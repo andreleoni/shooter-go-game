@@ -86,10 +86,13 @@ func DrawGameOver(screen *ebiten.Image) {
 // player
 
 type Player struct {
-	X, Y   float64
-	Speed  float64
-	Width  float64
-	Height float64
+	X, Y           float64
+	Speed          float64
+	Width          float64
+	Height         float64
+	BulletSpeed    float64              // Velocidade das balas
+	ActivePowerUps map[string]time.Time // Mapeia o tipo de power-up para seu tempo de expiração
+
 }
 
 var player Player
@@ -100,6 +103,7 @@ func (p *Player) Init() {
 	p.Speed = 2.0
 	p.Width = 16
 	p.Height = 16
+	p.ActivePowerUps = make(map[string]time.Time)
 }
 
 func (p *Player) Update() {
@@ -119,6 +123,18 @@ func (p *Player) Update() {
 	if ebiten.IsKeyPressed(ebiten.KeySpace) {
 		FireBullet(p)
 	}
+
+	for powerUpType, expiration := range p.ActivePowerUps {
+		if time.Now().After(expiration) {
+			delete(p.ActivePowerUps, powerUpType) // Remove power-up expirado
+
+			if powerUpType == "speed" {
+				p.Speed -= 1.0 // Reverte o aumento de velocidade
+			} else if powerUpType == "power" {
+				p.BulletSpeed += 2.0 // Reverte o aumento da força do tiro
+			}
+		}
+	}
 }
 
 func (p *Player) Draw(screen *ebiten.Image) {
@@ -128,10 +144,10 @@ func (p *Player) Draw(screen *ebiten.Image) {
 // powerup
 
 type PowerUp struct {
-	X, Y   float64
-	Width  float64
-	Height float64
-	Active bool
+	X, Y          float64
+	Width, Height float64
+	Type          string // Tipo do power-up (velocidade ou força do tiro)
+	Active        bool
 }
 
 var powerUps []PowerUp
@@ -143,6 +159,19 @@ func InitPowerUps() {
 			Y:      rand.Float64() * screenHeight,
 			Width:  16,
 			Height: 16,
+			Type:   "speed",
+			Active: true,
+		}
+		powerUps = append(powerUps, powerUp)
+	}
+
+	for i := 0; i < 3; i++ {
+		powerUp := PowerUp{
+			X:      rand.Float64() * screenWidth,
+			Y:      rand.Float64() * screenHeight,
+			Width:  16,
+			Height: 16,
+			Type:   "power",
 			Active: true,
 		}
 		powerUps = append(powerUps, powerUp)
@@ -153,7 +182,7 @@ func UpdatePowerUps(player *Player) {
 	for i := range powerUps {
 		if powerUps[i].Active && CheckCollision(player.X, player.Y, player.Width, player.Height, powerUps[i].X, powerUps[i].Y, powerUps[i].Width, powerUps[i].Height) {
 			powerUps[i].Active = false
-			ApplyPowerUpEffect(player)
+			ApplyPowerUpEffect(player, powerUps[i].Type)
 		}
 	}
 }
@@ -161,13 +190,26 @@ func UpdatePowerUps(player *Player) {
 func DrawPowerUps(screen *ebiten.Image) {
 	for _, powerUp := range powerUps {
 		if powerUp.Active {
-			ebitenutil.DrawRect(screen, powerUp.X, powerUp.Y, powerUp.Width, powerUp.Height, color.RGBA{0, 0, 255, 255}) // Azul
+			ebitenutil.DrawRect(screen, powerUp.X, powerUp.Y, powerUp.Width, powerUp.Height, color.RGBA{0, 0, 255, 255})
+
+			if powerUp.Type == "power" {
+				ebitenutil.DrawRect(screen, powerUp.X, powerUp.Y, powerUp.Width, powerUp.Height, color.RGBA{255, 255, 0, 255})
+			}
+
 		}
 	}
 }
 
-func ApplyPowerUpEffect(player *Player) {
-	player.Speed += 0.5 // Exemplo: aumenta a velocidade do jogador temporariamente
+func ApplyPowerUpEffect(player *Player, powerUpType string) {
+	if powerUpType == "speed" {
+		player.Speed += 1.0                                                    // Aumenta a velocidade do jogador
+		player.ActivePowerUps[powerUpType] = time.Now().Add(100 * time.Second) // Duração de 5 segundos
+	} else if powerUpType == "power" {
+		player.BulletSpeed += 2.0                                              // Aumenta a força do tiro
+		player.ActivePowerUps[powerUpType] = time.Now().Add(100 * time.Second) // Duração de 5 segundos
+	}
+
+	fmt.Println("New player attributes: ", player)
 }
 
 // enemy
@@ -196,7 +238,7 @@ func SpawnEnemies() {
 	}
 
 	// Limite máximo de inimigos ativos
-	if len(enemies) < 10 { // Por exemplo, 10 inimigos ativos
+	if len(enemies) < 9000 { // Por exemplo, 10 inimigos ativos
 		enemies = append(enemies, NewEnemy())
 	}
 	lastSpawnTime = time.Now()
@@ -272,7 +314,8 @@ var lastShotTime time.Time
 var shotInterval = 2 * time.Second // Tempo entre disparos
 
 func AutoShoot(player *Player) {
-	if time.Since(lastShotTime) >= shotInterval {
+	if time.Since(lastShotTime) >= shotInterval-time.Duration(player.BulletSpeed)*time.Second {
+		fmt.Println("shot in", time.Now())
 		FireBullet(player)        // Adiciona uma nova bala
 		lastShotTime = time.Now() // Atualiza o tempo do último disparo
 	}
