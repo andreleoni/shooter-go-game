@@ -19,7 +19,13 @@ const (
 )
 
 type Game struct {
-	gameOver bool
+	gameOver  bool
+	Obstacles []Obstacle
+}
+
+type Obstacle struct {
+	x, y          float64
+	width, height float64
 }
 
 func (g *Game) Update() error {
@@ -35,11 +41,34 @@ func (g *Game) Update() error {
 	AutoShoot(&player)
 
 	// Verifica colisões
-	if CheckCollisions() {
+	if CheckEnemyCollisions(g) {
 		g.gameOver = true
 	}
 
+	if CheckObstacleCollision(g) {
+		fmt.Println("obstacle collision detected")
+	}
+
 	return nil
+}
+
+func CheckObstacleCollision(g *Game) bool {
+	for _, obstacle := range g.Obstacles {
+		obstacleBox := struct{ x1, y1, x2, y2 float64 }{
+			x1: obstacle.x,
+			y1: obstacle.y,
+			x2: obstacle.x + obstacle.width,
+			y2: obstacle.y + obstacle.height,
+		}
+
+		// Check if bounding boxes intersect
+		if player.X < obstacleBox.x2 && player.X > obstacleBox.x1 &&
+			player.Y < obstacleBox.y2 && player.Y > obstacleBox.y1 {
+			return true // Collision detected
+		}
+	}
+
+	return false
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
@@ -56,6 +85,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	DrawEnemies(screen)
 	DrawPowerUps(screen)
 	DrawBullets(screen)
+
+	// Draw each obstacle as a filled rectangle
+	for _, obstacle := range g.Obstacles {
+		ebitenutil.DrawRect(screen, obstacle.x, obstacle.y, float64(obstacle.width), float64(obstacle.height), color.RGBA{33, 0, 0, 33})
+	}
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
@@ -68,19 +102,36 @@ func main() {
 	InitEnemies()
 	InitPowerUps()
 
-	CheckCollisions()
-
 	img, _, err := ebitenutil.NewImageFromFile("otsp_creatures_01.png")
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	rand.Seed(time.Now().UnixNano())
+	currentGame := Game{}
+	currentGame.generateObstacles(10)
+	fmt.Println(currentGame)
+
 	player.Avatar = img
 
 	ebiten.SetWindowSize(screenWidth, screenHeight)
 	ebiten.SetWindowTitle("Jogo Básico em Ebiten")
-	if err := ebiten.RunGame(&Game{}); err != nil {
+	if err := ebiten.RunGame(&currentGame); err != nil {
 		panic(err)
+	}
+}
+
+var currentGame Game
+
+func (g *Game) generateObstacles(count int) {
+	for i := 0; i < count; i++ {
+		obstacle := Obstacle{
+			x:      float64(rand.Intn(640)), // Random x position within window width
+			y:      float64(rand.Intn(480)), // Random y position within window height
+			width:  32,                      // Set obstacle width
+			height: 32,                      // Set obstacle height
+		}
+		g.Obstacles = append(g.Obstacles, obstacle)
 	}
 }
 
@@ -117,16 +168,16 @@ func (p *Player) Init() {
 }
 
 func (p *Player) Update() {
-	if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) && p.X > 0 {
+	if (ebiten.IsKeyPressed(ebiten.KeyA) || ebiten.IsKeyPressed(ebiten.KeyArrowLeft)) && p.X > 0 {
 		p.X -= p.Speed
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyArrowRight) && p.X < screenWidth-p.Width {
+	if ((ebiten.IsKeyPressed(ebiten.KeyD)) || ebiten.IsKeyPressed(ebiten.KeyArrowRight)) && p.X < screenWidth-p.Width {
 		p.X += p.Speed
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyArrowUp) && p.Y > 0 {
+	if ((ebiten.IsKeyPressed(ebiten.KeyW)) || ebiten.IsKeyPressed(ebiten.KeyArrowUp)) && p.Y > 0 {
 		p.Y -= p.Speed
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyArrowDown) && p.Y < screenHeight-p.Height {
+	if ((ebiten.IsKeyPressed(ebiten.KeyS)) || ebiten.IsKeyPressed(ebiten.KeyArrowDown)) && p.Y < screenHeight-p.Height {
 		p.Y += p.Speed
 	}
 
@@ -355,7 +406,7 @@ func CheckCollision(x1, y1, w1, h1, x2, y2, w2, h2 float64) bool {
 	return collision
 }
 
-func CheckCollisions() bool {
+func CheckEnemyCollisions(g *Game) bool {
 	// Verifica se um inimigo colidiu com o jogador
 	for _, enemy := range enemies {
 		if enemy.Active && player.X < enemy.X+enemy.Width && player.X+player.Width > enemy.X &&
