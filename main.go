@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"image"
 	"image/color"
+	"log"
 	"math"
 	"math/rand"
 	"time"
@@ -68,6 +70,13 @@ func main() {
 
 	CheckCollisions()
 
+	img, _, err := ebitenutil.NewImageFromFile("otsp_creatures_01.png")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	player.Avatar = img
+
 	ebiten.SetWindowSize(screenWidth, screenHeight)
 	ebiten.SetWindowTitle("Jogo Básico em Ebiten")
 	if err := ebiten.RunGame(&Game{}); err != nil {
@@ -87,6 +96,7 @@ func DrawGameOver(screen *ebiten.Image) {
 
 type Player struct {
 	X, Y           float64
+	Avatar         *ebiten.Image
 	Speed          float64
 	Width          float64
 	Height         float64
@@ -138,7 +148,19 @@ func (p *Player) Update() {
 }
 
 func (p *Player) Draw(screen *ebiten.Image) {
-	ebitenutil.DrawRect(screen, p.X, p.Y, p.Width, p.Height, color.RGBA{0, 255, 0, 255}) // Verde
+	// ebitenutil.DrawRect(screen, p.X, p.Y, p.Width, p.Height, color.RGBA{0, 255, 0, 255}) // Verde
+
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(p.X, p.Y)
+
+	// Apply a color key filter to remove the pink background
+	op.ColorM.Scale(1, 1, 1, 1)
+	op.ColorM.Translate(-1, -0, -1, 0) // Adjust for transparency in pink areas
+
+	// Desenha a área do sprite selecionada (exemplo: x: 0, y: 0, largura: 32, altura: 32)
+	subImage := p.Avatar.SubImage(image.Rect(64, 64, 32, 32)).(*ebiten.Image)
+
+	screen.DrawImage(subImage, op)
 }
 
 // powerup
