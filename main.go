@@ -34,41 +34,85 @@ func (g *Game) Update() error {
 	}
 
 	player.Update()
-	UpdateEnemies(&player)
+	UpdateEnemies(&player, g)
 	UpdatePowerUps(&player)
 	UpdateBullets()
 	SpawnEnemies()
 	AutoShoot(&player)
+
+	// Verifica colisão com obstáculos para jogador e inimigos
+	player.HandleObstacleCollision(g.Obstacles)
+	for i := range enemies {
+		enemies[i].HandleObstacleCollision(g.Obstacles)
+	}
 
 	// Verifica colisões
 	if CheckEnemyCollisions(g) {
 		g.gameOver = true
 	}
 
-	if CheckObstacleCollision(g) {
-		fmt.Println("obstacle collision detected")
-	}
-
 	return nil
 }
+func (p *Player) HandleObstacleCollision(obstacles []Obstacle) {
+	for _, obstacle := range obstacles {
+		if CheckCollision(p.X, p.Y, p.Width, p.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
+			// Ajuste horizontal
+			if p.X < obstacle.x {
+				p.X = obstacle.x - p.Width // Mover para a esquerda do obstáculo
+			} else if p.X > obstacle.x+obstacle.width {
+				p.X = obstacle.x + obstacle.width // Mover para a direita do obstáculo
+			}
 
-func CheckObstacleCollision(g *Game) bool {
-	for _, obstacle := range g.Obstacles {
-		obstacleBox := struct{ x1, y1, x2, y2 float64 }{
-			x1: obstacle.x,
-			y1: obstacle.y,
-			x2: obstacle.x + obstacle.width,
-			y2: obstacle.y + obstacle.height,
-		}
-
-		// Check if bounding boxes intersect
-		if player.X < obstacleBox.x2 && player.X > obstacleBox.x1 &&
-			player.Y < obstacleBox.y2 && player.Y > obstacleBox.y1 {
-			return true // Collision detected
+			// Ajuste vertical
+			if p.Y < obstacle.y {
+				p.Y = obstacle.y - p.Height // Mover acima do obstáculo
+			} else if p.Y > obstacle.y+obstacle.height {
+				p.Y = obstacle.y + obstacle.height // Mover abaixo do obstáculo
+			}
 		}
 	}
+}
 
-	return false
+func (e *Enemy) HandleObstacleCollision(obstacles []Obstacle) {
+	for _, obstacle := range obstacles {
+		if CheckCollision(e.X, e.Y, e.Width, e.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
+			// Calcula as profundidades de colisão nos eixos X e Y
+			xOverlap := min(e.X+e.Width, obstacle.x+obstacle.width) - max(e.X, obstacle.x)
+			yOverlap := min(e.Y+e.Height, obstacle.y+obstacle.height) - max(e.Y, obstacle.y)
+
+			// Ajusta o eixo com menor sobreposição para evitar travamento
+			if xOverlap < yOverlap {
+				// Ajuste no eixo X
+				if e.X < obstacle.x {
+					e.X = obstacle.x - e.Width
+				} else {
+					e.X = obstacle.x + obstacle.width
+				}
+			} else {
+				// Ajuste no eixo Y
+				if e.Y < obstacle.y {
+					e.Y = obstacle.y - e.Height
+				} else {
+					e.Y = obstacle.y + obstacle.height
+				}
+			}
+		}
+	}
+}
+
+// Funções auxiliares para calcular a sobreposição
+func min(a, b float64) float64 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func max(a, b float64) float64 {
+	if a > b {
+		return a
+	}
+	return b
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
@@ -303,7 +347,7 @@ func InitEnemies() {
 }
 
 var lastSpawnTime time.Time
-var spawnInterval = 200 * time.Millisecond // Tempo entre spawns
+var spawnInterval = 3000 * time.Millisecond // Tempo entre spawns
 
 func SpawnEnemies() {
 	if time.Since(lastSpawnTime) < spawnInterval {
@@ -314,7 +358,9 @@ func SpawnEnemies() {
 	if len(enemies) < 9000 { // Por exemplo, 10 inimigos ativos
 		enemies = append(enemies, NewEnemy())
 	}
-	lastSpawnTime = time.Now()
+
+	// remover, só ta aqui para testar o obstaculo
+	lastSpawnTime = time.Now().Add(30000 * time.Minute)
 }
 
 func NewEnemy() Enemy {
@@ -346,18 +392,18 @@ func NewEnemy() Enemy {
 	}
 }
 
-func UpdateEnemies(player *Player) {
+func UpdateEnemies(player *Player, g *Game) {
 	for i := range enemies {
-		enemies[i].Update(player)
+		enemies[i].Update(player, g)
 	}
 }
 
-func (e *Enemy) Update(player *Player) {
+func (e *Enemy) Update(player *Player, g *Game) {
 	if !e.Active {
 		return
 	}
 
-	// Calcula a direção em que o inimigo deve se mover
+	// Calcula a direção em que o inimigo deve se mover em direção ao jogador
 	directionX := player.X - e.X
 	directionY := player.Y - e.Y
 	length := math.Sqrt(directionX*directionX + directionY*directionY)
@@ -366,6 +412,26 @@ func (e *Enemy) Update(player *Player) {
 	if length > 0 {
 		directionX /= length
 		directionY /= length
+	}
+
+	obstacles := g.Obstacles
+
+	// Verifica se o inimigo está perto de um obstáculo
+	for _, obstacle := range obstacles {
+		if isNearObstacle(e, obstacle) {
+			// Ajusta a direção para contornar o obstáculo
+			avoidanceX, avoidanceY := avoidObstacle(e, obstacle)
+			directionX += avoidanceX
+			directionY += avoidanceY
+
+			// Normaliza novamente após ajustar para evitar o obstáculo
+			length = math.Sqrt(directionX*directionX + directionY*directionY)
+			if length > 0 {
+				directionX /= length
+				directionY /= length
+			}
+			break
+		}
 	}
 
 	// Atualiza a posição do inimigo
@@ -384,12 +450,13 @@ func DrawEnemies(screen *ebiten.Image) {
 // collision
 
 var lastShotTime time.Time
-var shotInterval = 2 * time.Second // Tempo entre disparos
+var shotInterval = 10 * time.Second // Tempo entre disparos
 
 func AutoShoot(player *Player) {
 	if time.Since(lastShotTime) >= shotInterval-time.Duration(player.BulletSpeed)*time.Second {
 		fmt.Println("shot in", time.Now())
-		FireBullet(player)        // Adiciona uma nova bala
+		// Removi o tiro pra testar obstaculos
+		// FireBullet(player)        // Adiciona uma nova bala
 		lastShotTime = time.Now() // Atualiza o tempo do último disparo
 	}
 }
@@ -430,6 +497,31 @@ func CheckEnemyCollisions(g *Game) bool {
 	}
 
 	return false
+}
+
+// Função para verificar se o inimigo está próximo de um obstáculo
+func isNearObstacle(e *Enemy, o Obstacle) bool {
+	// Calcula a distância do centro do inimigo ao centro do obstáculo
+	distX := (e.X + e.Width/2) - (o.x + o.width/2)
+	distY := (e.Y + e.Height/2) - (o.y + o.height/2)
+	distance := math.Sqrt(distX*distX + distY*distY)
+
+	// Define uma distância de proximidade (ajuste conforme necessário)
+	return distance < 50
+}
+
+// Função para desviar do obstáculo ajustando a direção
+func avoidObstacle(e *Enemy, o Obstacle) (float64, float64) {
+	// Calcula uma direção perpendicular ao obstáculo
+	if e.X < o.x {
+		return -0.5, 0 // Move para a esquerda
+	} else if e.X > o.x+o.width {
+		return 0.5, 0 // Move para a direita
+	} else if e.Y < o.y {
+		return 0, -0.5 // Move para cima
+	} else {
+		return 0, 0.5 // Move para baixo
+	}
 }
 
 // bullet
