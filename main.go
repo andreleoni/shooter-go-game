@@ -398,45 +398,50 @@ func UpdateEnemies(player *Player, g *Game) {
 	}
 }
 
-func (e *Enemy) Update(player *Player, g *Game) {
+func (e *Enemy) Update(p *Player, g *Game) {
 	if !e.Active {
 		return
 	}
 
-	// Calcula a direção em que o inimigo deve se mover em direção ao jogador
-	directionX := player.X - e.X
-	directionY := player.Y - e.Y
-	length := math.Sqrt(directionX*directionX + directionY*directionY)
+	e.MoveTowardsPlayer(p, g)
+}
 
-	// Normaliza a direção
-	if length > 0 {
-		directionX /= length
-		directionY /= length
+func (e *Enemy) MoveTowardsPlayer(p *Player, g *Game) {
+	playerX := p.X
+	playerY := p.Y
+
+	// Calcule a direção para o jogador
+	dx := playerX - e.X
+	dy := playerY - e.Y
+
+	// Normalize o vetor para obter direção unitária
+	distance := math.Sqrt(dx*dx + dy*dy)
+	if distance > 0 {
+		dx /= distance
+		dy /= distance
 	}
 
-	obstacles := g.Obstacles
+	// Aplique um pequeno movimento na direção do jogador
+	newX := e.X + dx*e.Speed
+	newY := e.Y + dy*e.Speed
 
-	// Verifica se o inimigo está perto de um obstáculo
-	for _, obstacle := range obstacles {
-		if isNearObstacle(e, obstacle) {
-			// Ajusta a direção para contornar o obstáculo
-			avoidanceX, avoidanceY := avoidObstacle(e, obstacle)
-			directionX += avoidanceX
-			directionY += avoidanceY
-
-			// Normaliza novamente após ajustar para evitar o obstáculo
-			length = math.Sqrt(directionX*directionX + directionY*directionY)
-			if length > 0 {
-				directionX /= length
-				directionY /= length
+	// Verifique colisão e ajuste o movimento, se necessário
+	for _, obstacle := range g.Obstacles {
+		if CheckCollision(newX, newY, e.Width, e.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
+			// Se houver colisão, mova-se perpendicularmente
+			if math.Abs(dx) > math.Abs(dy) {
+				// Tente mover-se na direção vertical
+				newY = e.Y + e.Speed*math.Copysign(1, dy)
+			} else {
+				// Tente mover-se na direção horizontal
+				newX = e.X + e.Speed*math.Copysign(1, dx)
 			}
-			break
 		}
 	}
 
-	// Atualiza a posição do inimigo
-	e.X += directionX * e.Speed
-	e.Y += directionY * e.Speed
+	// Atualize a posição do inimigo
+	e.X = newX
+	e.Y = newY
 }
 
 func DrawEnemies(screen *ebiten.Image) {
