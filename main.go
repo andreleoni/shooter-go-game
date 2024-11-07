@@ -54,23 +54,7 @@ func (g *Game) Update() error {
 	return nil
 }
 func (p *Player) HandleObstacleCollision(obstacles []Obstacle) {
-	for _, obstacle := range obstacles {
-		if CheckCollision(p.X, p.Y, p.Width, p.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
-			// Ajuste horizontal
-			if p.X < obstacle.x {
-				p.X = obstacle.x - p.Width // Mover para a esquerda do obstáculo
-			} else if p.X > obstacle.x+obstacle.width {
-				p.X = obstacle.x + obstacle.width // Mover para a direita do obstáculo
-			}
-
-			// Ajuste vertical
-			if p.Y < obstacle.y {
-				p.Y = obstacle.y - p.Height // Mover acima do obstáculo
-			} else if p.Y > obstacle.y+obstacle.height {
-				p.Y = obstacle.y + obstacle.height // Mover abaixo do obstáculo
-			}
-		}
-	}
+	// implementar colisao do player com o obstaculo
 }
 
 func (e *Enemy) HandleObstacleCollision(obstacles []Obstacle) {
@@ -168,15 +152,23 @@ func main() {
 var currentGame Game
 
 func (g *Game) generateObstacles(count int) {
-	for i := 0; i < count; i++ {
-		obstacle := Obstacle{
-			x:      float64(rand.Intn(640)), // Random x position within window width
-			y:      float64(rand.Intn(480)), // Random y position within window height
-			width:  32,                      // Set obstacle width
-			height: 32,                      // Set obstacle height
-		}
-		g.Obstacles = append(g.Obstacles, obstacle)
+	// for i := 0; i < count; i++ {
+	// 	obstacle := Obstacle{
+	// 		x:      float64(rand.Intn(640)), // Random x position within window width
+	// 		y:      float64(rand.Intn(480)), // Random y position within window height
+	// 		width:  32,                      // Set obstacle width
+	// 		height: 64,                      // Set obstacle height
+	// 	}
+	// 	g.Obstacles = append(g.Obstacles, obstacle)
+	// }
+
+	obstacle := Obstacle{
+		x:      float64(300), // Random x position within window width
+		y:      float64(200), // Random y position within window height
+		width:  32,           // Set obstacle width
+		height: 100,          // Set obstacle height
 	}
+	g.Obstacles = append(g.Obstacles, obstacle)
 }
 
 // game over
@@ -403,47 +395,99 @@ func (e *Enemy) Update(p *Player, g *Game) {
 		return
 	}
 
-	e.MoveTowardsPlayer(p, g)
+	for _, o := range g.Obstacles {
+		e.MoveForwardPlayer(o, p.X, p.Y)
+	}
 }
 
-func (e *Enemy) MoveTowardsPlayer(p *Player, g *Game) {
-	playerX := p.X
-	playerY := p.Y
-
-	// Calcule a direção para o jogador
+func (e *Enemy) MoveForwardPlayer(obstacle Obstacle, playerX, playerY float64) {
+	// Calcula o movimento em direção ao jogador
 	dx := playerX - e.X
 	dy := playerY - e.Y
 
-	// Normalize o vetor para obter direção unitária
+	// Normaliza a direção para a velocidade do inimigo
 	distance := math.Sqrt(dx*dx + dy*dy)
-	if distance > 0 {
-		dx /= distance
-		dy /= distance
+	if distance != 0 {
+		dx = (dx / distance) * e.Speed
+		dy = (dy / distance) * e.Speed
 	}
 
-	// Aplique um pequeno movimento na direção do jogador
-	newX := e.X + dx*e.Speed
-	newY := e.Y + dy*e.Speed
+	playerPositionX := "unknown"
+	playerPositionY := "unknown"
 
-	// Verifique colisão e ajuste o movimento, se necessário
-	for _, obstacle := range g.Obstacles {
-		if CheckCollision(newX, newY, e.Width, e.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
-			// Se houver colisão, mova-se perpendicularmente
-			if math.Abs(dx) > math.Abs(dy) {
-				// Tente mover-se na direção vertical
-				newY = e.Y + e.Speed*math.Copysign(1, dy)
-			} else {
-				// Tente mover-se na direção horizontal
-				newX = e.X + e.Speed*math.Copysign(1, dx)
+	if playerY < e.Y {
+		playerPositionY = "top"
+	} else if playerY > e.Y {
+		playerPositionY = "botton"
+	}
+
+	if playerX < e.X {
+		playerPositionX = "left"
+	} else if playerX > e.X {
+		playerPositionX = "right"
+	}
+
+	// Detecta colisão com o obstáculo
+	if CheckCollision(e.X+dx, e.Y+dy, e.Width, e.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
+		fmt.Println("player on", playerPositionY, playerPositionX)
+
+		// Ajuste de direção ao longo do obstáculo
+		// Calcula as distâncias até as bordas do obstáculo para decidir o melhor caminho
+		if e.X < obstacle.x {
+			// Move para a esquerda do obstáculo
+			dx = -e.Speed
+			dy = 0
+
+		} else if e.X > obstacle.x+obstacle.width {
+			// Move para a direita do obstáculo
+			dx = e.Speed
+			dy = 0
+
+		} else if e.Y < obstacle.y {
+			// Move para cima do obstáculo
+			dx = 0
+			dy = -e.Speed
+
+		} else if e.Y > obstacle.y+obstacle.height {
+			// Move para baixo do obstáculo
+			dx = 0
+			dy = e.Speed
+		}
+
+		if dx == 0 || dy == 0 {
+			if playerPositionY == "unknown" || playerPositionX == "unknown" {
+				randposition := rand.Intn(1)
+				if randposition == 0 {
+					dx = -e.Speed
+					dy = -e.Speed
+				} else {
+					dx = +e.Speed
+					dy = +e.Speed
+				}
+			}
+
+			if playerPositionY == "top" {
+				dy = +e.Speed
+			}
+
+			if playerPositionY == "botton" {
+				dy = -e.Speed
+			}
+
+			if playerPositionX == "left" {
+				dx = +e.Speed
+			}
+
+			if playerPositionX == "right" {
+				dx = -e.Speed
 			}
 		}
 	}
 
-	// Atualize a posição do inimigo
-	e.X = newX
-	e.Y = newY
+	// Move o inimigo na direção calculada
+	e.X += dx
+	e.Y += dy
 }
-
 func DrawEnemies(screen *ebiten.Image) {
 	for _, enemy := range enemies {
 		if enemy.Active {
@@ -473,7 +517,7 @@ func CheckCollision(x1, y1, w1, h1, x2, y2, w2, h2 float64) bool {
 		y1+h1 > y2
 
 	if collision {
-		fmt.Printf("Colisão detectada: Player (x: %.2f, y: %.2f, w: %.2f, h: %.2f) com PowerUp (x: %.2f, y: %.2f, w: %.2f, h: %.2f)\n", x1, y1, w1, h1, x2, y2, w2, h2)
+		// fmt.Printf("Colisão detectada: Player (x: %.2f, y: %.2f, w: %.2f, h: %.2f) com PowerUp (x: %.2f, y: %.2f, w: %.2f, h: %.2f)\n", x1, y1, w1, h1, x2, y2, w2, h2)
 	}
 	return collision
 }
@@ -502,31 +546,6 @@ func CheckEnemyCollisions(g *Game) bool {
 	}
 
 	return false
-}
-
-// Função para verificar se o inimigo está próximo de um obstáculo
-func isNearObstacle(e *Enemy, o Obstacle) bool {
-	// Calcula a distância do centro do inimigo ao centro do obstáculo
-	distX := (e.X + e.Width/2) - (o.x + o.width/2)
-	distY := (e.Y + e.Height/2) - (o.y + o.height/2)
-	distance := math.Sqrt(distX*distX + distY*distY)
-
-	// Define uma distância de proximidade (ajuste conforme necessário)
-	return distance < 50
-}
-
-// Função para desviar do obstáculo ajustando a direção
-func avoidObstacle(e *Enemy, o Obstacle) (float64, float64) {
-	// Calcula uma direção perpendicular ao obstáculo
-	if e.X < o.x {
-		return -0.5, 0 // Move para a esquerda
-	} else if e.X > o.x+o.width {
-		return 0.5, 0 // Move para a direita
-	} else if e.Y < o.y {
-		return 0, -0.5 // Move para cima
-	} else {
-		return 0, 0.5 // Move para baixo
-	}
 }
 
 // bullet
