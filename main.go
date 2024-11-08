@@ -42,9 +42,6 @@ func (g *Game) Update() error {
 
 	// Verifica colisão com obstáculos para jogador e inimigos
 	player.HandleObstacleCollision(g.Obstacles)
-	for i := range enemies {
-		enemies[i].HandleObstacleCollision(g.Obstacles)
-	}
 
 	// Verifica colisões
 	if CheckEnemyCollisions(g) {
@@ -55,33 +52,6 @@ func (g *Game) Update() error {
 }
 func (p *Player) HandleObstacleCollision(obstacles []Obstacle) {
 	// implementar colisao do player com o obstaculo
-}
-
-func (e *Enemy) HandleObstacleCollision(obstacles []Obstacle) {
-	for _, obstacle := range obstacles {
-		if CheckCollision(e.X, e.Y, e.Width, e.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
-			// Calcula as profundidades de colisão nos eixos X e Y
-			xOverlap := min(e.X+e.Width, obstacle.x+obstacle.width) - max(e.X, obstacle.x)
-			yOverlap := min(e.Y+e.Height, obstacle.y+obstacle.height) - max(e.Y, obstacle.y)
-
-			// Ajusta o eixo com menor sobreposição para evitar travamento
-			if xOverlap < yOverlap {
-				// Ajuste no eixo X
-				if e.X < obstacle.x {
-					e.X = obstacle.x - e.Width
-				} else {
-					e.X = obstacle.x + obstacle.width
-				}
-			} else {
-				// Ajuste no eixo Y
-				if e.Y < obstacle.y {
-					e.Y = obstacle.y - e.Height
-				} else {
-					e.Y = obstacle.y + obstacle.height
-				}
-			}
-		}
-	}
 }
 
 // Funções auxiliares para calcular a sobreposição
@@ -395,12 +365,10 @@ func (e *Enemy) Update(p *Player, g *Game) {
 		return
 	}
 
-	for _, o := range g.Obstacles {
-		e.MoveForwardPlayer(o, p.X, p.Y)
-	}
+	e.MoveForwardPlayer(g, p.X, p.Y)
 }
 
-func (e *Enemy) MoveForwardPlayer(obstacle Obstacle, playerX, playerY float64) {
+func (e *Enemy) MoveForwardPlayer(g *Game, playerX, playerY float64) {
 	// Calcula o movimento em direção ao jogador
 	dx := playerX - e.X
 	dy := playerY - e.Y
@@ -412,74 +380,28 @@ func (e *Enemy) MoveForwardPlayer(obstacle Obstacle, playerX, playerY float64) {
 		dy = (dy / distance) * e.Speed
 	}
 
-	playerPositionX := "unknown"
-	playerPositionY := "unknown"
-
-	if playerY < e.Y {
-		playerPositionY = "top"
-	} else if playerY > e.Y {
-		playerPositionY = "botton"
-	}
-
-	if playerX < e.X {
-		playerPositionX = "left"
-	} else if playerX > e.X {
-		playerPositionX = "right"
-	}
-
 	// Detecta colisão com o obstáculo
-	if CheckCollision(e.X+dx, e.Y+dy, e.Width, e.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
-		fmt.Println("player on", playerPositionY, playerPositionX)
+	for _, obstacle := range g.Obstacles {
+		if CheckCollision(e.X, e.Y, e.Width, e.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
+			// Calcula as profundidades de colisão nos eixos X e Y
+			xOverlap := min(e.X+e.Width, obstacle.x+obstacle.width) - max(e.X, obstacle.x)
+			yOverlap := min(e.Y+e.Height, obstacle.y+obstacle.height) - max(e.Y, obstacle.y)
 
-		// Ajuste de direção ao longo do obstáculo
-		// Calcula as distâncias até as bordas do obstáculo para decidir o melhor caminho
-		if e.X < obstacle.x {
-			// Move para a esquerda do obstáculo
-			dx = -e.Speed
-			dy = 0
-
-		} else if e.X > obstacle.x+obstacle.width {
-			// Move para a direita do obstáculo
-			dx = e.Speed
-			dy = 0
-
-		} else if e.Y < obstacle.y {
-			// Move para cima do obstáculo
-			dx = 0
-			dy = -e.Speed
-
-		} else if e.Y > obstacle.y+obstacle.height {
-			// Move para baixo do obstáculo
-			dx = 0
-			dy = e.Speed
-		}
-
-		if dx == 0 || dy == 0 {
-			if playerPositionY == "unknown" || playerPositionX == "unknown" {
-				randposition := rand.Intn(1)
-				if randposition == 0 {
-					dx = -e.Speed
-					dy = -e.Speed
+			// Ajusta o eixo com menor sobreposição para evitar travamento
+			if xOverlap < yOverlap {
+				// Ajuste no eixo X
+				if e.X < obstacle.x {
+					e.X = obstacle.x - e.Width
 				} else {
-					dx = +e.Speed
-					dy = +e.Speed
+					e.X = obstacle.x + obstacle.width
 				}
-			}
-
-			if playerPositionY == "top" {
-				dy = +e.Speed
-			}
-
-			if playerPositionY == "botton" {
-				dy = -e.Speed
-			}
-
-			if playerPositionX == "left" {
-				dx = +e.Speed
-			}
-
-			if playerPositionX == "right" {
-				dx = -e.Speed
+			} else {
+				// Ajuste no eixo Y
+				if e.Y < obstacle.y {
+					e.Y = obstacle.y - e.Height
+				} else {
+					e.Y = obstacle.y + obstacle.height
+				}
 			}
 		}
 	}
@@ -488,6 +410,7 @@ func (e *Enemy) MoveForwardPlayer(obstacle Obstacle, playerX, playerY float64) {
 	e.X += dx
 	e.Y += dy
 }
+
 func DrawEnemies(screen *ebiten.Image) {
 	for _, enemy := range enemies {
 		if enemy.Active {
