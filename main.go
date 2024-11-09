@@ -90,6 +90,8 @@ func (g *Game) Update() error {
 	// Verifica colisões
 	CheckEnemyCollisions(g)
 
+	UpdateXPItems(&player)
+
 	return nil
 }
 
@@ -152,6 +154,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	// Desenha a barra de vida do jogador
 	DrawHealthBar(screen, &player)
+
+	// Desenha a barra de experiência do jogador
+	DrawXPBar(screen, &player)
+
+	// Desenha os itens de experiência
+	DrawXPItems(screen)
 
 	// Desenha o mapa e os objetos levando em conta a posição da câmera
 	for _, obstacle := range g.Obstacles {
@@ -230,6 +238,14 @@ func checkOverlap(o1, o2 Obstacle, minDistanceX, minDistanceY float64) bool {
 		o1.y+o1.height+minDistanceY < o2.y || o1.y > o2.y+o2.height+minDistanceY)
 }
 
+func DrawXPItems(screen *ebiten.Image) {
+	for _, xpItem := range xpItems {
+		if xpItem.Active {
+			ebitenutil.DrawRect(screen, xpItem.X-camera.X, xpItem.Y-camera.Y, xpItem.Width, xpItem.Height, color.RGBA{255, 255, 0, 255}) // Amarelo
+		}
+	}
+}
+
 // game over
 
 func DrawGameOver(screen *ebiten.Image) {
@@ -249,8 +265,58 @@ type Player struct {
 	BulletSpeed    float64
 	WeaponStrength float64
 	Health         float64
+	Level          int
+	XP             float64
+	XPToNextLevel  float64
 	ActivePowerUps map[string]time.Time // Mapeia o tipo de power-up para seu tempo de expiração
 }
+
+func DrawXPBar(screen *ebiten.Image, player *Player) {
+	barWidth := 100.0
+	barHeight := 10.0
+	barX := (screenWidth - barWidth) / 2    // Centraliza a barra de experiência horizontalmente
+	barY := screenHeight - barHeight - 30.0 // Posiciona a barra de experiência na parte inferior da tela, acima da barra de vida
+
+	// Calcula a largura da barra de experiência com base na experiência atual do jogador
+	xpPercentage := player.XP / player.XPToNextLevel
+	currentBarWidth := barWidth * xpPercentage
+
+	// Desenha o fundo da barra de experiência (cinza)
+	ebitenutil.DrawRect(screen, barX, barY, barWidth, barHeight, color.RGBA{128, 128, 128, 255})
+
+	// Desenha a barra de experiência atual (azul)
+	ebitenutil.DrawRect(screen, barX, barY, currentBarWidth, barHeight, color.RGBA{0, 0, 255, 255})
+}
+
+type XPItem struct {
+	X, Y   float64
+	Width  float64
+	Height float64
+	Active bool
+}
+
+func UpdateXPItems(player *Player) {
+	for i := range xpItems {
+		if xpItems[i].Active && CheckCollision(player.X, player.Y, player.Width, player.Height, xpItems[i].X, xpItems[i].Y, xpItems[i].Width, xpItems[i].Height) {
+			xpItems[i].Active = false
+
+			player.XP += 10 // Adiciona experiência ao jogador
+			if player.XP >= player.XPToNextLevel {
+				player.LevelUp()
+			}
+		}
+	}
+}
+
+func (p *Player) LevelUp() {
+	p.Level++
+	p.XP = 0
+	p.XPToNextLevel *= 1.5  // Aumenta a experiência necessária para o próximo nível
+	p.WeaponStrength += 1.0 // Aumenta a força da arma
+	p.Health = 100.0        // Restaura a vida do jogador
+}
+
+var xpItems []XPItem
 
 var player Player
 
@@ -261,8 +327,11 @@ func (p *Player) Init() {
 	p.Width = 36
 	p.Height = 36
 	p.BulletSpeed = 0.0
-	p.WeaponStrength = 1.0 // Força inicial da arma
-	p.Health = 100.0       // Vida inicial do jogador
+	p.WeaponStrength = 5.0
+	p.Health = 100.0
+	p.XP = 0.0              // Adicionar valor inicial de XP
+	p.XPToNextLevel = 100.0 // Adicionar valor necessário para o próximo nível
+	p.Level = 1             // Adicionar nível inicial
 	p.ActivePowerUps = make(map[string]time.Time)
 }
 
@@ -481,9 +550,9 @@ func NewEnemy() Enemy {
 		Width:  16,
 		Height: 16,
 		Active: true,
-		Speed:  1.0, // Velocidade do inimigo
-		Health: 5.0, // Vida do inimigo
-		Attack: 5.0, // Pontos de ataque do inimigo
+		Speed:  1.0,  // Velocidade do inimigo
+		Health: 10.0, // Vida do inimigo
+		Attack: 5.0,  // Pontos de ataque do inimigo
 	}
 }
 
@@ -710,8 +779,50 @@ func CheckEnemyCollisions(g *Game) bool {
 				bullets[i].Y < enemies[j].Y+enemies[j].Height && bullets[i].Y+10 > enemies[j].Y {
 				bullets[i].Active = false                  // Desativa a bala
 				enemies[j].Health -= player.WeaponStrength // Reduz a vida do inimigo
+
 				if enemies[j].Health <= 0 {
 					enemies[j].Active = false // Desativa o inimigo se a vida for menor ou igual a 0
+
+					// Dropar item de experiência quando o inimigo é derrotado
+					xpItem := XPItem{
+						X:      enemies[j].X,
+						Y:      enemies[j].Y,
+						Width:  10,
+						Height: 10,
+						Active: true,
+					}
+
+					xpItems = append(xpItems, xpItem)
+				}
+
+				return false
+			}
+		}
+	}
+
+	// Verifica se uma bala colidiu com um inimigo
+	for i := len(bullets) - 1; i >= 0; i-- {
+		for j := len(enemies) - 1; j >= 0; j-- {
+			if bullets[i].Active && enemies[j].Active &&
+				bullets[i].X < enemies[j].X+enemies[j].Width && bullets[i].X+4 > enemies[j].X &&
+				bullets[i].Y < enemies[j].Y+enemies[j].Height && bullets[i].Y+10 > enemies[j].Y {
+				bullets[i].Active = false                  // Desativa a bala
+				enemies[j].Health -= player.WeaponStrength // Reduz a vida do inimigo
+
+				if enemies[j].Health <= 0 {
+					enemies[j].Active = false // Desativa o inimigo se a vida for menor ou igual a 0
+
+					// Dropar item de experiência quando o inimigo é derrotado
+					if enemies[j].Health <= 0 {
+						xpItem := XPItem{
+							X:      enemies[j].X,
+							Y:      enemies[j].Y,
+							Width:  10,
+							Height: 10,
+							Active: true,
+						}
+						xpItems = append(xpItems, xpItem)
+					}
 				}
 				return false
 			}
