@@ -20,8 +20,36 @@ const (
 )
 
 type Game struct {
-	gameOver  bool
-	Obstacles []Obstacle
+	gameOver        bool
+	choosingPowerUp bool
+	Obstacles       []Obstacle
+	powerUpOptions  []string
+}
+
+func DrawPowerUpChoice(screen *ebiten.Image) {
+	cardWidth := 200.0
+	cardHeight := 100.0
+	cardX := (screenWidth - cardWidth) / 2
+	cardY := (screenHeight - cardHeight) / 2
+
+	// Draw the card background
+	ebitenutil.DrawRect(screen, cardX, cardY, cardWidth, cardHeight, color.RGBA{255, 255, 255, 255})
+
+	// Draw the text
+	message := "Choose your power-up:\n1. Speed\n2. Power"
+	ebitenutil.DebugPrintAt(screen, message, int(cardX)+10, int(cardY)+10)
+}
+
+func ApplyPowerUpEffect(player *Player, powerUpType string) {
+	// Ativa o modo de escolha de power-up e atualiza as opções disponíveis
+	currentGame.choosingPowerUp = true
+
+	// Atualiza o tipo de power-up que será aplicado após a escolha
+	if powerUpType == "speed" {
+		currentGame.powerUpOptions = []string{"speed"}
+	} else if powerUpType == "power" {
+		currentGame.powerUpOptions = []string{"power"}
+	}
 }
 
 type Obstacle struct {
@@ -32,6 +60,19 @@ type Obstacle struct {
 func (g *Game) Update() error {
 	if g.gameOver {
 		return nil // Não atualiza se o jogo estiver terminado
+	}
+
+	if g.choosingPowerUp {
+		if ebiten.IsKeyPressed(ebiten.Key1) {
+			player.Speed += 1.0
+			player.ActivePowerUps["speed"] = time.Now().Add(100 * time.Second)
+			g.choosingPowerUp = false
+		} else if ebiten.IsKeyPressed(ebiten.Key2) {
+			player.BulletSpeed += 2.0
+			player.ActivePowerUps["power"] = time.Now().Add(100 * time.Second)
+			g.choosingPowerUp = false
+		}
+		return nil
 	}
 
 	player.Update()
@@ -53,7 +94,6 @@ func (g *Game) Update() error {
 
 	return nil
 }
-
 func (p *Player) HandleObstacleCollision(obstacles []Obstacle) {
 	for _, obstacle := range obstacles {
 		if CheckCollision(p.X, p.Y, p.Width, p.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
@@ -99,6 +139,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		return
 	}
 
+	if g.choosingPowerUp {
+		DrawPowerUpChoice(screen)
+		return
+	}
+
 	// Desenha o jogador, inimigos e power-ups
 	player.Draw(screen)
 
@@ -133,7 +178,7 @@ func main() {
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	currentGame := Game{}
+	currentGame = Game{}
 	currentGame.generateObstacles(10, 16, 16, 64, 64)
 	fmt.Println(currentGame)
 
@@ -323,18 +368,6 @@ func DrawPowerUps(screen *ebiten.Image) {
 			}
 		}
 	}
-}
-
-func ApplyPowerUpEffect(player *Player, powerUpType string) {
-	if powerUpType == "speed" {
-		player.Speed += 1.0                                                    // Aumenta a velocidade do jogador
-		player.ActivePowerUps[powerUpType] = time.Now().Add(100 * time.Second) // Duração de 5 segundos
-	} else if powerUpType == "power" {
-		player.BulletSpeed += 2.0                                              // Aumenta a força do tiro
-		player.ActivePowerUps[powerUpType] = time.Now().Add(100 * time.Second) // Duração de 5 segundos
-	}
-
-	fmt.Println("New player attributes: ", player)
 }
 
 // enemy
@@ -602,7 +635,6 @@ var shotInterval = 1 * time.Second // Tempo entre disparos
 
 func AutoShoot(player *Player) {
 	if time.Since(lastShotTime) >= shotInterval-time.Duration(player.BulletSpeed)*time.Second {
-		fmt.Println("shot in", time.Now())
 		// Removi o tiro pra testar obstaculos
 		FireBullet(player)        // Adiciona uma nova bala
 		lastShotTime = time.Now() // Atualiza o tempo do último disparo
