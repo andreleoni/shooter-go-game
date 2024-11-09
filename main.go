@@ -181,7 +181,7 @@ func main() {
 
 	rand.Seed(time.Now().UnixNano())
 	currentGame = Game{}
-	currentGame.generateObstacles(10, 16, 16, 64, 64)
+	currentGame.generateObstacles(20, 16, 16, 64, 64)
 	fmt.Println(currentGame)
 
 	player.Avatar = img
@@ -332,8 +332,8 @@ var powerUps []PowerUp
 func DrawHealthBar(screen *ebiten.Image, player *Player) {
 	barWidth := 100.0
 	barHeight := 10.0
-	barX := 10.0
-	barY := 10.0
+	barX := (screenWidth - barWidth) - 500.0 // Centraliza a barra de vida horizontalmente
+	barY := screenHeight - barHeight - 10.0  // Posiciona a barra de vida na parte inferior da tela
 
 	// Calcula a largura da barra de vida com base na vida do jogador
 	healthPercentage := player.Health / 100.0
