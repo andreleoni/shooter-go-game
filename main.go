@@ -65,11 +65,11 @@ func (g *Game) Update() error {
 	if g.choosingPowerUp {
 		if ebiten.IsKeyPressed(ebiten.Key1) {
 			player.Speed += 1.0
-			player.ActivePowerUps["speed"] = time.Now().Add(100 * time.Second)
+			player.ActivePowerUps["speed"] = time.Now().Add(15 * time.Minute)
 			g.choosingPowerUp = false
 		} else if ebiten.IsKeyPressed(ebiten.Key2) {
-			player.BulletSpeed += 2.0
-			player.ActivePowerUps["power"] = time.Now().Add(100 * time.Second)
+			player.BulletSpeed += 0.2
+			player.ActivePowerUps["power"] = time.Now().Add(15 * time.Minute)
 			g.choosingPowerUp = false
 		}
 		return nil
@@ -634,8 +634,9 @@ var lastShotTime time.Time
 var shotInterval = 1 * time.Second // Tempo entre disparos
 
 func AutoShoot(player *Player) {
-	if time.Since(lastShotTime) >= shotInterval-time.Duration(player.BulletSpeed)*time.Second {
-		// Removi o tiro pra testar obstaculos
+	if time.Since(lastShotTime) >=
+		shotInterval-time.Duration(player.BulletSpeed)*time.Second {
+
 		FireBullet(player)        // Adiciona uma nova bala
 		lastShotTime = time.Now() // Atualiza o tempo do último disparo
 	}
