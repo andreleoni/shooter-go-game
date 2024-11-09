@@ -88,12 +88,11 @@ func (g *Game) Update() error {
 	player.HandleObstacleCollision(g.Obstacles)
 
 	// Verifica colisões
-	if CheckEnemyCollisions(g) {
-		g.gameOver = true
-	}
+	CheckEnemyCollisions(g)
 
 	return nil
 }
+
 func (p *Player) HandleObstacleCollision(obstacles []Obstacle) {
 	for _, obstacle := range obstacles {
 		if CheckCollision(p.X, p.Y, p.Width, p.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
@@ -150,6 +149,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	DrawEnemies(screen)
 	DrawPowerUps(screen)
 	DrawBullets(screen)
+
+	// Desenha a barra de vida do jogador
+	DrawHealthBar(screen, &player)
 
 	// Desenha o mapa e os objetos levando em conta a posição da câmera
 	for _, obstacle := range g.Obstacles {
@@ -246,8 +248,8 @@ type Player struct {
 	Height         float64
 	BulletSpeed    float64
 	WeaponStrength float64
+	Health         float64
 	ActivePowerUps map[string]time.Time // Mapeia o tipo de power-up para seu tempo de expiração
-
 }
 
 var player Player
@@ -260,6 +262,7 @@ func (p *Player) Init() {
 	p.Height = 36
 	p.BulletSpeed = 0.0
 	p.WeaponStrength = 1.0 // Força inicial da arma
+	p.Health = 100.0       // Vida inicial do jogador
 	p.ActivePowerUps = make(map[string]time.Time)
 }
 
@@ -326,6 +329,23 @@ type PowerUp struct {
 
 var powerUps []PowerUp
 
+func DrawHealthBar(screen *ebiten.Image, player *Player) {
+	barWidth := 100.0
+	barHeight := 10.0
+	barX := 10.0
+	barY := 10.0
+
+	// Calcula a largura da barra de vida com base na vida do jogador
+	healthPercentage := player.Health / 100.0
+	currentBarWidth := barWidth * healthPercentage
+
+	// Desenha o fundo da barra de vida (vermelho)
+	ebitenutil.DrawRect(screen, barX, barY, barWidth, barHeight, color.RGBA{255, 0, 0, 255})
+
+	// Desenha a barra de vida atual (verde)
+	ebitenutil.DrawRect(screen, barX, barY, currentBarWidth, barHeight, color.RGBA{0, 255, 0, 255})
+}
+
 func InitPowerUps() {
 	for i := 0; i < 3; i++ {
 		powerUp := PowerUp{
@@ -384,6 +404,7 @@ type Enemy struct {
 	Speed  float64
 	Active bool
 	Health float64
+	Attack float64
 }
 
 func UpdateEnemies(player *Player, g *Game) {
@@ -460,8 +481,9 @@ func NewEnemy() Enemy {
 		Width:  16,
 		Height: 16,
 		Active: true,
-		Speed:  1.0,
-		Health: 10.0,
+		Speed:  1.0, // Velocidade do inimigo
+		Health: 5.0, // Vida do inimigo
+		Attack: 5.0, // Pontos de ataque do inimigo
 	}
 }
 
@@ -659,11 +681,23 @@ func CheckCollision(x1, y1, w1, h1, x2, y2, w2, h2 float64) bool {
 	return collision
 }
 
+var lastEnemyCollisionAt time.Time
+
 func CheckEnemyCollisions(g *Game) bool {
 	// Verifica se um inimigo colidiu com o jogador
 	for _, enemy := range enemies {
 		if enemy.Active && player.X < enemy.X+enemy.Width && player.X+player.Width > enemy.X &&
 			player.Y < enemy.Y+enemy.Height && player.Y+player.Height > enemy.Y {
+
+			if time.Since(lastEnemyCollisionAt) > 1*time.Second {
+				player.Health -= enemy.Attack
+				lastEnemyCollisionAt = time.Now()
+			}
+
+			if player.Health <= 0 {
+				g.gameOver = true // Termina o jogo se a vida do jogador chegar a zero
+			}
+
 			return true // Colisão entre jogador e inimigo
 		}
 	}
