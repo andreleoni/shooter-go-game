@@ -368,47 +368,116 @@ func (e *Enemy) Update(p *Player, g *Game) {
 	e.MoveForwardPlayer(g, p.X, p.Y)
 }
 
-func (e *Enemy) MoveForwardPlayer(g *Game, playerX, playerY float64) {
-	// Calcula o movimento em direção ao jogador
-	dx := playerX - e.X
-	dy := playerY - e.Y
+type RelativePosition struct {
+	X string
+	Y string
+}
 
-	// Normaliza a direção para a velocidade do inimigo
-	distance := math.Sqrt(dx*dx + dy*dy)
-	if distance != 0 {
-		dx = (dx / distance) * e.Speed
-		dy = (dy / distance) * e.Speed
+func (rp RelativePosition) Top() bool {
+	return rp.Y == "top"
+}
+
+func (rp RelativePosition) Down() bool {
+	return rp.Y == "down"
+}
+
+func (rp RelativePosition) Left() bool {
+	return rp.X == "left"
+}
+
+func (rp RelativePosition) Right() bool {
+	return rp.X == "right"
+}
+
+func (e *Enemy) GetRelativePosition(playerX, playerY float64) *RelativePosition {
+	rp := RelativePosition{}
+
+	if e.Y < playerY {
+		rp.Y = "down"
+	} else if e.Y > playerY {
+		rp.Y = "top"
 	}
+
+	if e.X < playerX {
+		rp.X = "right"
+	} else if e.X > playerX {
+		rp.X = "left"
+	}
+
+	fmt.Println("relativo a player", rp)
+
+	return &rp
+}
+
+func (e *Enemy) MoveForwardPlayer(g *Game, playerX, playerY float64) {
+	incollision := false
+	relativePosition := e.GetRelativePosition(playerX, playerY)
 
 	// Detecta colisão com o obstáculo
 	for _, obstacle := range g.Obstacles {
-		if CheckCollision(e.X, e.Y, e.Width, e.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
-			// Calcula as profundidades de colisão nos eixos X e Y
-			xOverlap := min(e.X+e.Width, obstacle.x+obstacle.width) - max(e.X, obstacle.x)
-			yOverlap := min(e.Y+e.Height, obstacle.y+obstacle.height) - max(e.Y, obstacle.y)
-
-			// Ajusta o eixo com menor sobreposição para evitar travamento
-			if xOverlap < yOverlap {
-				// Ajuste no eixo X
-				if e.X < obstacle.x {
-					e.X = obstacle.x - e.Width
-				} else {
-					e.X = obstacle.x + obstacle.width
-				}
-			} else {
-				// Ajuste no eixo Y
-				if e.Y < obstacle.y {
-					e.Y = obstacle.y - e.Height
-				} else {
-					e.Y = obstacle.y + obstacle.height
-				}
+		// Verifica colisão ao mover para a direita
+		if CheckCollision(e.X+e.Speed, e.Y, e.Width, e.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
+			if relativePosition.Top() {
+				e.Y -= e.Speed
+			} else if relativePosition.Down() {
+				e.Y += e.Speed
 			}
+
+			incollision = true
+			break
+
+			// Verifica colisão ao mover para baixo
+		} else if CheckCollision(e.X, e.Y+e.Speed, e.Width, e.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
+			if relativePosition.Left() {
+				e.X -= e.Speed
+			} else if relativePosition.Right() {
+				e.X += e.Speed
+			}
+
+			incollision = true
+			break
+
+			// Verifica colisão ao mover para a esquerda
+		} else if CheckCollision(e.X-e.Speed, e.Y, e.Width, e.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
+			if relativePosition.Top() {
+				e.Y -= e.Speed
+			} else if relativePosition.Down() {
+				e.Y += e.Speed
+			}
+
+			incollision = true
+			break
+
+			// Verifica colisão ao mover para cima
+		} else if CheckCollision(e.X, e.Y-e.Speed, e.Width, e.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
+			if relativePosition.Left() {
+				e.X -= e.Speed
+			} else if relativePosition.Right() {
+				e.X += e.Speed
+			}
+
+			incollision = true
+			break
 		}
 	}
 
-	// Move o inimigo na direção calculada
-	e.X += dx
-	e.Y += dy
+	// Se não houver colisão, move o inimigo em direção ao jogador
+	if !incollision {
+		// Calcula o movimento em direção ao jogador
+		dx := playerX - e.X
+		dy := playerY - e.Y
+
+		// Normaliza a direção para a velocidade do inimigo
+		distance := math.Sqrt(dx*dx + dy*dy)
+		if distance != 0 {
+			dx = (dx / distance) * e.Speed
+			dy = (dy / distance) * e.Speed
+		}
+
+		// Move o inimigo na direção calculada
+		e.X += dx
+		e.Y += dy
+	}
 }
 
 func DrawEnemies(screen *ebiten.Image) {
