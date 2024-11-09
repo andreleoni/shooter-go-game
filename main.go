@@ -14,6 +14,8 @@ import (
 )
 
 const (
+	mapWidth     = 1000
+	mapHeight    = 1000
 	screenWidth  = 640
 	screenHeight = 480
 )
@@ -34,6 +36,8 @@ func (g *Game) Update() error {
 	}
 
 	player.Update()
+	camera.Update(player.X, player.Y)
+
 	UpdateEnemies(&player, g)
 	UpdatePowerUps(&player)
 	UpdateBullets()
@@ -72,6 +76,10 @@ func max(a, b float64) float64 {
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.RGBA{0, 0, 0, 255}) // Fundo preto
 
+	// Desenha o fundo do mapa
+	mapBackgroundColor := color.RGBA{50, 50, 50, 255} // Cor de fundo do mapa (cinza escuro)
+	ebitenutil.DrawRect(screen, -camera.X, -camera.Y, mapWidth, mapHeight, mapBackgroundColor)
+
 	if g.gameOver {
 		DrawGameOver(screen)
 		return
@@ -84,15 +92,20 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	DrawPowerUps(screen)
 	DrawBullets(screen)
 
-	// Draw each obstacle as a filled rectangle
+	// Desenha o mapa e os objetos levando em conta a posição da câmera
 	for _, obstacle := range g.Obstacles {
-		ebitenutil.DrawRect(screen, obstacle.x, obstacle.y, float64(obstacle.width), float64(obstacle.height), color.RGBA{33, 0, 0, 33})
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(obstacle.x-camera.X, obstacle.y-camera.Y)
+
+		ebitenutil.DrawRect(screen, obstacle.x-camera.X, obstacle.y-camera.Y, float64(obstacle.width), float64(obstacle.height), color.RGBA{33, 0, 0, 33})
 	}
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return screenWidth, screenHeight
 }
+
+var camera Camera
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
@@ -107,13 +120,13 @@ func main() {
 
 	rand.Seed(time.Now().UnixNano())
 	currentGame := Game{}
-	currentGame.generateObstacles(10)
+	currentGame.generateObstacles(10, 16, 16, 64, 64)
 	fmt.Println(currentGame)
 
 	player.Avatar = img
 
 	ebiten.SetWindowSize(screenWidth, screenHeight)
-	ebiten.SetWindowTitle("Jogo Básico em Ebiten")
+	ebiten.SetWindowTitle("leonigod")
 	if err := ebiten.RunGame(&currentGame); err != nil {
 		panic(err)
 	}
@@ -121,24 +134,39 @@ func main() {
 
 var currentGame Game
 
-func (g *Game) generateObstacles(count int) {
-	// for i := 0; i < count; i++ {
-	// 	obstacle := Obstacle{
-	// 		x:      float64(rand.Intn(640)), // Random x position within window width
-	// 		y:      float64(rand.Intn(480)), // Random y position within window height
-	// 		width:  32,                      // Set obstacle width
-	// 		height: 64,                      // Set obstacle height
-	// 	}
-	// 	g.Obstacles = append(g.Obstacles, obstacle)
-	// }
+func (g *Game) generateObstacles(count int, minWidth, minHeight, maxWidth, maxHeight float64) {
 
-	obstacle := Obstacle{
-		x:      float64(300), // Random x position within window width
-		y:      float64(200), // Random y position within window height
-		width:  32,           // Set obstacle width
-		height: 100,          // Set obstacle height
+	for i := 0; i < count; i++ {
+		var obstacle Obstacle
+
+		validPosition := false
+
+		for !validPosition {
+			// Gera posições e tamanhos aleatórios para o obstáculo
+			obstacle = Obstacle{
+				x:      float64(rand.Intn(mapWidth)),
+				y:      float64(rand.Intn(mapHeight)),
+				width:  minWidth + float64(rand.Intn(int(maxWidth-minWidth))),
+				height: minHeight + float64(rand.Intn(int(maxHeight-minHeight))),
+			}
+
+			// Verifica se o obstáculo não se sobrepõe a outros obstáculos
+			validPosition = true
+			for _, existingObstacle := range g.Obstacles {
+				if checkOverlap(obstacle, existingObstacle, 0, 0) {
+					validPosition = false
+					break
+				}
+			}
+		}
+
+		g.Obstacles = append(g.Obstacles, obstacle)
 	}
-	g.Obstacles = append(g.Obstacles, obstacle)
+}
+
+func checkOverlap(o1, o2 Obstacle, minDistanceX, minDistanceY float64) bool {
+	return !(o1.x+o1.width+minDistanceX < o2.x || o1.x > o2.x+o2.width+minDistanceX ||
+		o1.y+o1.height+minDistanceY < o2.y || o1.y > o2.y+o2.height+minDistanceY)
 }
 
 // game over
@@ -173,42 +201,46 @@ func (p *Player) Init() {
 	p.ActivePowerUps = make(map[string]time.Time)
 }
 
+type Camera struct {
+	X, Y float64
+}
+
+func (c *Camera) Update(playerX, playerY float64) {
+	c.X = playerX - screenWidth/2
+	c.Y = playerY - screenHeight/2
+
+	// Limita a câmera para não sair dos limites do mapa
+	if c.X < 0 {
+		c.X = 0
+	}
+	if c.Y < 0 {
+		c.Y = 0
+	}
+	if c.X > mapWidth-screenWidth {
+		c.X = mapWidth - screenWidth
+	}
+	if c.Y > mapHeight-screenHeight {
+		c.Y = mapHeight - screenHeight
+	}
+}
+
 func (p *Player) Update() {
 	if (ebiten.IsKeyPressed(ebiten.KeyA) || ebiten.IsKeyPressed(ebiten.KeyArrowLeft)) && p.X > 0 {
 		p.X -= p.Speed
 	}
-	if ((ebiten.IsKeyPressed(ebiten.KeyD)) || ebiten.IsKeyPressed(ebiten.KeyArrowRight)) && p.X < screenWidth-p.Width {
+	if (ebiten.IsKeyPressed(ebiten.KeyD) || ebiten.IsKeyPressed(ebiten.KeyArrowRight)) && p.X < mapWidth-p.Width {
 		p.X += p.Speed
 	}
-	if ((ebiten.IsKeyPressed(ebiten.KeyW)) || ebiten.IsKeyPressed(ebiten.KeyArrowUp)) && p.Y > 0 {
+	if (ebiten.IsKeyPressed(ebiten.KeyW) || ebiten.IsKeyPressed(ebiten.KeyArrowUp)) && p.Y > 0 {
 		p.Y -= p.Speed
 	}
-	if ((ebiten.IsKeyPressed(ebiten.KeyS)) || ebiten.IsKeyPressed(ebiten.KeyArrowDown)) && p.Y < screenHeight-p.Height {
+	if (ebiten.IsKeyPressed(ebiten.KeyS) || ebiten.IsKeyPressed(ebiten.KeyArrowDown)) && p.Y < mapHeight-p.Height {
 		p.Y += p.Speed
 	}
-
-	if ebiten.IsKeyPressed(ebiten.KeySpace) {
-		FireBullet(p)
-	}
-
-	for powerUpType, expiration := range p.ActivePowerUps {
-		if time.Now().After(expiration) {
-			delete(p.ActivePowerUps, powerUpType) // Remove power-up expirado
-
-			if powerUpType == "speed" {
-				p.Speed -= 1.0 // Reverte o aumento de velocidade
-			} else if powerUpType == "power" {
-				p.BulletSpeed += 2.0 // Reverte o aumento da força do tiro
-			}
-		}
-	}
 }
-
 func (p *Player) Draw(screen *ebiten.Image) {
-	// ebitenutil.DrawRect(screen, p.X, p.Y, p.Width, p.Height, color.RGBA{0, 255, 0, 255}) // Verde
-
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(p.X, p.Y)
+	op.GeoM.Translate(p.X-camera.X, p.Y-camera.Y)
 
 	// Apply a color key filter to remove the pink background
 	op.ColorM.Scale(1, 1, 1, 1)
@@ -234,8 +266,8 @@ var powerUps []PowerUp
 func InitPowerUps() {
 	for i := 0; i < 3; i++ {
 		powerUp := PowerUp{
-			X:      rand.Float64() * screenWidth,
-			Y:      rand.Float64() * screenHeight,
+			X:      rand.Float64() * mapWidth,
+			Y:      rand.Float64() * mapHeight,
 			Width:  16,
 			Height: 16,
 			Type:   "speed",
@@ -246,8 +278,8 @@ func InitPowerUps() {
 
 	for i := 0; i < 3; i++ {
 		powerUp := PowerUp{
-			X:      rand.Float64() * screenWidth,
-			Y:      rand.Float64() * screenHeight,
+			X:      rand.Float64() * mapWidth,
+			Y:      rand.Float64() * mapHeight,
 			Width:  16,
 			Height: 16,
 			Type:   "power",
@@ -269,12 +301,11 @@ func UpdatePowerUps(player *Player) {
 func DrawPowerUps(screen *ebiten.Image) {
 	for _, powerUp := range powerUps {
 		if powerUp.Active {
-			ebitenutil.DrawRect(screen, powerUp.X, powerUp.Y, powerUp.Width, powerUp.Height, color.RGBA{0, 0, 255, 255})
+			ebitenutil.DrawRect(screen, powerUp.X-camera.X, powerUp.Y-camera.Y, powerUp.Width, powerUp.Height, color.RGBA{0, 0, 255, 255})
 
 			if powerUp.Type == "power" {
-				ebitenutil.DrawRect(screen, powerUp.X, powerUp.Y, powerUp.Width, powerUp.Height, color.RGBA{255, 255, 0, 255})
+				ebitenutil.DrawRect(screen, powerUp.X-camera.X, powerUp.Y-camera.Y, powerUp.Width, powerUp.Height, color.RGBA{255, 255, 0, 255})
 			}
-
 		}
 	}
 }
@@ -316,32 +347,53 @@ func SpawnEnemies() {
 		return
 	}
 
+	if spawnInterval > 500*time.Millisecond {
+		spawnInterval -= 200 * time.Millisecond // Aumenta a frequência de spawns
+	}
+
 	// Limite máximo de inimigos ativos
 	if len(enemies) < 9000 { // Por exemplo, 10 inimigos ativos
 		enemies = append(enemies, NewEnemy())
 	}
 
 	// remover, só ta aqui para testar o obstaculo
-	lastSpawnTime = time.Now().Add(30000 * time.Minute)
+	lastSpawnTime = time.Now() //.Add(30000 * time.Minute)
 }
 
 func NewEnemy() Enemy {
-	// Escolhe uma posição aleatória fora da tela
+	// Calcula as distâncias entre o jogador e cada borda da tela, considerando a posição da câmera
+	distances := map[string]float64{
+		"top":    player.Y - camera.Y,
+		"bottom": (camera.Y + screenHeight) - player.Y,
+		"left":   player.X - camera.X,
+		"right":  (camera.X + screenWidth) - player.X,
+	}
+
+	// Encontra a borda mais próxima
+	var closestBorder string
+	minDistance := math.MaxFloat64
+	for border, distance := range distances {
+		if distance < minDistance {
+			minDistance = distance
+			closestBorder = border
+		}
+	}
+
+	// Define a posição inicial do inimigo com base na borda mais próxima
 	var x, y float64
-	spawnSide := rand.Intn(4) // 0: cima, 1: baixo, 2: esquerda, 3: direita
-	switch spawnSide {
-	case 0: // Cima
-		x = rand.Float64() * screenWidth
-		y = -20 // Acima da tela
-	case 1: // Baixo
-		x = rand.Float64() * screenWidth
-		y = screenHeight + 20 // Abaixo da tela
-	case 2: // Esquerda
-		x = -20 // À esquerda da tela
-		y = rand.Float64() * screenHeight
-	case 3: // Direita
-		x = screenWidth + 20 // À direita da tela
-		y = rand.Float64() * screenHeight
+	switch closestBorder {
+	case "top":
+		x = camera.X + rand.Float64()*screenWidth
+		y = camera.Y - 20 // Acima da tela
+	case "bottom":
+		x = camera.X + rand.Float64()*screenWidth
+		y = camera.Y + screenHeight + 20 // Abaixo da tela
+	case "left":
+		x = camera.X - 20 // À esquerda da tela
+		y = camera.Y + rand.Float64()*screenHeight
+	case "right":
+		x = camera.X + screenWidth + 20 // À direita da tela
+		y = camera.Y + rand.Float64()*screenHeight
 	}
 
 	return Enemy{
@@ -404,8 +456,6 @@ func (e *Enemy) GetRelativePosition(playerX, playerY float64) *RelativePosition 
 		rp.X = "left"
 	}
 
-	fmt.Println("relativo a player", rp)
-
 	return &rp
 }
 
@@ -446,7 +496,7 @@ func (e *Enemy) MoveForwardPlayer(g *Game, playerX, playerY float64) {
 
 	// Detecta colisão com o obstáculo
 	for _, obstacle := range g.Obstacles {
-		relativePosition := e.GetClosestCorner(obstacle.x, obstacle.y, obstacle.width, obstacle.height)
+		relativePosition := e.GetRelativePosition(playerX, playerY)
 
 		oc := ObstacleCollision{}
 
@@ -498,10 +548,9 @@ func (e *Enemy) MoveForwardPlayer(g *Game, playerX, playerY float64) {
 			incollision = true
 		}
 
-		if oc.X != "" || oc.Y != "" {
-			fmt.Println("print my corner collision: ", oc)
+		if incollision {
+			break
 		}
-
 	}
 
 	// Se não houver colisão, move o inimigo em direção ao jogador
@@ -526,7 +575,7 @@ func (e *Enemy) MoveForwardPlayer(g *Game, playerX, playerY float64) {
 func DrawEnemies(screen *ebiten.Image) {
 	for _, enemy := range enemies {
 		if enemy.Active {
-			ebitenutil.DrawRect(screen, enemy.X, enemy.Y, enemy.Width, enemy.Height, color.RGBA{255, 0, 0, 255}) // Vermelho
+			ebitenutil.DrawRect(screen, enemy.X-camera.X, enemy.Y-camera.Y, enemy.Width, enemy.Height, color.RGBA{255, 0, 0, 255}) // Vermelho
 		}
 	}
 }
@@ -534,13 +583,13 @@ func DrawEnemies(screen *ebiten.Image) {
 // collision
 
 var lastShotTime time.Time
-var shotInterval = 10 * time.Second // Tempo entre disparos
+var shotInterval = 1 * time.Second // Tempo entre disparos
 
 func AutoShoot(player *Player) {
 	if time.Since(lastShotTime) >= shotInterval-time.Duration(player.BulletSpeed)*time.Second {
 		fmt.Println("shot in", time.Now())
 		// Removi o tiro pra testar obstaculos
-		// FireBullet(player)        // Adiciona uma nova bala
+		FireBullet(player)        // Adiciona uma nova bala
 		lastShotTime = time.Now() // Atualiza o tempo do último disparo
 	}
 }
@@ -615,7 +664,7 @@ func GetNearestEnemy(player *Player) *Enemy {
 func DrawBullets(screen *ebiten.Image) {
 	for _, bullet := range bullets {
 		if bullet.Active {
-			ebitenutil.DrawRect(screen, bullet.X, bullet.Y, 4, 10, color.RGBA{255, 255, 0, 255}) // Amarelo
+			ebitenutil.DrawRect(screen, bullet.X-camera.X, bullet.Y-camera.Y, 4, 10, color.RGBA{255, 255, 0, 255}) // Amarelo
 		}
 	}
 }
@@ -638,8 +687,8 @@ func FireBullet(player *Player) {
 	}
 
 	bullet := Bullet{
-		X:          player.X + player.Width/2 - 2, // Centraliza a bala em relação ao jogador
-		Y:          player.Y,
+		X:          player.X + player.Width/2 - 2,  // Centraliza a bala em relação ao jogador
+		Y:          player.Y + player.Height/2 - 5, // Centraliza a bala em relação ao jogador
 		Speed:      5.0,
 		Active:     true,
 		DirectionX: directionX,
@@ -655,7 +704,7 @@ func UpdateBullets() {
 			bullets[i].Y += bullets[i].DirectionY * bullets[i].Speed
 
 			// Desativa a bala se sair da tela
-			if bullets[i].Y < 0 || bullets[i].Y > screenHeight || bullets[i].X < 0 || bullets[i].X > screenWidth {
+			if bullets[i].Y < 0 || bullets[i].Y > mapHeight || bullets[i].X < 0 || bullets[i].X > mapWidth {
 				bullets[i].Active = false
 			}
 		}
