@@ -409,14 +409,50 @@ func (e *Enemy) GetRelativePosition(playerX, playerY float64) *RelativePosition 
 	return &rp
 }
 
+func (e *Enemy) GetClosestCorner(obstacleX, obstacleY, obstacleWidth, obstacleHeight float64) RelativePosition {
+	// Calcula as distâncias entre o inimigo e cada canto do obstáculo
+	topLeftDistance := math.Sqrt(math.Pow(e.X-obstacleX, 2) + math.Pow(e.Y-obstacleY, 2))
+	topRightDistance := math.Sqrt(math.Pow((e.X+e.Width)-(obstacleX+obstacleWidth), 2) + math.Pow(e.Y-obstacleY, 2))
+	bottomLeftDistance := math.Sqrt(math.Pow(e.X-obstacleX, 2) + math.Pow((e.Y+e.Height)-(obstacleY+obstacleHeight), 2))
+	bottomRightDistance := math.Sqrt(math.Pow((e.X+e.Width)-(obstacleX+obstacleWidth), 2) + math.Pow((e.Y+e.Height)-(obstacleY+obstacleHeight), 2))
+
+	// Determina o canto mais próximo
+	minDistance := topLeftDistance
+	closestCorner := RelativePosition{X: "left", Y: "top"}
+
+	if topRightDistance < minDistance {
+		minDistance = topRightDistance
+		closestCorner = RelativePosition{X: "right", Y: "top"}
+	}
+
+	if bottomLeftDistance < minDistance {
+		minDistance = bottomLeftDistance
+		closestCorner = RelativePosition{X: "left", Y: "down"}
+	}
+
+	if bottomRightDistance < minDistance {
+		closestCorner = RelativePosition{X: "right", Y: "down"}
+	}
+
+	return closestCorner
+}
+
+type ObstacleCollision struct {
+	X, Y string
+}
+
 func (e *Enemy) MoveForwardPlayer(g *Game, playerX, playerY float64) {
 	incollision := false
-	relativePosition := e.GetRelativePosition(playerX, playerY)
 
 	// Detecta colisão com o obstáculo
 	for _, obstacle := range g.Obstacles {
-		// Verifica colisão ao mover para a direita
+		relativePosition := e.GetClosestCorner(obstacle.x, obstacle.y, obstacle.width, obstacle.height)
+
+		oc := ObstacleCollision{}
+
 		if CheckCollision(e.X+e.Speed, e.Y, e.Width, e.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
+			oc.X = "right"
+
 			if relativePosition.Top() {
 				e.Y -= e.Speed
 			} else if relativePosition.Down() {
@@ -424,41 +460,48 @@ func (e *Enemy) MoveForwardPlayer(g *Game, playerX, playerY float64) {
 			}
 
 			incollision = true
-			break
-
-			// Verifica colisão ao mover para baixo
-		} else if CheckCollision(e.X, e.Y+e.Speed, e.Width, e.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
-			if relativePosition.Left() {
-				e.X -= e.Speed
-			} else if relativePosition.Right() {
-				e.X += e.Speed
-			}
-
-			incollision = true
-			break
-
-			// Verifica colisão ao mover para a esquerda
-		} else if CheckCollision(e.X-e.Speed, e.Y, e.Width, e.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
-			if relativePosition.Top() {
-				e.Y -= e.Speed
-			} else if relativePosition.Down() {
-				e.Y += e.Speed
-			}
-
-			incollision = true
-			break
-
-			// Verifica colisão ao mover para cima
-		} else if CheckCollision(e.X, e.Y-e.Speed, e.Width, e.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
-			if relativePosition.Left() {
-				e.X -= e.Speed
-			} else if relativePosition.Right() {
-				e.X += e.Speed
-			}
-
-			incollision = true
-			break
 		}
+
+		if CheckCollision(e.X, e.Y+e.Speed, e.Width, e.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
+			oc.Y = "bottom"
+
+			if relativePosition.Left() {
+				e.X -= e.Speed
+			} else if relativePosition.Right() {
+				e.X += e.Speed
+			}
+
+			incollision = true
+		}
+
+		if CheckCollision(e.X-e.Speed, e.Y, e.Width, e.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
+			oc.X = "top"
+
+			if relativePosition.Top() {
+				e.Y -= e.Speed
+			} else if relativePosition.Down() {
+				e.Y += e.Speed
+			}
+
+			incollision = true
+		}
+
+		if CheckCollision(e.X, e.Y-e.Speed, e.Width, e.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
+			oc.Y = "left"
+
+			if relativePosition.Left() {
+				e.X -= e.Speed
+			} else if relativePosition.Right() {
+				e.X += e.Speed
+			}
+
+			incollision = true
+		}
+
+		if oc.X != "" || oc.Y != "" {
+			fmt.Println("print my corner collision: ", oc)
+		}
+
 	}
 
 	// Se não houver colisão, move o inimigo em direção ao jogador
