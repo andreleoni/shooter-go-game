@@ -244,7 +244,8 @@ type Player struct {
 	Speed          float64
 	Width          float64
 	Height         float64
-	BulletSpeed    float64              // Velocidade das balas
+	BulletSpeed    float64
+	WeaponStrength float64
 	ActivePowerUps map[string]time.Time // Mapeia o tipo de power-up para seu tempo de expiração
 
 }
@@ -255,8 +256,10 @@ func (p *Player) Init() {
 	p.X = screenWidth / 2
 	p.Y = screenHeight / 2
 	p.Speed = 2.0
-	p.Width = 16
-	p.Height = 16
+	p.Width = 36
+	p.Height = 36
+	p.BulletSpeed = 0.0
+	p.WeaponStrength = 1.0 // Força inicial da arma
 	p.ActivePowerUps = make(map[string]time.Time)
 }
 
@@ -380,6 +383,13 @@ type Enemy struct {
 	SpeedY float64
 	Speed  float64
 	Active bool
+	Health float64
+}
+
+func UpdateEnemies(player *Player, g *Game) {
+	for i := range enemies {
+		enemies[i].Update(player, g)
+	}
 }
 
 var enemies []Enemy
@@ -450,13 +460,8 @@ func NewEnemy() Enemy {
 		Width:  16,
 		Height: 16,
 		Active: true,
-		Speed:  1.0, // Velocidade do inimigo
-	}
-}
-
-func UpdateEnemies(player *Player, g *Game) {
-	for i := range enemies {
-		enemies[i].Update(player, g)
+		Speed:  1.0,
+		Health: 10.0,
 	}
 }
 
@@ -669,9 +674,11 @@ func CheckEnemyCollisions(g *Game) bool {
 			if bullets[i].Active && enemies[j].Active &&
 				bullets[i].X < enemies[j].X+enemies[j].Width && bullets[i].X+4 > enemies[j].X &&
 				bullets[i].Y < enemies[j].Y+enemies[j].Height && bullets[i].Y+10 > enemies[j].Y {
-				bullets[i].Active = false // Desativa a bala
-				enemies[j].Active = false // Desativa o inimigo
-				// Aqui você pode incrementar a pontuação ou fazer outra lógica
+				bullets[i].Active = false                  // Desativa a bala
+				enemies[j].Health -= player.WeaponStrength // Reduz a vida do inimigo
+				if enemies[j].Health <= 0 {
+					enemies[j].Active = false // Desativa o inimigo se a vida for menor ou igual a 0
+				}
 				return false
 			}
 		}
