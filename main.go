@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"image"
 	"image/color"
 	"log"
 	"math"
@@ -54,8 +53,23 @@ func (g *Game) Update() error {
 
 	return nil
 }
+
 func (p *Player) HandleObstacleCollision(obstacles []Obstacle) {
-	// implementar colisao do player com o obstaculo
+	for _, obstacle := range obstacles {
+		if CheckCollision(p.X, p.Y, p.Width, p.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
+			// Resolve a colisão ajustando a posição do jogador
+			if p.X < obstacle.x && p.X+p.Width > obstacle.x && p.X+p.Width < obstacle.x+obstacle.width {
+				p.X = obstacle.x - p.Width
+			} else if p.X+p.Width > obstacle.x+obstacle.width && p.X < obstacle.x+obstacle.width {
+				p.X = obstacle.x + obstacle.width
+			}
+			if p.Y < obstacle.y && p.Y+p.Height > obstacle.y && p.Y+p.Height < obstacle.y+obstacle.height {
+				p.Y = obstacle.y - p.Height
+			} else if p.Y+p.Height > obstacle.y+obstacle.height && p.Y < obstacle.y+obstacle.height {
+				p.Y = obstacle.y + obstacle.height
+			}
+		}
+	}
 }
 
 // Funções auxiliares para calcular a sobreposição
@@ -225,6 +239,8 @@ func (c *Camera) Update(playerX, playerY float64) {
 }
 
 func (p *Player) Update() {
+	// originalX, originalY := p.X, p.Y
+
 	if (ebiten.IsKeyPressed(ebiten.KeyA) || ebiten.IsKeyPressed(ebiten.KeyArrowLeft)) && p.X > 0 {
 		p.X -= p.Speed
 	}
@@ -237,19 +253,18 @@ func (p *Player) Update() {
 	if (ebiten.IsKeyPressed(ebiten.KeyS) || ebiten.IsKeyPressed(ebiten.KeyArrowDown)) && p.Y < mapHeight-p.Height {
 		p.Y += p.Speed
 	}
+
+	// Verifica colisão com obstáculos
+	p.HandleObstacleCollision(currentGame.Obstacles)
 }
+
 func (p *Player) Draw(screen *ebiten.Image) {
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(p.X-camera.X, p.Y-camera.Y)
+	// Calcula a posição do jogador relativa à câmera
+	px := p.X - camera.X
+	py := p.Y - camera.Y
 
-	// Apply a color key filter to remove the pink background
-	op.ColorM.Scale(1, 1, 1, 1)
-	op.ColorM.Translate(-1, -0, -1, 0) // Adjust for transparency in pink areas
-
-	// Desenha a área do sprite selecionada (exemplo: x: 0, y: 0, largura: 32, altura: 32)
-	subImage := p.Avatar.SubImage(image.Rect(64, 64, 32, 32)).(*ebiten.Image)
-
-	screen.DrawImage(subImage, op)
+	// Desenha o jogador como um retângulo
+	ebitenutil.DrawRect(screen, px, py, float64(p.Width), float64(p.Height), color.RGBA{231, 2, 2, 255})
 }
 
 // powerup
