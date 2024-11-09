@@ -264,7 +264,7 @@ func (p *Player) Draw(screen *ebiten.Image) {
 	py := p.Y - camera.Y
 
 	// Desenha o jogador como um retângulo
-	ebitenutil.DrawRect(screen, px, py, float64(p.Width), float64(p.Height), color.RGBA{231, 2, 2, 255})
+	ebitenutil.DrawRect(screen, px, py, float64(p.Width), float64(p.Height), color.RGBA{0, 255, 2, 255})
 }
 
 // powerup
