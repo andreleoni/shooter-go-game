@@ -241,7 +241,7 @@ func checkOverlap(o1, o2 Obstacle, minDistanceX, minDistanceY float64) bool {
 func DrawXPItems(screen *ebiten.Image) {
 	for _, xpItem := range xpItems {
 		if xpItem.Active {
-			ebitenutil.DrawRect(screen, xpItem.X-camera.X, xpItem.Y-camera.Y, xpItem.Width, xpItem.Height, color.RGBA{255, 255, 0, 255}) // Amarelo
+			ebitenutil.DrawCircle(screen, xpItem.X-camera.X, xpItem.Y-camera.Y, 10, color.RGBA{255, 255, 0, 255}) // Amarelo
 		}
 	}
 }
@@ -638,9 +638,15 @@ type ObstacleCollision struct {
 func (e *Enemy) MoveForwardPlayer(g *Game, playerX, playerY float64) {
 	incollision := false
 
+	// Calcula o centro do jogador e do inimigo
+	playerCenterX := playerX + player.Width/2
+	playerCenterY := playerY + player.Height/2
+	enemyCenterX := e.X + e.Width/2
+	enemyCenterY := e.Y + e.Height/2
+
 	// Detecta colisão com o obstáculo
 	for _, obstacle := range g.Obstacles {
-		relativePosition := e.GetRelativePosition(playerX, playerY)
+		relativePosition := e.GetRelativePosition(playerCenterX, playerCenterY)
 
 		oc := ObstacleCollision{}
 
@@ -697,11 +703,11 @@ func (e *Enemy) MoveForwardPlayer(g *Game, playerX, playerY float64) {
 		}
 	}
 
-	// Se não houver colisão, move o inimigo em direção ao jogador
+	// Se não houver colisão, move o inimigo em direção ao centro do jogador
 	if !incollision {
-		// Calcula o movimento em direção ao jogador
-		dx := playerX - e.X
-		dy := playerY - e.Y
+		// Calcula o movimento em direção ao centro do jogador
+		dx := playerCenterX - enemyCenterX
+		dy := playerCenterY - enemyCenterY
 
 		// Normaliza a direção para a velocidade do inimigo
 		distance := math.Sqrt(dx*dx + dy*dy)
