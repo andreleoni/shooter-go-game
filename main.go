@@ -1110,67 +1110,43 @@ func CheckCollision(x1, y1, w1, h1, x2, y2, w2, h2 float64) bool {
 var lastEnemyCollisionAt time.Time
 
 func CheckEnemyCollisions(g *Game) bool {
-	// Verifica se um inimigo colidiu com o jogador
+	// Check player collision with enemies first
 	for _, enemy := range enemies {
-		if enemy.Active && player.X < enemy.X+enemy.Width && player.X+player.Width > enemy.X &&
-			player.Y < enemy.Y+enemy.Height && player.Y+player.Height > enemy.Y {
-
+		if enemy.Active && CheckCollision(player.X, player.Y, player.Width, player.Height,
+			enemy.X, enemy.Y, enemy.Width, enemy.Height) {
 			if time.Since(lastEnemyCollisionAt) > 1*time.Second {
 				player.Health -= enemy.Attack
 				lastEnemyCollisionAt = time.Now()
 			}
-
 			if player.Health <= 0 {
-				g.gameOver = true // Termina o jogo se a vida do jogador chegar a zero
+				g.gameOver = true
 			}
-
-			return true // Colisão entre jogador e inimigo
+			return true
 		}
 	}
 
-	// Verifica se uma bala colidiu com um inimigo
+	// Check bullet collisions with enemies
 	for i := len(bullets) - 1; i >= 0; i-- {
 		for j := len(enemies) - 1; j >= 0; j-- {
-			if bullets[i].Active && enemies[j].Active &&
-				bullets[i].X < enemies[j].X+enemies[j].Width && bullets[i].X+4 > enemies[j].X &&
-				bullets[i].Y < enemies[j].Y+enemies[j].Height && bullets[i].Y+10 > enemies[j].Y {
-				bullets[i].Active = false                  // Desativa a bala
-				enemies[j].Health -= player.WeaponStrength // Reduz a vida do inimigo
+			if bullets[i].Active && enemies[j].Active {
+				// Check collision using centers and proper dimensions
+				bulletCenterX := bullets[i].X + bullets[i].Width/2
+				bulletCenterY := bullets[i].Y + bullets[i].Height/2
+				enemyCenterX := enemies[j].X + enemies[j].Width/2
+				enemyCenterY := enemies[j].Y + enemies[j].Height/2
 
-				if enemies[j].Health <= 0 {
-					enemies[j].Active = false // Desativa o inimigo se a vida for menor ou igual a 0
+				dx := math.Abs(bulletCenterX - enemyCenterX)
+				dy := math.Abs(bulletCenterY - enemyCenterY)
 
-					// Dropar item de experiência quando o inimigo é derrotado
-					xpItem := XPItem{
-						X:      enemies[j].X,
-						Y:      enemies[j].Y,
-						Width:  10,
-						Height: 10,
-						Active: true,
-					}
+				if dx < (bullets[i].Width+enemies[j].Width)/2 &&
+					dy < (bullets[i].Height+enemies[j].Height)/2 {
+					bullets[i].Active = false
+					enemies[j].Health -= player.WeaponStrength
 
-					xpItems = append(xpItems, xpItem)
-				}
-
-				return false
-			}
-		}
-	}
-
-	// Verifica se uma bala colidiu com um inimigo
-	for i := len(bullets) - 1; i >= 0; i-- {
-		for j := len(enemies) - 1; j >= 0; j-- {
-			if bullets[i].Active && enemies[j].Active &&
-				bullets[i].X < enemies[j].X+enemies[j].Width && bullets[i].X+4 > enemies[j].X &&
-				bullets[i].Y < enemies[j].Y+enemies[j].Height && bullets[i].Y+10 > enemies[j].Y {
-				bullets[i].Active = false                  // Desativa a bala
-				enemies[j].Health -= player.WeaponStrength // Reduz a vida do inimigo
-
-				if enemies[j].Health <= 0 {
-					enemies[j].Active = false // Desativa o inimigo se a vida for menor ou igual a 0
-
-					// Dropar item de experiência quando o inimigo é derrotado
 					if enemies[j].Health <= 0 {
+						enemies[j].Active = false
+
+						// Dropar item de experiência quando o inimigo é derrotado
 						xpItem := XPItem{
 							X:      enemies[j].X,
 							Y:      enemies[j].Y,
@@ -1181,24 +1157,23 @@ func CheckEnemyCollisions(g *Game) bool {
 						xpItems = append(xpItems, xpItem)
 					}
 				}
-				return false
 			}
 		}
 	}
-
 	return false
 }
 
 // bullet
 
 type Bullet struct {
-	X, Y       float64
-	Speed      float64
-	Active     bool
-	DirectionX float64
-	DirectionY float64
-	Damage     float64
-	Color      color.RGBA
+	X, Y          float64
+	Speed         float64
+	Active        bool
+	DirectionX    float64
+	DirectionY    float64
+	Damage        float64
+	Color         color.RGBA
+	Width, Height float64
 }
 
 var bullets []Bullet
@@ -1365,9 +1340,15 @@ func FireBullet(player *Player) {
 		return
 	}
 
-	// Calculate direction
-	directionX := nearestEnemy.X - player.X
-	directionY := nearestEnemy.Y - player.Y
+	// Calculate center positions
+	playerCenterX := player.X + player.Width/2
+	playerCenterY := player.Y + player.Height/2
+	enemyCenterX := nearestEnemy.X + nearestEnemy.Width/2
+	enemyCenterY := nearestEnemy.Y + nearestEnemy.Height/2
+
+	// Calculate direction from player center to enemy center
+	directionX := enemyCenterX - playerCenterX
+	directionY := enemyCenterY - playerCenterY
 	length := math.Sqrt(directionX*directionX + directionY*directionY)
 
 	// Normalize direction
@@ -1376,14 +1357,18 @@ func FireBullet(player *Player) {
 		directionY /= length
 	}
 
+	// Create bullet at player's center
 	bullet := Bullet{
-		X:          player.X + player.Width/2,
-		Y:          player.Y + player.Height/2,
+		X:          playerCenterX,
+		Y:          playerCenterY,
 		Speed:      5.0,
 		Active:     true,
 		DirectionX: directionX,
 		DirectionY: directionY,
+		Width:      4, // Add bullet dimensions
+		Height:     10,
 	}
+	bullets = append(bullets, bullet)
 
 	bullets = append(bullets, bullet)
 }
