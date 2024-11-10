@@ -13,10 +13,15 @@ import (
 )
 
 const (
-	mapWidth     = 1000
-	mapHeight    = 1000
-	screenWidth  = 640
-	screenHeight = 480
+	mapWidth     = 2000
+	mapHeight    = 2000
+	screenWidth  = 1080
+	screenHeight = 720
+)
+
+const (
+	enemySeparationDistance = 30.0 // Minimum distance between enemies
+	separationForce         = 0.5  // Force of separation
 )
 
 type Game struct {
@@ -36,7 +41,7 @@ func DrawPowerUpChoice(screen *ebiten.Image) {
 	ebitenutil.DrawRect(screen, cardX, cardY, cardWidth, cardHeight, color.RGBA{255, 255, 255, 255})
 
 	// Draw the text
-	message := "Choose your power-up:\n1. Speed\n2. Power"
+	message := "Choose your power-up:\n1. Speed\n2. Power\n3. Radius"
 	ebitenutil.DebugPrintAt(screen, message, int(cardX)+10, int(cardY)+10)
 }
 
@@ -47,6 +52,10 @@ func ApplyPowerUpEffect(player *Player, powerUpType string) {
 	// Atualiza o tipo de power-up que será aplicado após a escolha
 	if powerUpType == "speed" {
 		currentGame.powerUpOptions = []string{"speed"}
+
+	} else if powerUpType == "radius" {
+		currentGame.powerUpOptions = []string{"radius"}
+
 	} else if powerUpType == "power" {
 		currentGame.powerUpOptions = []string{"power"}
 	}
@@ -71,7 +80,12 @@ func (g *Game) Update() error {
 			player.BulletSpeed += 0.2
 			player.ActivePowerUps["power"] = time.Now().Add(15 * time.Minute)
 			g.choosingPowerUp = false
+		} else if ebiten.IsKeyPressed(ebiten.Key3) {
+			player.CollectionRadius += 100.0
+			player.ActivePowerUps["radius"] = time.Now().Add(15 * time.Minute)
+			g.choosingPowerUp = false
 		}
+
 		return nil
 	}
 
@@ -241,9 +255,11 @@ func checkOverlap(o1, o2 Obstacle, minDistanceX, minDistanceY float64) bool {
 func DrawXPItems(screen *ebiten.Image) {
 	for _, xpItem := range xpItems {
 		if xpItem.Active {
-			ebitenutil.DrawCircle(screen, xpItem.X-camera.X, xpItem.Y-camera.Y, 10, color.RGBA{255, 255, 0, 255}) // Amarelo
+			// Draw XP item
+			ebitenutil.DrawCircle(screen, xpItem.X-camera.X, xpItem.Y-camera.Y, 5, color.RGBA{255, 255, 0, 255})
 		}
 	}
+
 }
 
 // game over
@@ -257,18 +273,19 @@ func DrawGameOver(screen *ebiten.Image) {
 // player
 
 type Player struct {
-	X, Y           float64
-	Avatar         *ebiten.Image
-	Speed          float64
-	Width          float64
-	Height         float64
-	BulletSpeed    float64
-	WeaponStrength float64
-	Health         float64
-	Level          int
-	XP             float64
-	XPToNextLevel  float64
-	ActivePowerUps map[string]time.Time // Mapeia o tipo de power-up para seu tempo de expiração
+	X, Y             float64
+	Avatar           *ebiten.Image
+	Speed            float64
+	Width            float64
+	Height           float64
+	BulletSpeed      float64
+	WeaponStrength   float64
+	Health           float64
+	Level            int
+	XP               float64
+	XPToNextLevel    float64
+	CollectionRadius float64
+	ActivePowerUps   map[string]time.Time // Mapeia o tipo de power-up para seu tempo de expiração
 }
 
 func DrawXPBar(screen *ebiten.Image, player *Player) {
@@ -289,20 +306,62 @@ func DrawXPBar(screen *ebiten.Image, player *Player) {
 }
 
 type XPItem struct {
-	X, Y   float64
-	Width  float64
-	Height float64
-	Active bool
+	X, Y     float64
+	Width    float64
+	Height   float64
+	Active   bool
+	VelX     float64
+	VelY     float64
+	Moving   bool
+	Progress float64 // For easing
 }
 
 func UpdateXPItems(player *Player) {
-	for i := range xpItems {
-		if xpItems[i].Active && CheckCollision(player.X, player.Y, player.Width, player.Height, xpItems[i].X, xpItems[i].Y, xpItems[i].Width, xpItems[i].Height) {
-			xpItems[i].Active = false
+	playerCenterX := player.X + player.Width/2
+	playerCenterY := player.Y + player.Height/2
 
-			player.XP += 10 // Adiciona experiência ao jogador
-			if player.XP >= player.XPToNextLevel {
-				player.LevelUp()
+	for i := range xpItems {
+		if !xpItems[i].Active {
+			continue
+		}
+
+		// Calculate distance to player
+		dx := playerCenterX - xpItems[i].X
+		dy := playerCenterY - xpItems[i].Y
+		dist := math.Sqrt(dx*dx + dy*dy)
+
+		// Check if within collection radius
+		if dist < player.CollectionRadius {
+			xpItems[i].Moving = true
+		}
+
+		// Update movement with easing
+		if xpItems[i].Moving {
+			// Ease progress
+			xpItems[i].Progress += 0.05
+			if xpItems[i].Progress > 1 {
+				xpItems[i].Progress = 1
+			}
+
+			// Apply easing function (cubic)
+			t := xpItems[i].Progress
+			ease := t * t * (3 - 2*t)
+
+			// Calculate target position
+			targetX := playerCenterX
+			targetY := playerCenterY
+
+			// Interpolate position
+			xpItems[i].X = xpItems[i].X + (targetX-xpItems[i].X)*ease
+			xpItems[i].Y = xpItems[i].Y + (targetY-xpItems[i].Y)*ease
+
+			// Collect when very close
+			if dist < 5.0 {
+				xpItems[i].Active = false
+				player.XP += 10
+				if player.XP >= player.XPToNextLevel {
+					player.LevelUp()
+				}
 			}
 		}
 	}
@@ -332,6 +391,7 @@ func (p *Player) Init() {
 	p.XP = 0.0              // Adicionar valor inicial de XP
 	p.XPToNextLevel = 100.0 // Adicionar valor necessário para o próximo nível
 	p.Level = 1             // Adicionar nível inicial
+	p.CollectionRadius = 50.0
 	p.ActivePowerUps = make(map[string]time.Time)
 }
 
@@ -416,25 +476,12 @@ func DrawHealthBar(screen *ebiten.Image, player *Player) {
 }
 
 func InitPowerUps() {
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 6; i++ {
 		powerUp := PowerUp{
 			X:      rand.Float64() * mapWidth,
 			Y:      rand.Float64() * mapHeight,
 			Width:  16,
 			Height: 16,
-			Type:   "speed",
-			Active: true,
-		}
-		powerUps = append(powerUps, powerUp)
-	}
-
-	for i := 0; i < 3; i++ {
-		powerUp := PowerUp{
-			X:      rand.Float64() * mapWidth,
-			Y:      rand.Float64() * mapHeight,
-			Width:  16,
-			Height: 16,
-			Type:   "power",
 			Active: true,
 		}
 		powerUps = append(powerUps, powerUp)
@@ -638,13 +685,35 @@ type ObstacleCollision struct {
 func (e *Enemy) MoveForwardPlayer(g *Game, playerX, playerY float64) {
 	incollision := false
 
-	// Calcula o centro do jogador e do inimigo
+	// Calculate centers
 	playerCenterX := playerX + player.Width/2
 	playerCenterY := playerY + player.Height/2
 	enemyCenterX := e.X + e.Width/2
 	enemyCenterY := e.Y + e.Height/2
 
-	// Detecta colisão com o obstáculo
+	// Calculate separation vector
+	separationX := 0.0
+	separationY := 0.0
+
+	// Check collision with other enemies
+	for _, other := range enemies {
+		if other.Active && other != *e {
+			// Calculate distance between enemies
+			dx := e.X - other.X
+			dy := e.Y - other.Y
+			distance := math.Sqrt(dx*dx + dy*dy)
+
+			// Apply separation if too close
+			if distance < enemySeparationDistance && distance > 0 {
+				// Calculate separation force
+				strength := (enemySeparationDistance - distance) / enemySeparationDistance
+				separationX += (dx / distance) * strength * separationForce
+				separationY += (dy / distance) * strength * separationForce
+			}
+		}
+	}
+
+	// Handle obstacle collisions
 	for _, obstacle := range g.Obstacles {
 		relativePosition := e.GetRelativePosition(playerCenterX, playerCenterY)
 
@@ -703,22 +772,33 @@ func (e *Enemy) MoveForwardPlayer(g *Game, playerX, playerY float64) {
 		}
 	}
 
-	// Se não houver colisão, move o inimigo em direção ao centro do jogador
+	// If no obstacle collision, move enemy
 	if !incollision {
-		// Calcula o movimento em direção ao centro do jogador
+		// Calculate direction to player
 		dx := playerCenterX - enemyCenterX
 		dy := playerCenterY - enemyCenterY
-
-		// Normaliza a direção para a velocidade do inimigo
 		distance := math.Sqrt(dx*dx + dy*dy)
-		if distance != 0 {
-			dx = (dx / distance) * e.Speed
-			dy = (dy / distance) * e.Speed
-		}
 
-		// Move o inimigo na direção calculada
-		e.X += dx
-		e.Y += dy
+		if distance > 0 {
+			// Normalize direction
+			dx = dx / distance
+			dy = dy / distance
+
+			// Add separation force to movement
+			dx += separationX
+			dy += separationY
+
+			// Normalize combined vector
+			totalForce := math.Sqrt(dx*dx + dy*dy)
+			if totalForce > 0 {
+				dx = dx / totalForce * e.Speed
+				dy = dy / totalForce * e.Speed
+			}
+
+			// Move enemy
+			e.X += dx
+			e.Y += dy
+		}
 	}
 }
 
@@ -745,15 +825,10 @@ func AutoShoot(player *Player) {
 }
 
 func CheckCollision(x1, y1, w1, h1, x2, y2, w2, h2 float64) bool {
-	collision := x1 < x2+w2 &&
+	return x1 < x2+w2 &&
 		x1+w1 > x2 &&
 		y1 < y2+h2 &&
 		y1+h1 > y2
-
-	if collision {
-		// fmt.Printf("Colisão detectada: Player (x: %.2f, y: %.2f, w: %.2f, h: %.2f) com PowerUp (x: %.2f, y: %.2f, w: %.2f, h: %.2f)\n", x1, y1, w1, h1, x2, y2, w2, h2)
-	}
-	return collision
 }
 
 var lastEnemyCollisionAt time.Time
