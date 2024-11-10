@@ -1125,28 +1125,31 @@ func CheckEnemyCollisions(g *Game) bool {
 		}
 	}
 
-	// Check bullet collisions with enemies
+	// Check bullet collisions with enemies using circle-to-rectangle collision
 	for i := len(bullets) - 1; i >= 0; i-- {
 		for j := len(enemies) - 1; j >= 0; j-- {
 			if bullets[i].Active && enemies[j].Active {
-				// Check collision using centers and proper dimensions
-				bulletCenterX := bullets[i].X + bullets[i].Width/2
-				bulletCenterY := bullets[i].Y + bullets[i].Height/2
-				enemyCenterX := enemies[j].X + enemies[j].Width/2
-				enemyCenterY := enemies[j].Y + enemies[j].Height/2
+				// Get the center of the bullet (circle)
+				bulletCenterX := bullets[i].X
+				bulletCenterY := bullets[i].Y
 
-				dx := math.Abs(bulletCenterX - enemyCenterX)
-				dy := math.Abs(bulletCenterY - enemyCenterY)
+				// Find closest point on rectangle to circle center
+				closestX := math.Max(enemies[j].X, math.Min(bulletCenterX, enemies[j].X+enemies[j].Width))
+				closestY := math.Max(enemies[j].Y, math.Min(bulletCenterY, enemies[j].Y+enemies[j].Height))
 
-				if dx < (bullets[i].Width+enemies[j].Width)/2 &&
-					dy < (bullets[i].Height+enemies[j].Height)/2 {
+				// Calculate distance between closest point and circle center
+				distanceX := bulletCenterX - closestX
+				distanceY := bulletCenterY - closestY
+				distanceSquared := distanceX*distanceX + distanceY*distanceY
+
+				// Check if distance is less than circle radius
+				if distanceSquared <= (bullets[i].Radius * bullets[i].Radius) {
 					bullets[i].Active = false
 					enemies[j].Health -= player.WeaponStrength
 
 					if enemies[j].Health <= 0 {
 						enemies[j].Active = false
-
-						// Dropar item de experiência quando o inimigo é derrotado
+						// Drop XP item
 						xpItem := XPItem{
 							X:      enemies[j].X,
 							Y:      enemies[j].Y,
@@ -1166,14 +1169,14 @@ func CheckEnemyCollisions(g *Game) bool {
 // bullet
 
 type Bullet struct {
-	X, Y          float64
-	Speed         float64
-	Active        bool
-	DirectionX    float64
-	DirectionY    float64
-	Damage        float64
-	Color         color.RGBA
-	Width, Height float64
+	X, Y       float64
+	Speed      float64
+	Active     bool
+	DirectionX float64
+	DirectionY float64
+	Damage     float64
+	Color      color.RGBA
+	Radius     float64
 }
 
 var bullets []Bullet
@@ -1198,7 +1201,7 @@ func GetNearestEnemy(player *Player) *Enemy {
 func DrawBullets(screen *ebiten.Image) {
 	for _, bullet := range bullets {
 		if bullet.Active {
-			ebitenutil.DrawRect(screen, bullet.X-camera.X, bullet.Y-camera.Y, 4, 10, color.RGBA{255, 255, 0, 255})
+			ebitenutil.DrawCircle(screen, bullet.X-camera.X, bullet.Y-camera.Y, bullet.Radius, color.RGBA{255, 255, 0, 255})
 		}
 	}
 }
@@ -1365,8 +1368,7 @@ func FireBullet(player *Player) {
 		Active:     true,
 		DirectionX: directionX,
 		DirectionY: directionY,
-		Width:      4, // Add bullet dimensions
-		Height:     10,
+		Radius:     4.0,
 	}
 	bullets = append(bullets, bullet)
 
