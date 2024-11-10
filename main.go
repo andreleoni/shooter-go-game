@@ -22,6 +22,7 @@ const (
 const (
 	enemySeparationDistance = 30.0 // Minimum distance between enemies
 	separationForce         = 0.5  // Force of separation
+	MaxWeapons              = 5
 )
 
 type Game struct {
@@ -134,18 +135,15 @@ func DrawStatusUI(screen *ebiten.Image, player *Player) {
 		}
 	}
 
-	// Draw current weapon
-	weaponText := fmt.Sprintf("Weapon: %s", player.CurrentWeapon)
-	ebitenutil.DebugPrintAt(screen, weaponText, 10, int(powerupY)+20)
+	// Draw active weapons
+	weaponsY := powerupY + 20
+	ebitenutil.DebugPrintAt(screen, "Active Weapons:", 10, int(weaponsY))
+	weaponsY += 20
 
-	// Draw available weapons
-	availableY := powerupY + 40
-	ebitenutil.DebugPrintAt(screen, "Available Weapons:", 10, int(availableY))
-	for weaponType, owned := range player.Weapons {
-		if owned {
-			ebitenutil.DebugPrintAt(screen, string(weaponType), 20, int(availableY)+20)
-			availableY += 20
-		}
+	for i, weapon := range player.ActiveWeapons {
+		text := fmt.Sprintf("%d: %s", i+1, weapon)
+		ebitenutil.DebugPrintAt(screen, text, 20, int(weaponsY))
+		weaponsY += 20
 	}
 }
 
@@ -332,6 +330,7 @@ type Player struct {
 	XPToNextLevel    float64
 	CollectionRadius float64
 	CurrentWeapon    WeaponType
+	ActiveWeapons    []WeaponType
 	Weapons          map[WeaponType]bool
 	ActivePowerUps   map[string]time.Time // Mapeia o tipo de power-up para seu tempo de expiração
 }
@@ -443,6 +442,24 @@ func (p *Player) Init() {
 	p.ActivePowerUps = make(map[string]time.Time)
 	p.Weapons = make(map[WeaponType]bool) // Initialize weapons map
 	p.CurrentWeapon = BasicGun
+	p.ActiveWeapons = []WeaponType{BasicGun} // Start with basic gun
+	p.Weapons = make(map[WeaponType]bool)
+	p.Weapons[BasicGun] = true
+}
+
+func (p *Player) AddWeapon(weaponType WeaponType) bool {
+	// Don't allow replacing BasicGun or exceeding max weapons
+	if len(p.ActiveWeapons) >= MaxWeapons {
+		return false
+	}
+
+	// Add weapon if not already owned
+	if !p.Weapons[weaponType] {
+		p.Weapons[weaponType] = true
+		p.ActiveWeapons = append(p.ActiveWeapons, weaponType)
+		return true
+	}
+	return false
 }
 
 type Camera struct {
@@ -551,10 +568,6 @@ func DrawPowerUps(screen *ebiten.Image) {
 	for _, powerUp := range powerUps {
 		if powerUp.Active {
 			ebitenutil.DrawRect(screen, powerUp.X-camera.X, powerUp.Y-camera.Y, powerUp.Width, powerUp.Height, color.RGBA{0, 0, 255, 255})
-
-			if powerUp.Type == "power" {
-				ebitenutil.DrawRect(screen, powerUp.X-camera.X, powerUp.Y-camera.Y, powerUp.Width, powerUp.Height, color.RGBA{255, 255, 0, 255})
-			}
 		}
 	}
 }
@@ -866,11 +879,12 @@ var lastShotTime time.Time
 var shotInterval = 1 * time.Second // Tempo entre disparos
 
 func AutoShoot(player *Player) {
-	if time.Since(lastShotTime) >=
-		shotInterval-time.Duration(player.BulletSpeed)*time.Second {
-
-		FireBullet(player)        // Adiciona uma nova bala
-		lastShotTime = time.Now() // Atualiza o tempo do último disparo
+	if time.Since(lastShotTime) >= shotInterval-time.Duration(player.BulletSpeed)*time.Second {
+		// Fire all active weapons
+		for _, weaponType := range player.ActiveWeapons {
+			FireBullet(player, weaponType)
+		}
+		lastShotTime = time.Now()
 	}
 }
 
@@ -968,6 +982,7 @@ func CheckEnemyCollisions(g *Game) bool {
 type Bullet struct {
 	X, Y       float64
 	Speed      float64
+	WeaponType WeaponType
 	Active     bool
 	DirectionX float64
 	DirectionY float64
@@ -995,13 +1010,26 @@ func GetNearestEnemy(player *Player) *Enemy {
 func DrawBullets(screen *ebiten.Image) {
 	for _, bullet := range bullets {
 		if bullet.Active {
-			ebitenutil.DrawRect(screen, bullet.X-camera.X, bullet.Y-camera.Y, 4, 10, color.RGBA{255, 255, 0, 255}) // Amarelo
+			ebitenutil.DrawRect(screen, bullet.X-camera.X, bullet.Y-camera.Y, 4, 10, getBulletColor(bullet.WeaponType)) // Amarelo
 		}
 	}
 }
 
-func FireBullet(player *Player) {
-	weapon := getWeaponStats(player.CurrentWeapon)
+func getBulletColor(weaponType WeaponType) color.RGBA {
+	switch weaponType {
+	case Shotgun:
+		return color.RGBA{255, 0, 0, 255} // Red
+	case RapidFire:
+		return color.RGBA{0, 255, 255, 255} // Cyan
+	case SpreadShot:
+		return color.RGBA{0, 255, 0, 255} // Green
+	default:
+		return color.RGBA{255, 255, 0, 255} // Yellow (BasicGun)
+	}
+}
+
+func FireBullet(player *Player, weapontype WeaponType) {
+	weapon := getWeaponStats(weapontype)
 
 	for i := 0; i < weapon.ProjectileCount; i++ {
 		nearestEnemy := GetNearestEnemy(player)
@@ -1032,6 +1060,7 @@ func FireBullet(player *Player) {
 				Active:     true,
 				DirectionX: spreadDirX,
 				DirectionY: spreadDirY,
+				WeaponType: weapontype,
 			}
 			bullets = append(bullets, bullet)
 		}
@@ -1113,7 +1142,6 @@ func InitWeapons() {
 	}
 }
 
-// Update weapon collection
 func UpdateWeapons(player *Player) {
 	if player.Weapons == nil {
 		player.Weapons = make(map[WeaponType]bool)
@@ -1123,8 +1151,8 @@ func UpdateWeapons(player *Player) {
 		if weapons[i].Active && CheckCollision(player.X, player.Y, player.Width, player.Height,
 			weapons[i].X, weapons[i].Y, weapons[i].Width, weapons[i].Height) {
 			weapons[i].Active = false
-			player.CurrentWeapon = weapons[i].Type
-			player.Weapons[weapons[i].Type] = true
+
+			player.AddWeapon(weapons[i].Type)
 		}
 	}
 }
@@ -1159,7 +1187,8 @@ func getWeaponStats(weaponType WeaponType) Weapon {
 			Type:            Shotgun,
 			FireRate:        0.8,
 			ProjectileCount: 5,
-			Spread:          0.3}
+			Spread:          0.3,
+		}
 	case RapidFire:
 		return Weapon{Type: RapidFire, FireRate: 0.2, ProjectileCount: 1, Spread: 0.1}
 	case SpreadShot:
