@@ -110,6 +110,45 @@ func (g *Game) Update() error {
 	return nil
 }
 
+func DrawStatusUI(screen *ebiten.Image, player *Player) {
+	// Draw powerups status
+	powerupY := 10.0
+	for powerupType, expiryTime := range player.ActivePowerUps {
+		if time.Now().Before(expiryTime) {
+			// Calculate remaining time
+			remaining := expiryTime.Sub(time.Now()).Seconds()
+
+			// Draw powerup icon and time
+			var text string
+			switch powerupType {
+			case "speed":
+				text = fmt.Sprintf("Speed: %.0fs", remaining)
+			case "power":
+				text = fmt.Sprintf("Power: %.0fs", remaining)
+			case "radius":
+				text = fmt.Sprintf("Radius: %.0fs", remaining)
+			}
+
+			ebitenutil.DebugPrintAt(screen, text, 10, int(powerupY))
+			powerupY += 20
+		}
+	}
+
+	// Draw current weapon
+	weaponText := fmt.Sprintf("Weapon: %s", player.CurrentWeapon)
+	ebitenutil.DebugPrintAt(screen, weaponText, 10, int(powerupY)+20)
+
+	// Draw available weapons
+	availableY := powerupY + 40
+	ebitenutil.DebugPrintAt(screen, "Available Weapons:", 10, int(availableY))
+	for weaponType, owned := range player.Weapons {
+		if owned {
+			ebitenutil.DebugPrintAt(screen, string(weaponType), 20, int(availableY)+20)
+			availableY += 20
+		}
+	}
+}
+
 func (p *Player) HandleObstacleCollision(obstacles []Obstacle) {
 	for _, obstacle := range obstacles {
 		if CheckCollision(p.X, p.Y, p.Width, p.Height, obstacle.x, obstacle.y, obstacle.width, obstacle.height) {
@@ -166,6 +205,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	DrawEnemies(screen)
 	DrawPowerUps(screen)
 	DrawBullets(screen)
+	DrawStatusUI(screen, &player)
 
 	// Desenha a barra de vida do jogador
 	DrawHealthBar(screen, &player)
