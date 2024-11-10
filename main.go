@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	mapWidth     = 2000
-	mapHeight    = 2000
+	mapWidth     = 1080
+	mapHeight    = 720
 	screenWidth  = 1080
 	screenHeight = 720
 )
@@ -105,6 +105,7 @@ func (g *Game) Update() error {
 	CheckEnemyCollisions(g)
 
 	UpdateXPItems(&player)
+	UpdateWeapons(&player)
 
 	return nil
 }
@@ -175,6 +176,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// Desenha os itens de experiência
 	DrawXPItems(screen)
 
+	DrawWeapons(screen)
+
 	// Desenha o mapa e os objetos levando em conta a posição da câmera
 	for _, obstacle := range g.Obstacles {
 		op := &ebiten.DrawImageOptions{}
@@ -192,9 +195,12 @@ var camera Camera
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
+
 	player.Init()
+
 	InitEnemies()
 	InitPowerUps()
+	InitWeapons()
 
 	img, _, err := ebitenutil.NewImageFromFile("otsp_creatures_01.png")
 	if err != nil {
@@ -285,6 +291,8 @@ type Player struct {
 	XP               float64
 	XPToNextLevel    float64
 	CollectionRadius float64
+	CurrentWeapon    WeaponType
+	Weapons          map[WeaponType]bool
 	ActivePowerUps   map[string]time.Time // Mapeia o tipo de power-up para seu tempo de expiração
 }
 
@@ -393,6 +401,8 @@ func (p *Player) Init() {
 	p.Level = 1             // Adicionar nível inicial
 	p.CollectionRadius = 50.0
 	p.ActivePowerUps = make(map[string]time.Time)
+	p.Weapons = make(map[WeaponType]bool) // Initialize weapons map
+	p.CurrentWeapon = BasicGun
 }
 
 type Camera struct {
@@ -951,31 +961,41 @@ func DrawBullets(screen *ebiten.Image) {
 }
 
 func FireBullet(player *Player) {
-	nearestEnemy := GetNearestEnemy(player)
-	if nearestEnemy == nil {
-		return // Não há inimigos ativos
-	}
+	weapon := getWeaponStats(player.CurrentWeapon)
 
-	// Calcula a direção
-	directionX := nearestEnemy.X - player.X
-	directionY := nearestEnemy.Y - player.Y
-	length := math.Sqrt(directionX*directionX + directionY*directionY)
+	for i := 0; i < weapon.ProjectileCount; i++ {
+		nearestEnemy := GetNearestEnemy(player)
+		if nearestEnemy == nil {
+			return
+		}
 
-	// Normaliza a direção
-	if length > 0 {
-		directionX /= length
-		directionY /= length
-	}
+		// Calculate base direction
+		dirX := nearestEnemy.X - player.X
+		dirY := nearestEnemy.Y - player.Y
+		length := math.Sqrt(dirX*dirX + dirY*dirY)
 
-	bullet := Bullet{
-		X:          player.X + player.Width/2 - 2,  // Centraliza a bala em relação ao jogador
-		Y:          player.Y + player.Height/2 - 5, // Centraliza a bala em relação ao jogador
-		Speed:      5.0,
-		Active:     true,
-		DirectionX: directionX,
-		DirectionY: directionY,
+		if length > 0 {
+			dirX /= length
+			dirY /= length
+
+			// Add spread
+			angle := (rand.Float64() - 0.5) * weapon.Spread
+			cosA := math.Cos(angle)
+			sinA := math.Sin(angle)
+			spreadDirX := dirX*cosA - dirY*sinA
+			spreadDirY := dirX*sinA + dirY*cosA
+
+			bullet := Bullet{
+				X:          player.X + player.Width/2,
+				Y:          player.Y + player.Height/2,
+				Speed:      5.0,
+				Active:     true,
+				DirectionX: spreadDirX,
+				DirectionY: spreadDirY,
+			}
+			bullets = append(bullets, bullet)
+		}
 	}
-	bullets = append(bullets, bullet)
 }
 
 func UpdateBullets() {
@@ -989,5 +1009,122 @@ func UpdateBullets() {
 				bullets[i].Active = false
 			}
 		}
+	}
+}
+
+// Add weapon types
+type WeaponType string
+
+const (
+	BasicGun   WeaponType = "basic"
+	Shotgun    WeaponType = "shotgun"
+	RapidFire  WeaponType = "rapid"
+	SpreadShot WeaponType = "spread"
+)
+
+// Weapon struct
+type Weapon struct {
+	Type            WeaponType
+	FireRate        float64
+	ProjectileCount int
+	Spread          float64
+	X, Y            float64
+	Width           float64
+	Height          float64
+	Active          bool
+}
+
+// Add weapon spawning
+var weapons []Weapon
+
+func InitWeapons() {
+	weapons = make([]Weapon, 0)
+
+	// Spawn initial weapons
+	for i := 0; i < 3; i++ {
+		weapon := Weapon{
+			X:      rand.Float64() * mapWidth,
+			Y:      rand.Float64() * mapHeight,
+			Width:  16,
+			Height: 16,
+			Active: true,
+		}
+
+		// Randomly assign weapon type
+		switch rand.Intn(3) {
+		case 0:
+			weapon.Type = Shotgun
+			weapon.FireRate = 0.8
+			weapon.ProjectileCount = 5
+			weapon.Spread = 0.3
+		case 1:
+			weapon.Type = RapidFire
+			weapon.FireRate = 0.2
+			weapon.ProjectileCount = 1
+			weapon.Spread = 0.1
+		case 2:
+			weapon.Type = SpreadShot
+			weapon.FireRate = 0.5
+			weapon.ProjectileCount = 3
+			weapon.Spread = 0.2
+		}
+
+		weapons = append(weapons, weapon)
+	}
+}
+
+// Update weapon collection
+func UpdateWeapons(player *Player) {
+	if player.Weapons == nil {
+		player.Weapons = make(map[WeaponType]bool)
+	}
+
+	for i := range weapons {
+		if weapons[i].Active && CheckCollision(player.X, player.Y, player.Width, player.Height,
+			weapons[i].X, weapons[i].Y, weapons[i].Width, weapons[i].Height) {
+			weapons[i].Active = false
+			player.CurrentWeapon = weapons[i].Type
+			player.Weapons[weapons[i].Type] = true
+		}
+	}
+}
+
+// Draw weapons
+func DrawWeapons(screen *ebiten.Image) {
+	for _, weapon := range weapons {
+		if weapon.Active {
+			switch weapon.Type {
+			case Shotgun:
+				ebitenutil.DrawRect(screen, weapon.X-camera.X, weapon.Y-camera.Y,
+					weapon.Width, weapon.Height, color.RGBA{255, 0, 0, 255})
+			case RapidFire:
+				ebitenutil.DrawRect(screen, weapon.X-camera.X, weapon.Y-camera.Y,
+					weapon.Width, weapon.Height, color.RGBA{0, 0, 255, 255})
+			case SpreadShot:
+				ebitenutil.DrawRect(screen, weapon.X-camera.X, weapon.Y-camera.Y,
+					weapon.Width, weapon.Height, color.RGBA{0, 255, 0, 255})
+			default:
+				ebitenutil.DrawRect(screen, weapon.X-camera.X, weapon.Y-camera.Y,
+					weapon.Width, weapon.Height, color.RGBA{128, 0, 128, 255})
+			}
+
+		}
+	}
+}
+
+func getWeaponStats(weaponType WeaponType) Weapon {
+	switch weaponType {
+	case Shotgun:
+		return Weapon{
+			Type:            Shotgun,
+			FireRate:        0.8,
+			ProjectileCount: 5,
+			Spread:          0.3}
+	case RapidFire:
+		return Weapon{Type: RapidFire, FireRate: 0.2, ProjectileCount: 1, Spread: 0.1}
+	case SpreadShot:
+		return Weapon{Type: SpreadShot, FireRate: 0.5, ProjectileCount: 3, Spread: 0.2}
+	default:
+		return Weapon{Type: BasicGun, FireRate: 1.0, ProjectileCount: 1, Spread: 0}
 	}
 }
