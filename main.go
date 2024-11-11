@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	mapWidth     = 1080
-	mapHeight    = 720
+	mapWidth     = 2000
+	mapHeight    = 2000
 	screenWidth  = 1080
 	screenHeight = 720
 )
