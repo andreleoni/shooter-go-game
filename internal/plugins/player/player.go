@@ -36,6 +36,9 @@ func (p *PlayerPlugin) Init(kernel *core.GameKernel) error {
 func (p *PlayerPlugin) Update() error {
 	newX, newY := p.x, p.y
 
+	// Store current position in case we need to revert
+	oldX, oldY := p.x, p.y
+
 	if ebiten.IsKeyPressed(ebiten.KeyW) {
 		newY -= p.speed * p.kernel.DeltaTime
 	}
@@ -49,10 +52,13 @@ func (p *PlayerPlugin) Update() error {
 		newX += p.speed * p.kernel.DeltaTime
 	}
 
-	// Get obstacle plugin and check collision
+	// Get obstacle plugin and check collision with player size (20x20)
 	obstaclePlugin := p.kernel.PluginManager.GetPlugin("ObstacleSystem").(*obstacle.ObstaclePlugin)
-	if !obstaclePlugin.CheckCollision(newX, newY) {
+	if !obstaclePlugin.CheckCollisionRect(newX, newY, 20, 20) {
 		p.x, p.y = newX, newY
+	} else {
+		// Revert position if collision detected
+		p.x, p.y = oldX, oldY
 	}
 
 	return nil

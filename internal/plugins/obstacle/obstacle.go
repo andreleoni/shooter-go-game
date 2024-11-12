@@ -90,3 +90,18 @@ func (op *ObstaclePlugin) CheckCollision(x, y float64) bool {
 func (op *ObstaclePlugin) GetObstacles() []*Obstacle {
 	return op.obstacles
 }
+
+func (op *ObstaclePlugin) CheckCollisionRect(x, y, width, height float64) bool {
+	for _, obstacle := range op.obstacles {
+		if obstacle.Active {
+			// Check for rectangle overlap
+			if x < obstacle.X+obstacle.Width &&
+				x+width > obstacle.X &&
+				y < obstacle.Y+obstacle.Height &&
+				y+height > obstacle.Y {
+				return true
+			}
+		}
+	}
+	return false
+}

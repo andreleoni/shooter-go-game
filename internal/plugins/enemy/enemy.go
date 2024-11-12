@@ -50,30 +50,14 @@ func (ep *EnemyPlugin) Update() error {
 	}
 
 	playerX, playerY := ep.playerPlugin.GetPosition()
-
-	for _, enemy := range ep.enemies {
-		if enemy.Active {
-			dx := playerX - enemy.X
-			dy := playerY - enemy.Y
-			distance := math.Sqrt(dx*dx + dy*dy)
-			if distance > 0 {
-				dx /= distance
-				dy /= distance
-			}
-			enemy.X += dx * enemy.Speed * ep.kernel.DeltaTime
-			enemy.Y += dy * enemy.Speed * ep.kernel.DeltaTime
-
-			if enemy.Y > 600 {
-				enemy.Active = false
-			}
-		}
-	}
-
 	obstaclePlugin := ep.kernel.PluginManager.GetPlugin("ObstacleSystem").(*obstacle.ObstaclePlugin)
 
 	for _, enemy := range ep.enemies {
 		if enemy.Active {
-			playerX, playerY := ep.playerPlugin.GetPosition()
+			// Store current position
+			oldX, oldY := enemy.X, enemy.Y
+
+			// Calculate movement
 			dx := playerX - enemy.X
 			dy := playerY - enemy.Y
 			distance := math.Sqrt(dx*dx + dy*dy)
@@ -85,18 +69,20 @@ func (ep *EnemyPlugin) Update() error {
 				newX := enemy.X + dx*enemy.Speed*ep.kernel.DeltaTime
 				newY := enemy.Y + dy*enemy.Speed*ep.kernel.DeltaTime
 
-				// Only move if no collision with obstacles
-				if !obstaclePlugin.CheckCollision(newX, newY) {
+				// Check collision with enemy size (20x20)
+				if !obstaclePlugin.CheckCollisionRect(newX, newY, 20, 20) {
 					enemy.X = newX
 					enemy.Y = newY
+				} else {
+					// Revert position if collision detected
+					enemy.X = oldX
+					enemy.Y = oldY
 				}
 			}
 		}
 	}
-
 	return nil
 }
-
 func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 	for _, enemy := range ep.enemies {
 		if enemy.Active {
