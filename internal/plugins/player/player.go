@@ -2,6 +2,7 @@ package player
 
 import (
 	"game/internal/core"
+	"game/internal/plugins/bullet"
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -43,6 +44,9 @@ func (p *PlayerPlugin) Update() error {
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyD) {
 		p.x += p.speed * p.kernel.DeltaTime
+	}
+	if ebiten.IsKeyPressed(ebiten.KeySpace) {
+		p.kernel.PluginManager.GetPlugin("BulletSystem").(*bullet.BulletPlugin).Shoot(p.x, p.y)
 	}
 	return nil
 }

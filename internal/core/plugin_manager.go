@@ -1,4 +1,3 @@
-// core/plugin_manager.go
 package core
 
 import "github.com/hajimehoshi/ebiten/v2"
@@ -37,4 +36,8 @@ func (pm *PluginManager) DrawAll(screen *ebiten.Image) {
 	for _, plugin := range pm.plugins {
 		plugin.Draw(screen)
 	}
+}
+
+func (pm *PluginManager) GetPlugin(id string) Plugin {
+	return pm.plugins[id]
 }
