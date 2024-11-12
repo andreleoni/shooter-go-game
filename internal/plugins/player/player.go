@@ -3,7 +3,7 @@ package player
 
 import (
 	"game/internal/core"
-	"game/internal/plugins/bullet"
+	"game/internal/plugins/obstacle"
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -34,22 +34,27 @@ func (p *PlayerPlugin) Init(kernel *core.GameKernel) error {
 }
 
 func (p *PlayerPlugin) Update() error {
+	newX, newY := p.x, p.y
+
 	if ebiten.IsKeyPressed(ebiten.KeyW) {
-		p.y -= p.speed * p.kernel.DeltaTime
+		newY -= p.speed * p.kernel.DeltaTime
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyS) {
-		p.y += p.speed * p.kernel.DeltaTime
+		newY += p.speed * p.kernel.DeltaTime
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyA) {
-		p.x -= p.speed * p.kernel.DeltaTime
+		newX -= p.speed * p.kernel.DeltaTime
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyD) {
-		p.x += p.speed * p.kernel.DeltaTime
+		newX += p.speed * p.kernel.DeltaTime
 	}
-	if ebiten.IsKeyPressed(ebiten.KeySpace) {
-		bulletPlugin := p.kernel.PluginManager.GetPlugin("BulletSystem").(*bullet.BulletPlugin)
-		bulletPlugin.Shoot(p.x, p.y)
+
+	// Get obstacle plugin and check collision
+	obstaclePlugin := p.kernel.PluginManager.GetPlugin("ObstacleSystem").(*obstacle.ObstaclePlugin)
+	if !obstaclePlugin.CheckCollision(newX, newY) {
+		p.x, p.y = newX, newY
 	}
+
 	return nil
 }
 

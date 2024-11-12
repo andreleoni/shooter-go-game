@@ -5,6 +5,7 @@ import (
 	"game/internal/plugins/bullet"
 	"game/internal/plugins/collision"
 	"game/internal/plugins/enemy"
+	"game/internal/plugins/obstacle"
 	"game/internal/plugins/player"
 	"log"
 
@@ -35,16 +36,19 @@ func main() {
 	bulletPlugin := bullet.NewBulletPlugin()
 	enemyPlugin := enemy.NewEnemyPlugin(playerPlugin)
 	collisionPlugin := collision.NewCollisionPlugin(bulletPlugin, enemyPlugin)
+	obstaclePlugin := obstacle.NewObstaclePlugin()
 
 	kernel.PluginManager.Register(playerPlugin)
 	kernel.PluginManager.Register(bulletPlugin)
 	kernel.PluginManager.Register(enemyPlugin)
 	kernel.PluginManager.Register(collisionPlugin)
+	kernel.PluginManager.Register(obstaclePlugin)
 
 	playerPlugin.Init(kernel)
 	bulletPlugin.Init(kernel)
 	enemyPlugin.Init(kernel)
 	collisionPlugin.Init(kernel)
+	obstaclePlugin.Init(kernel)
 
 	game := &Game{kernel: kernel}
 

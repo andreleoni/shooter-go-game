@@ -2,6 +2,7 @@ package enemy
 
 import (
 	"game/internal/core"
+	"game/internal/plugins/obstacle"
 	"game/internal/plugins/player"
 	"image/color"
 	"math"
@@ -67,6 +68,32 @@ func (ep *EnemyPlugin) Update() error {
 			}
 		}
 	}
+
+	obstaclePlugin := ep.kernel.PluginManager.GetPlugin("ObstacleSystem").(*obstacle.ObstaclePlugin)
+
+	for _, enemy := range ep.enemies {
+		if enemy.Active {
+			playerX, playerY := ep.playerPlugin.GetPosition()
+			dx := playerX - enemy.X
+			dy := playerY - enemy.Y
+			distance := math.Sqrt(dx*dx + dy*dy)
+
+			if distance > 0 {
+				dx /= distance
+				dy /= distance
+
+				newX := enemy.X + dx*enemy.Speed*ep.kernel.DeltaTime
+				newY := enemy.Y + dy*enemy.Speed*ep.kernel.DeltaTime
+
+				// Only move if no collision with obstacles
+				if !obstaclePlugin.CheckCollision(newX, newY) {
+					enemy.X = newX
+					enemy.Y = newY
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
