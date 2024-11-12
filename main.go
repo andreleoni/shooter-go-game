@@ -33,7 +33,7 @@ func main() {
 	// Register plugins
 	playerPlugin := player.NewPlayerPlugin()
 	bulletPlugin := bullet.NewBulletPlugin()
-	enemyPlugin := enemy.NewEnemyPlugin()
+	enemyPlugin := enemy.NewEnemyPlugin(playerPlugin)
 	collisionPlugin := collision.NewCollisionPlugin(bulletPlugin, enemyPlugin)
 
 	kernel.PluginManager.Register(playerPlugin)

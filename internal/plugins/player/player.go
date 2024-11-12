@@ -1,3 +1,4 @@
+// plugins/player.go
 package player
 
 import (
@@ -46,11 +47,16 @@ func (p *PlayerPlugin) Update() error {
 		p.x += p.speed * p.kernel.DeltaTime
 	}
 	if ebiten.IsKeyPressed(ebiten.KeySpace) {
-		p.kernel.PluginManager.GetPlugin("BulletSystem").(*bullet.BulletPlugin).Shoot(p.x, p.y)
+		bulletPlugin := p.kernel.PluginManager.GetPlugin("BulletSystem").(*bullet.BulletPlugin)
+		bulletPlugin.Shoot(p.x, p.y)
 	}
 	return nil
 }
 
 func (p *PlayerPlugin) Draw(screen *ebiten.Image) {
-	ebitenutil.DrawRect(screen, p.x, p.y, 10, 10, color.RGBA{255.0, 255.0, 0, 0})
+	ebitenutil.DrawRect(screen, p.x, p.y, 10, 10, color.RGBA{255, 255, 0, 255})
+}
+
+func (p *PlayerPlugin) GetPosition() (float64, float64) {
+	return p.x, p.y
 }

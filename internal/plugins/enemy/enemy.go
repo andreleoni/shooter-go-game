@@ -2,7 +2,9 @@ package enemy
 
 import (
 	"game/internal/core"
+	"game/internal/plugins/player"
 	"image/color"
+	"math"
 	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -16,15 +18,17 @@ type Enemy struct {
 }
 
 type EnemyPlugin struct {
-	kernel     *core.GameKernel
-	enemies    []*Enemy
-	spawnTimer float64
+	kernel       *core.GameKernel
+	enemies      []*Enemy
+	spawnTimer   float64
+	playerPlugin *player.PlayerPlugin
 }
 
-func NewEnemyPlugin() *EnemyPlugin {
+func NewEnemyPlugin(playerPlugin *player.PlayerPlugin) *EnemyPlugin {
 	return &EnemyPlugin{
-		enemies:    []*Enemy{},
-		spawnTimer: 0,
+		enemies:      []*Enemy{},
+		spawnTimer:   0,
+		playerPlugin: playerPlugin,
 	}
 }
 
@@ -44,9 +48,20 @@ func (ep *EnemyPlugin) Update() error {
 		ep.spawnTimer = 0
 	}
 
+	playerX, playerY := ep.playerPlugin.GetPosition()
+
 	for _, enemy := range ep.enemies {
 		if enemy.Active {
-			enemy.Y += enemy.Speed * ep.kernel.DeltaTime
+			dx := playerX - enemy.X
+			dy := playerY - enemy.Y
+			distance := math.Sqrt(dx*dx + dy*dy)
+			if distance > 0 {
+				dx /= distance
+				dy /= distance
+			}
+			enemy.X += dx * enemy.Speed * ep.kernel.DeltaTime
+			enemy.Y += dy * enemy.Speed * ep.kernel.DeltaTime
+
 			if enemy.Y > 600 {
 				enemy.Active = false
 			}
@@ -58,7 +73,7 @@ func (ep *EnemyPlugin) Update() error {
 func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 	for _, enemy := range ep.enemies {
 		if enemy.Active {
-			ebitenutil.DrawRect(screen, enemy.X, enemy.Y, 20, 20, color.RGBA{0, 0, 255, 255})
+			ebitenutil.DrawRect(screen, enemy.X, enemy.Y, 20, 20, color.RGBA{255, 0, 0, 255})
 		}
 	}
 }
