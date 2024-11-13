@@ -12,12 +12,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
-type Enemy struct {
-	X, Y   float64
-	Speed  float64
-	Active bool
-}
-
 type EnemyPlugin struct {
 	kernel       *core.GameKernel
 	enemies      []*Enemy

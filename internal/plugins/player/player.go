@@ -41,7 +41,6 @@ func (p *PlayerPlugin) Init(kernel *core.GameKernel) error {
 func (p *PlayerPlugin) Update() error {
 	newX, newY := p.x, p.y
 
-	// Store current position in case we need to revert
 	oldX, oldY := p.x, p.y
 
 	if ebiten.IsKeyPressed(ebiten.KeyW) {

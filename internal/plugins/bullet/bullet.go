@@ -9,12 +9,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
-type Bullet struct {
-	X, Y   float64
-	Speed  float64
-	Active bool
-}
-
 type BulletPlugin struct {
 	kernel  *core.GameKernel
 	bullets []*Bullet

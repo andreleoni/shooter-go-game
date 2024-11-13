@@ -3,7 +3,7 @@ package main
 import (
 	"game/internal/core"
 	"game/internal/plugins/bullet"
-	"game/internal/plugins/collision"
+	"game/internal/plugins/combat"
 	"game/internal/plugins/enemy"
 	"game/internal/plugins/obstacle"
 	"game/internal/plugins/player"
@@ -35,19 +35,19 @@ func main() {
 	playerPlugin := player.NewPlayerPlugin()
 	bulletPlugin := bullet.NewBulletPlugin()
 	enemyPlugin := enemy.NewEnemyPlugin(playerPlugin)
-	collisionPlugin := collision.NewCollisionPlugin(bulletPlugin, enemyPlugin)
+	combatPlugin := combat.NewCombatPlugin(bulletPlugin, enemyPlugin)
 	obstaclePlugin := obstacle.NewObstaclePlugin()
 
 	kernel.PluginManager.Register(playerPlugin)
 	kernel.PluginManager.Register(bulletPlugin)
 	kernel.PluginManager.Register(enemyPlugin)
-	kernel.PluginManager.Register(collisionPlugin)
+	kernel.PluginManager.Register(combatPlugin)
 	kernel.PluginManager.Register(obstaclePlugin)
 
 	playerPlugin.Init(kernel)
 	bulletPlugin.Init(kernel)
 	enemyPlugin.Init(kernel)
-	collisionPlugin.Init(kernel)
+	combatPlugin.Init(kernel)
 	obstaclePlugin.Init(kernel)
 
 	game := &Game{kernel: kernel}
