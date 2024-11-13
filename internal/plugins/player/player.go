@@ -3,6 +3,7 @@ package player
 
 import (
 	"game/internal/core"
+	"game/internal/plugins/bullet"
 	"game/internal/plugins/obstacle"
 	"image/color"
 
@@ -11,16 +12,20 @@ import (
 )
 
 type PlayerPlugin struct {
-	kernel *core.GameKernel
-	x, y   float64
-	speed  float64
+	kernel        *core.GameKernel
+	x, y          float64
+	speed         float64
+	shootTimer    float64
+	shootCooldown float64
 }
 
 func NewPlayerPlugin() *PlayerPlugin {
 	return &PlayerPlugin{
-		x:     400,
-		y:     300,
-		speed: 200,
+		x:             400,
+		y:             300,
+		speed:         200,
+		shootCooldown: 1.0, // 1 second between shots
+		shootTimer:    0,
 	}
 }
 
@@ -52,13 +57,19 @@ func (p *PlayerPlugin) Update() error {
 		newX += p.speed * p.kernel.DeltaTime
 	}
 
-	// Get obstacle plugin and check collision with player size (20x20)
 	obstaclePlugin := p.kernel.PluginManager.GetPlugin("ObstacleSystem").(*obstacle.ObstaclePlugin)
 	if !obstaclePlugin.CheckCollisionRect(newX, newY, 20, 20) {
 		p.x, p.y = newX, newY
 	} else {
-		// Revert position if collision detected
 		p.x, p.y = oldX, oldY
+	}
+
+	// Auto-shooting
+	p.shootTimer += p.kernel.DeltaTime
+	if p.shootTimer >= p.shootCooldown {
+		bulletPlugin := p.kernel.PluginManager.GetPlugin("BulletSystem").(*bullet.BulletPlugin)
+		bulletPlugin.Shoot(p.x, p.y)
+		p.shootTimer = 0
 	}
 
 	return nil
