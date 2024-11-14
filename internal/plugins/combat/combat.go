@@ -2,6 +2,7 @@ package combat
 
 import (
 	"game/internal/core"
+	"game/internal/helpers/collision"
 	"game/internal/plugins/bullet"
 	"game/internal/plugins/enemy"
 
@@ -42,19 +43,16 @@ func (cp *CombatPlugin) Update() error {
 		if bullet.Active {
 			for _, enemy := range enemies {
 				if enemy.Active {
-					// Check if bullet hits enemy
-					if checkCollision(bullet.X, bullet.Y, 5, 10, enemy.X, enemy.Y, 20, 20) {
+					if collision.Check(bullet.X, bullet.Y, 5, 10, enemy.X, enemy.Y, 20, 20) {
 						bullet.Active = false
 						enemy.Active = false
 						// Here we could add effects, sounds, score etc
+						// Enemy have blood
+						// Weapon have different collision skill
 					}
 				}
 			}
 		}
 	}
 	return nil
-}
-
-func checkCollision(x1, y1, w1, h1, x2, y2, w2, h2 float64) bool {
-	return x1 < x2+w2 && x1+w1 > x2 && y1 < y2+h2 && y1+h1 > y2
 }

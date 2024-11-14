@@ -2,6 +2,7 @@ package enemy
 
 import (
 	"game/internal/core"
+	entity "game/internal/plugins/enemy/entities"
 	"game/internal/plugins/obstacle"
 	"game/internal/plugins/player"
 	"image/color"
@@ -14,14 +15,14 @@ import (
 
 type EnemyPlugin struct {
 	kernel       *core.GameKernel
-	enemies      []*Enemy
+	enemies      []*entity.Enemy
 	spawnTimer   float64
 	playerPlugin *player.PlayerPlugin
 }
 
 func NewEnemyPlugin(playerPlugin *player.PlayerPlugin) *EnemyPlugin {
 	return &EnemyPlugin{
-		enemies:      []*Enemy{},
+		enemies:      []*entity.Enemy{},
 		spawnTimer:   0,
 		playerPlugin: playerPlugin,
 	}
@@ -86,9 +87,9 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 }
 
 func (ep *EnemyPlugin) Spawn(x, y float64) {
-	ep.enemies = append(ep.enemies, &Enemy{X: x, Y: y, Speed: 100, Active: true})
+	ep.enemies = append(ep.enemies, &entity.Enemy{X: x, Y: y, Speed: 100, Active: true})
 }
 
-func (ep *EnemyPlugin) GetEnemies() []*Enemy {
+func (ep *EnemyPlugin) GetEnemies() []*entity.Enemy {
 	return ep.enemies
 }

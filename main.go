@@ -33,8 +33,8 @@ func main() {
 
 	// Register plugins
 	playerPlugin := player.NewPlayerPlugin()
-	bulletPlugin := bullet.NewBulletPlugin()
 	enemyPlugin := enemy.NewEnemyPlugin(playerPlugin)
+	bulletPlugin := bullet.NewBulletPlugin()
 	combatPlugin := combat.NewCombatPlugin(bulletPlugin, enemyPlugin)
 	obstaclePlugin := obstacle.NewObstaclePlugin()
 
