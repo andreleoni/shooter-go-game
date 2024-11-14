@@ -3,6 +3,8 @@ package enemy
 import (
 	"game/internal/core"
 	entity "game/internal/plugins/enemy/entities"
+	"game/internal/plugins/enemy/factory"
+	"game/internal/plugins/enemy/templates"
 	"game/internal/plugins/obstacle"
 	"game/internal/plugins/player"
 	"image/color"
@@ -87,7 +89,7 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 }
 
 func (ep *EnemyPlugin) Spawn(x, y float64) {
-	ep.enemies = append(ep.enemies, &entity.Enemy{X: x, Y: y, Speed: 100, Active: true})
+	ep.enemies = append(ep.enemies, factory.CreateEnemy(templates.TankEnemy, x, y))
 }
 
 func (ep *EnemyPlugin) GetEnemies() []*entity.Enemy {
