@@ -37,8 +37,6 @@ func (pm *PluginManager) Register(plugin Plugin, priority int) {
 }
 
 func (pm *PluginManager) UpdateAll() error {
-	fmt.Println("Updating plugin:")
-
 	for _, plugin := range retrieveSortedPlugins(pm.plugins) {
 		fmt.Println(plugin.plugin.ID())
 
@@ -47,7 +45,6 @@ func (pm *PluginManager) UpdateAll() error {
 		}
 	}
 
-	fmt.Print("\n\n\n\n")
 	return nil
 }
 

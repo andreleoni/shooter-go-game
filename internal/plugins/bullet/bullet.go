@@ -5,7 +5,7 @@ import (
 	"game/internal/constants"
 	"game/internal/core"
 	"game/internal/plugins"
-	bulletentities "game/internal/plugins/bullet/entities"
+	entities "game/internal/plugins/bullet/entities"
 	"game/internal/plugins/camera"
 	"image/color"
 	"math"
@@ -16,12 +16,12 @@ import (
 
 type BulletPlugin struct {
 	kernel  *core.GameKernel
-	bullets []*bulletentities.Bullet
+	bullets []*entities.Bullet
 }
 
 func NewBulletPlugin() *BulletPlugin {
 	return &BulletPlugin{
-		bullets: []*bulletentities.Bullet{},
+		bullets: []*entities.Bullet{},
 	}
 }
 
@@ -104,20 +104,31 @@ func (bp *BulletPlugin) Shoot(x, y float64) {
 			}
 		}
 
+		// Calcular direção
+		dx := closestEnemy.X - x
+		dy := closestEnemy.Y - y
+
+		distance := math.Sqrt(dx*dx + dy*dy)
+
+		dirX := dx / distance
+		dirY := dy / distance
+
 		// Create bullet targeting closest enemy
-		bullet := &bulletentities.Bullet{
-			X:       x,
-			Y:       y,
-			Speed:   300,
-			Active:  true,
-			TargetX: closestEnemy.X,
-			TargetY: closestEnemy.Y,
+		bullet := &entities.Bullet{
+			X:          x,
+			Y:          y,
+			Speed:      300,
+			Active:     true,
+			TargetX:    closestEnemy.X,
+			TargetY:    closestEnemy.Y,
+			DirectionX: dirX,
+			DirectionY: dirY,
 		}
 
 		bp.bullets = append(bp.bullets, bullet)
 	}
 }
 
-func (bp *BulletPlugin) GetBullets() []*bulletentities.Bullet {
+func (bp *BulletPlugin) GetBullets() []*entities.Bullet {
 	return bp.bullets
 }
