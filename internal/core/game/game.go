@@ -4,8 +4,10 @@ package game
 import (
 	"game/internal/constants"
 	"game/internal/core"
+	"image"
 	"image/color"
 	"log"
+	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text"
@@ -22,6 +24,8 @@ type Game struct {
 	gameFont       font.Face
 	canTransition  bool // Prevent multiple transitions
 	selectionDelay float64
+
+	wallpaper *ebiten.Image
 }
 
 type Character struct {
@@ -45,6 +49,18 @@ func NewGame(kernel *core.GameKernel) *Game {
 		log.Fatal(err)
 	}
 
+	// Load the wallpaper image
+	file, err := os.Open("assets/images/menu/wallpaper.png")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	img, _, err := image.Decode(file)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return &Game{
 		kernel:       kernel,
 		currentState: MenuState,
@@ -54,6 +70,7 @@ func NewGame(kernel *core.GameKernel) *Game {
 		},
 		selectionDelay: 0,
 		gameFont:       gameFont,
+		wallpaper:      ebiten.NewImageFromImage(img),
 	}
 }
 
@@ -116,9 +133,35 @@ func (g *Game) Update() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	switch g.currentState {
 	case MenuState:
+		// Calculate the scale to fit the wallpaper to the screen width
+		screenWidth, screenHeight := screen.Size()
+		wallpaperWidth, wallpaperHeight := g.wallpaper.Size()
+		scaleX := float64(screenWidth) / float64(wallpaperWidth)
+		scaleY := float64(screenHeight) / float64(wallpaperHeight)
+
+		// Create options to scale the wallpaper
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Scale(scaleX, scaleY)
+
+		// Draw the wallpaper
+		screen.DrawImage(g.wallpaper, op)
+
 		text.Draw(screen, "Press ENTER to Start", g.gameFont, 300, 200, color.White)
 
 	case CharacterSelectState:
+		// Calculate the scale to fit the wallpaper to the screen width
+		screenWidth, screenHeight := screen.Size()
+		wallpaperWidth, wallpaperHeight := g.wallpaper.Size()
+		scaleX := float64(screenWidth) / float64(wallpaperWidth)
+		scaleY := float64(screenHeight) / float64(wallpaperHeight)
+
+		// Create options to scale the wallpaper
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Scale(scaleX, scaleY)
+
+		// Draw the wallpaper
+		screen.DrawImage(g.wallpaper, op)
+
 		text.Draw(screen, "Select Character:", g.gameFont, 300, 150, color.White)
 
 		for i, char := range g.characters {
