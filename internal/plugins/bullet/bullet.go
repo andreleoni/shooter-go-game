@@ -115,10 +115,9 @@ func (bp *BulletPlugin) Shoot(x, y float64) {
 
 		// Create bullet targeting closest enemy
 		bullet := &entities.Bullet{
-			X: x,
-			Y: y,
-			// Speed:      300,
-			Speed:      1,
+			X:          x,
+			Y:          y,
+			Speed:      300,
 			Active:     true,
 			TargetX:    closestEnemy.X,
 			TargetY:    closestEnemy.Y,

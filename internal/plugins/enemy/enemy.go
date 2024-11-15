@@ -53,70 +53,25 @@ func (ep *EnemyPlugin) Update() error {
 	playerX, playerY := ep.playerPlugin.GetPosition()
 	obstaclePlugin := ep.kernel.PluginManager.GetPlugin("ObstacleSystem").(*obstacle.ObstaclePlugin)
 
-	for i, enemy := range ep.enemies {
+	for _, enemy := range ep.enemies {
 		if enemy.Active {
-			// Store current position
-			oldX, oldY := enemy.X, enemy.Y
+			ep.moveTowardsPlayer(enemy, playerX, playerY, obstaclePlugin)
+		}
+	}
 
-			// Calculate desired velocity towards player
-			dx := playerX - enemy.X
-			dy := playerY - enemy.Y
-			distance := math.Sqrt(dx*dx + dy*dy)
+	return nil
+}
 
-			if distance > 0 {
-				dx /= distance
-				dy /= distance
-
-				desiredX := dx * enemy.Speed * ep.kernel.DeltaTime
-				desiredY := dy * enemy.Speed * ep.kernel.DeltaTime
-
-				// Check for obstacles and steer around them
-				if !obstaclePlugin.CheckCollisionRect(enemy.X+desiredX, enemy.Y+desiredY, enemy.Width, enemy.Height) {
-					enemy.X += desiredX
-					enemy.Y += desiredY
-				} else {
-					// Enhanced obstacle avoidance by trying multiple directions
-					directions := [][2]float64{
-						{-desiredY, desiredX},  // Left
-						{desiredY, -desiredX},  // Right
-						{-desiredX, -desiredY}, // Backward
-					}
-
-					moved := false
-
-					for _, dir := range directions {
-						if !obstaclePlugin.CheckCollisionRect(enemy.X+dir[0], enemy.Y+dir[1], enemy.Width, enemy.Height) {
-							enemy.X += dir[0]
-							enemy.Y += dir[1]
-
-							moved = true
-
-							break
-						}
-					}
-
-					// If no direction is found, revert to old position
-					if !moved {
-						enemy.X = oldX
-						enemy.Y = oldY
-					}
-				}
-
-				// Check for collisions with other enemies
-				for j, otherEnemy := range ep.enemies {
-					if i != j && otherEnemy.Active {
-						if math.Abs(enemy.X-otherEnemy.X) < enemy.Width && math.Abs(enemy.Y-otherEnemy.Y) < enemy.Height {
-							// Adjust position to avoid collision
-							enemy.X = oldX
-							enemy.Y = oldY
-							break
-						}
-					}
-				}
+func (ep *EnemyPlugin) checkEnemyCollision(x, y float64, currentEnemy *entity.Enemy) bool {
+	for _, enemy := range ep.enemies {
+		if enemy != currentEnemy && enemy.Active {
+			if math.Abs(enemy.X-x) < currentEnemy.Width && math.Abs(enemy.Y-y) < currentEnemy.Height {
+				return true
 			}
 		}
 	}
-	return nil
+
+	return false
 }
 
 func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
@@ -153,4 +108,76 @@ func (ep *EnemyPlugin) Spawn(x, y float64) {
 
 func (ep *EnemyPlugin) GetEnemies() []*entity.Enemy {
 	return ep.enemies
+}
+
+func (ep *EnemyPlugin) moveTowardsPlayer(enemy *entity.Enemy, playerX, playerY float64, obstaclePlugin *obstacle.ObstaclePlugin) {
+	// Calculate desired velocity towards player
+	dx := playerX - enemy.X
+	dy := playerY - enemy.Y
+	distance := math.Sqrt(dx*dx + dy*dy)
+
+	if distance > 0 {
+		dx /= distance
+		dy /= distance
+
+		desiredX := dx * enemy.Speed * ep.kernel.DeltaTime
+		desiredY := dy * enemy.Speed * ep.kernel.DeltaTime
+
+		// Check for obstacles and steer around them
+		if !obstaclePlugin.CheckCollisionRect(enemy.X+desiredX, enemy.Y+desiredY, enemy.Width, enemy.Height) &&
+			!ep.checkEnemyCollision(enemy.X+desiredX, enemy.Y+desiredY, enemy) {
+			enemy.X += desiredX
+			enemy.Y += desiredY
+		} else {
+			// Move perpendicularly to avoid collision
+			perpendicularDirections := [][2]float64{
+				{0, -enemy.Speed * ep.kernel.DeltaTime}, // Up
+				{0, enemy.Speed * ep.kernel.DeltaTime},  // Down
+			}
+
+			// Determine which perpendicular direction is closer to the player
+			if math.Abs(playerY-(enemy.Y-perpendicularDirections[0][1])) < math.Abs(playerY-(enemy.Y+perpendicularDirections[1][1])) {
+				perpendicularDirections = [][2]float64{
+					{0, -enemy.Speed * ep.kernel.DeltaTime}, // Up
+					{0, enemy.Speed * ep.kernel.DeltaTime},  // Down
+				}
+			} else {
+				perpendicularDirections = [][2]float64{
+					{0, enemy.Speed * ep.kernel.DeltaTime},  // Down
+					{0, -enemy.Speed * ep.kernel.DeltaTime}, // Up
+				}
+			}
+
+			moved := false
+			for _, dir := range perpendicularDirections {
+				if !obstaclePlugin.CheckCollisionRect(enemy.X+dir[0], enemy.Y+dir[1], enemy.Width, enemy.Height) &&
+					!ep.checkEnemyCollision(enemy.X+dir[0], enemy.Y+dir[1], enemy) {
+					enemy.X += dir[0]
+					enemy.Y += dir[1]
+					moved = true
+					break
+				}
+			}
+
+			// If no direction is found, revert to old position and move randomly left or right
+			if !moved {
+				directions := [][2]float64{
+					{-enemy.Speed * ep.kernel.DeltaTime, 0}, // Left
+					{enemy.Speed * ep.kernel.DeltaTime, 0},  // Right
+					{0, -enemy.Speed * ep.kernel.DeltaTime}, // Up
+					{0, enemy.Speed * ep.kernel.DeltaTime},  // Down
+				}
+
+				for {
+					randomDirection := rand.Intn(4)
+					dir := directions[randomDirection]
+					if !obstaclePlugin.CheckCollisionRect(enemy.X+dir[0], enemy.Y+dir[1], enemy.Width, enemy.Height) {
+						enemy.X += dir[0]
+						enemy.Y += dir[1]
+						break
+					}
+				}
+			}
+		}
+	}
 }
