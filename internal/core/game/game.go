@@ -15,12 +15,13 @@ import (
 )
 
 type Game struct {
-	kernel        *core.GameKernel
-	currentState  State
-	characters    []Character
-	selectedChar  int
-	gameFont      font.Face
-	canTransition bool // Prevent multiple transitions
+	kernel         *core.GameKernel
+	currentState   State
+	characters     []Character
+	selectedChar   int
+	gameFont       font.Face
+	canTransition  bool // Prevent multiple transitions
+	selectionDelay float64
 }
 
 type Character struct {
@@ -51,7 +52,8 @@ func NewGame(kernel *core.GameKernel) *Game {
 			{Name: "Character 1", Speed: 1, Health: 100},
 			{Name: "Character 2", Speed: 2, Health: 200},
 		},
-		gameFont: gameFont,
+		selectionDelay: 0,
+		gameFont:       gameFont,
 	}
 }
 
@@ -68,20 +70,34 @@ func (g *Game) Update() error {
 		}
 
 	case CharacterSelectState:
-		if ebiten.IsKeyPressed(ebiten.KeyArrowRight) {
-			g.selectedChar = (g.selectedChar + 1) % len(g.characters)
-		}
-		if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) {
-			g.selectedChar--
-			if g.selectedChar < 0 {
-				g.selectedChar = len(g.characters) - 1
+		g.kernel.Update()
+
+		g.selectionDelay += g.kernel.DeltaTime
+
+		if g.selectionDelay > 0.05 {
+			if ebiten.IsKeyPressed(ebiten.KeyArrowRight) {
+				g.selectedChar = (g.selectedChar + 1) % len(g.characters)
+				g.selectionDelay = 0
 			}
-		}
-		if g.canTransition && ebiten.IsKeyPressed(ebiten.KeyEnter) {
-			g.currentState = PlayingState
-			g.canTransition = false
-			// Signal game start with selected character
-			g.kernel.EventBus.Publish("StartGame", g.characters[g.selectedChar])
+
+			if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) {
+				g.selectedChar--
+
+				if g.selectedChar < 0 {
+					g.selectedChar = len(g.characters) - 1
+				}
+
+				g.selectionDelay = 0
+			}
+
+			if g.canTransition && ebiten.IsKeyPressed(ebiten.KeyEnter) {
+				g.currentState = PlayingState
+				g.canTransition = false
+
+				g.kernel.EventBus.Publish("StartGame", g.characters[g.selectedChar])
+
+				g.selectionDelay = 0
+			}
 		}
 
 	case GameOverState:
@@ -89,10 +105,6 @@ func (g *Game) Update() error {
 			g.currentState = MenuState
 			g.canTransition = false
 		}
-	}
-
-	if g.currentState == PlayingState {
-		return g.kernel.Update()
 	}
 
 	return nil
@@ -105,12 +117,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	case CharacterSelectState:
 		text.Draw(screen, "Select Character:", g.gameFont, 300, 150, color.White)
+
 		for i, char := range g.characters {
 			col := color.White
+
 			if i == g.selectedChar {
-				col = color.Gray16{233}
+				col = color.Gray16{200}
 			}
-			text.Draw(screen, char.Name, g.gameFont, 300, 200, col)
+
+			text.Draw(screen, char.Name, g.gameFont, 300, 200+(i*30), col)
 		}
 
 	case GameOverState:

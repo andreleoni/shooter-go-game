@@ -39,14 +39,12 @@ func (k *GameKernel) Update() error {
 	frameTime := currentTime.Sub(k.lastUpdate).Seconds()
 	k.lastUpdate = currentTime
 
-	// Prevent spiral of death with max steps
 	if frameTime > 0.25 {
 		frameTime = 0.25
 	}
 
 	k.accumulator += frameTime
 
-	// Update with fixed timestep
 	steps := 0
 	for k.accumulator >= FixedTimeStep && steps < MaxSteps {
 		k.DeltaTime = FixedTimeStep

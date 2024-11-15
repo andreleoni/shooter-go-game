@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"game/internal/core"
 	"game/internal/core/game"
 	"game/internal/plugins/bullet"
@@ -20,6 +21,8 @@ func main() {
 	gameInstance := game.NewGame(kernel)
 
 	kernel.EventBus.Subscribe("StartGame", func(data interface{}) {
+		fmt.Println("Game started", data)
+
 		playerPlugin := player.NewPlayerPlugin()
 		cameraPlugin := camera.NewCameraPlugin(playerPlugin)
 		enemyPlugin := enemy.NewEnemyPlugin(playerPlugin)
