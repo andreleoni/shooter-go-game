@@ -78,6 +78,7 @@ func (p *PlayerPlugin) Draw(screen *ebiten.Image) {
 	cameraPlugin := p.kernel.PluginManager.GetPlugin("CameraSystem").(*camera.CameraPlugin)
 	cameraX, cameraY := cameraPlugin.GetPosition()
 
+	// ebitenutil.DrawRect(screen, p.x, p.y, 20, 20, color.RGBA{255, 0, 0, 255})
 	screenX := p.x - cameraX
 	screenY := p.y - cameraY
 

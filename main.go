@@ -31,12 +31,12 @@ func main() {
 		combatPlugin := combat.NewCombatPlugin(bulletPlugin, enemyPlugin)
 		obstaclePlugin := obstacle.NewObstaclePlugin()
 
-		kernel.PluginManager.Register(playerPlugin)
-		kernel.PluginManager.Register(bulletPlugin)
-		kernel.PluginManager.Register(enemyPlugin)
-		kernel.PluginManager.Register(combatPlugin)
-		kernel.PluginManager.Register(obstaclePlugin)
-		kernel.PluginManager.Register(cameraPlugin)
+		kernel.PluginManager.Register(playerPlugin, 0)
+		kernel.PluginManager.Register(bulletPlugin, 1)
+		kernel.PluginManager.Register(enemyPlugin, 2)
+		kernel.PluginManager.Register(combatPlugin, 3)
+		kernel.PluginManager.Register(obstaclePlugin, 4)
+		kernel.PluginManager.Register(cameraPlugin, 5)
 
 		playerPlugin.Init(kernel)
 		bulletPlugin.Init(kernel)
