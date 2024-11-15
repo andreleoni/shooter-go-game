@@ -71,15 +71,15 @@ func (ep *EnemyPlugin) Update() error {
 				desiredY := dy * enemy.Speed * ep.kernel.DeltaTime
 
 				// Check for obstacles and steer around them
-				if !obstaclePlugin.CheckCollisionRect(enemy.X+desiredX, enemy.Y+desiredY, 20, 20) {
+				if !obstaclePlugin.CheckCollisionRect(enemy.X+desiredX, enemy.Y+desiredY, enemy.Width, enemy.Height) {
 					enemy.X += desiredX
 					enemy.Y += desiredY
 				} else {
 					// Simple obstacle avoidance by steering to the side
-					if !obstaclePlugin.CheckCollisionRect(enemy.X-desiredY, enemy.Y+desiredX, 20, 20) {
+					if !obstaclePlugin.CheckCollisionRect(enemy.X-desiredY, enemy.Y+desiredX, enemy.Width, enemy.Height) {
 						enemy.X -= desiredY
 						enemy.Y += desiredX
-					} else if !obstaclePlugin.CheckCollisionRect(enemy.X+desiredY, enemy.Y-desiredX, 20, 20) {
+					} else if !obstaclePlugin.CheckCollisionRect(enemy.X+desiredY, enemy.Y-desiredX, enemy.Width, enemy.Height) {
 						enemy.X += desiredY
 						enemy.Y -= desiredX
 					} else {
@@ -92,7 +92,7 @@ func (ep *EnemyPlugin) Update() error {
 				// Check for collisions with other enemies
 				for j, otherEnemy := range ep.enemies {
 					if i != j && otherEnemy.Active {
-						if math.Abs(enemy.X-otherEnemy.X) < 20 && math.Abs(enemy.Y-otherEnemy.Y) < 20 {
+						if math.Abs(enemy.X-otherEnemy.X) < enemy.Width && math.Abs(enemy.Y-otherEnemy.Y) < enemy.Height {
 							// Adjust position to avoid collision
 							enemy.X = oldX
 							enemy.Y = oldY
@@ -117,14 +117,15 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 			screenY := enemy.Y - cameraY
 
 			// Only draw if on screen
-			if screenX >= -20 && screenX <= constants.ScreenWidth+20 &&
-				screenY >= -20 && screenY <= constants.ScreenHeight+20 {
+			if screenX >= -enemy.Width && screenX <= constants.ScreenWidth+enemy.Width &&
+				screenY >= -enemy.Height && screenY <= constants.ScreenHeight+enemy.Height {
+
 				ebitenutil.DrawRect(
 					screen,
 					screenX,
 					screenY,
-					20,
-					20,
+					enemy.Width,
+					enemy.Height,
 					color.RGBA{255, 0, 0, 255},
 				)
 			}
