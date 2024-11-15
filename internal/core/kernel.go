@@ -1,6 +1,8 @@
+// internal/core/kernel.go
 package core
 
 import (
+	"game/internal/core/eventbus"
 	"sync"
 	"time"
 )
@@ -12,6 +14,7 @@ const (
 
 type GameKernel struct {
 	PluginManager *PluginManager
+	EventBus      *eventbus.EventBus
 	TimeScale     float64
 	DeltaTime     float64
 	accumulator   float64
@@ -22,6 +25,7 @@ type GameKernel struct {
 func NewGameKernel() *GameKernel {
 	return &GameKernel{
 		PluginManager: NewPluginManager(),
+		EventBus:      eventbus.NewEventBus(),
 		TimeScale:     1.0,
 		lastUpdate:    time.Now(),
 	}
@@ -32,8 +36,29 @@ func (k *GameKernel) Update() error {
 	defer k.mu.Unlock()
 
 	currentTime := time.Now()
-	k.DeltaTime = currentTime.Sub(k.lastUpdate).Seconds() * k.TimeScale
+	frameTime := currentTime.Sub(k.lastUpdate).Seconds()
 	k.lastUpdate = currentTime
 
-	return k.PluginManager.UpdateAll()
+	// Prevent spiral of death with max steps
+	if frameTime > 0.25 {
+		frameTime = 0.25
+	}
+
+	k.accumulator += frameTime
+
+	// Update with fixed timestep
+	steps := 0
+	for k.accumulator >= FixedTimeStep && steps < MaxSteps {
+		k.DeltaTime = FixedTimeStep
+		if err := k.PluginManager.UpdateAll(); err != nil {
+			return err
+		}
+		k.accumulator -= FixedTimeStep
+		steps++
+	}
+
+	// Store leftover time
+	k.DeltaTime = k.accumulator
+
+	return nil
 }
