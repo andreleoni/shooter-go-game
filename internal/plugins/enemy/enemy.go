@@ -2,6 +2,7 @@ package enemy
 
 import (
 	"fmt"
+	"game/internal/animation"
 	"game/internal/constants"
 	"game/internal/core"
 	"game/internal/plugins/camera"
@@ -11,8 +12,10 @@ import (
 	"game/internal/plugins/obstacle"
 	"game/internal/plugins/player"
 	"image/color"
+	"log"
 	"math"
 	"math/rand"
+	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -23,6 +26,7 @@ type EnemyPlugin struct {
 	enemies      []*entity.Enemy
 	spawnTimer   float64
 	playerPlugin *player.PlayerPlugin
+	animation    *animation.Animation
 }
 
 func NewEnemyPlugin(playerPlugin *player.PlayerPlugin) *EnemyPlugin {
@@ -39,6 +43,16 @@ func (ep *EnemyPlugin) ID() string {
 
 func (ep *EnemyPlugin) Init(kernel *core.GameKernel) error {
 	ep.kernel = kernel
+
+	ep.animation = animation.NewAnimation(0.01)
+	err := ep.animation.LoadFromJSON(
+		"assets/images/player/gunner/run/tileset.json",
+		"assets/images/player/gunner/run/tileset.png")
+
+	if err != nil {
+		log.Fatal("Failed to load enemy animation:", err)
+	}
+
 	return nil
 }
 
@@ -58,6 +72,8 @@ func (ep *EnemyPlugin) Update() error {
 			ep.moveTowardsPlayer(enemy, playerX, playerY, obstaclePlugin)
 		}
 	}
+
+	ep.animation.Update(ep.kernel.DeltaTime)
 
 	return nil
 }
@@ -88,14 +104,18 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 			if screenX >= -enemy.Width && screenX <= constants.ScreenWidth+enemy.Width &&
 				screenY >= -enemy.Height && screenY <= constants.ScreenHeight+enemy.Height {
 
-				ebitenutil.DrawRect(
-					screen,
-					screenX,
-					screenY,
-					enemy.Width,
-					enemy.Height,
-					color.RGBA{255, 0, 0, 255},
-				)
+				if os.Getenv("DEBUG") == "true" {
+					ebitenutil.DrawRect(
+						screen,
+						screenX,
+						screenY,
+						enemy.Width,
+						enemy.Height,
+						color.RGBA{255, 0, 0, 255},
+					)
+				}
+
+				ep.animation.Draw(screen, screenX, screenY, true)
 			}
 		}
 	}
