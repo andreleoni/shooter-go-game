@@ -105,6 +105,9 @@ func (g *Game) Update() error {
 			g.currentState = MenuState
 			g.canTransition = false
 		}
+
+	case PlayingState:
+		g.kernel.Update()
 	}
 
 	return nil

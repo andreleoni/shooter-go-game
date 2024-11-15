@@ -22,6 +22,7 @@ func main() {
 
 	kernel.EventBus.Subscribe("StartGame", func(data interface{}) {
 		fmt.Println("Game started", data)
+		// Level design com apenas os plugins necessários para aquele level
 
 		playerPlugin := player.NewPlayerPlugin()
 		cameraPlugin := camera.NewCameraPlugin(playerPlugin)
