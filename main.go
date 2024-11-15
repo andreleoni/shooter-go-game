@@ -7,6 +7,7 @@ import (
 	"game/internal/plugins/camera"
 	"game/internal/plugins/combat"
 	"game/internal/plugins/enemy"
+	"game/internal/plugins/menu"
 	"game/internal/plugins/obstacle"
 	"game/internal/plugins/player"
 	"log"
@@ -33,7 +34,8 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 func main() {
 	kernel := core.NewGameKernel()
 
-	// Register plugins
+	menuPlugin := menu.NewMenuPlugin()
+
 	playerPlugin := player.NewPlayerPlugin()
 	cameraPlugin := camera.NewCameraPlugin(playerPlugin)
 	enemyPlugin := enemy.NewEnemyPlugin(playerPlugin)
@@ -41,6 +43,7 @@ func main() {
 	combatPlugin := combat.NewCombatPlugin(bulletPlugin, enemyPlugin)
 	obstaclePlugin := obstacle.NewObstaclePlugin()
 
+	kernel.PluginManager.Register(menuPlugin)
 	kernel.PluginManager.Register(playerPlugin)
 	kernel.PluginManager.Register(bulletPlugin)
 	kernel.PluginManager.Register(enemyPlugin)
@@ -48,6 +51,7 @@ func main() {
 	kernel.PluginManager.Register(obstaclePlugin)
 	kernel.PluginManager.Register(cameraPlugin)
 
+	menuPlugin.Init(kernel)
 	playerPlugin.Init(kernel)
 	bulletPlugin.Init(kernel)
 	enemyPlugin.Init(kernel)
