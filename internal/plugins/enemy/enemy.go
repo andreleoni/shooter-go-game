@@ -53,12 +53,12 @@ func (ep *EnemyPlugin) Update() error {
 	playerX, playerY := ep.playerPlugin.GetPosition()
 	obstaclePlugin := ep.kernel.PluginManager.GetPlugin("ObstacleSystem").(*obstacle.ObstaclePlugin)
 
-	for _, enemy := range ep.enemies {
+	for i, enemy := range ep.enemies {
 		if enemy.Active {
 			// Store current position
 			oldX, oldY := enemy.X, enemy.Y
 
-			// Calculate movement
+			// Calculate desired velocity towards player
 			dx := playerX - enemy.X
 			dy := playerY - enemy.Y
 			distance := math.Sqrt(dx*dx + dy*dy)
@@ -67,21 +67,43 @@ func (ep *EnemyPlugin) Update() error {
 				dx /= distance
 				dy /= distance
 
-				newX := enemy.X + dx*enemy.Speed*ep.kernel.DeltaTime
-				newY := enemy.Y + dy*enemy.Speed*ep.kernel.DeltaTime
+				desiredX := dx * enemy.Speed * ep.kernel.DeltaTime
+				desiredY := dy * enemy.Speed * ep.kernel.DeltaTime
 
-				// Check collision with enemy size (20x20)
-				if !obstaclePlugin.CheckCollisionRect(newX, newY, 20, 20) {
-					enemy.X = newX
-					enemy.Y = newY
+				// Check for obstacles and steer around them
+				if !obstaclePlugin.CheckCollisionRect(enemy.X+desiredX, enemy.Y+desiredY, 20, 20) {
+					enemy.X += desiredX
+					enemy.Y += desiredY
 				} else {
-					// Revert position if collision detected
-					enemy.X = oldX
-					enemy.Y = oldY
+					// Simple obstacle avoidance by steering to the side
+					if !obstaclePlugin.CheckCollisionRect(enemy.X-desiredY, enemy.Y+desiredX, 20, 20) {
+						enemy.X -= desiredY
+						enemy.Y += desiredX
+					} else if !obstaclePlugin.CheckCollisionRect(enemy.X+desiredY, enemy.Y-desiredX, 20, 20) {
+						enemy.X += desiredY
+						enemy.Y -= desiredX
+					} else {
+						// Revert position if no clear path is found
+						enemy.X = oldX
+						enemy.Y = oldY
+					}
+				}
+
+				// Check for collisions with other enemies
+				for j, otherEnemy := range ep.enemies {
+					if i != j && otherEnemy.Active {
+						if math.Abs(enemy.X-otherEnemy.X) < 20 && math.Abs(enemy.Y-otherEnemy.Y) < 20 {
+							// Adjust position to avoid collision
+							enemy.X = oldX
+							enemy.Y = oldY
+							break
+						}
+					}
 				}
 			}
 		}
 	}
+
 	return nil
 }
 func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
