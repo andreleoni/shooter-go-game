@@ -2,9 +2,11 @@
 package bullet
 
 import (
+	"game/internal/constants"
 	"game/internal/core"
 	"game/internal/plugins"
 	bulletentities "game/internal/plugins/bullet/entities"
+	"game/internal/plugins/camera"
 	"image/color"
 	"math"
 
@@ -39,9 +41,9 @@ func (bp *BulletPlugin) Update() error {
 
 			// Deactivate if off screen
 			if bullet.X < 0 ||
-				bullet.X > 800 ||
+				bullet.X > constants.WorldHeight ||
 				bullet.Y < 0 ||
-				bullet.Y > 600 {
+				bullet.Y > constants.WorldWidth {
 
 				bullet.Active = false
 			}
@@ -51,9 +53,27 @@ func (bp *BulletPlugin) Update() error {
 }
 
 func (bp *BulletPlugin) Draw(screen *ebiten.Image) {
+	cameraPlugin := bp.kernel.PluginManager.GetPlugin("CameraSystem").(*camera.CameraPlugin)
+	cameraX, cameraY := cameraPlugin.GetPosition()
+
 	for _, bullet := range bp.bullets {
 		if bullet.Active {
-			ebitenutil.DrawRect(screen, bullet.X, bullet.Y, 5, 10, color.RGBA{255, 0, 0, 255})
+			// Draw bullet relative to camera position
+			screenX := bullet.X - cameraX
+			screenY := bullet.Y - cameraY
+
+			// Only draw if on screen
+			if screenX >= -5 && screenX <= constants.ScreenWidth+5 &&
+				screenY >= -5 && screenY <= constants.ScreenHeight+5 {
+				ebitenutil.DrawRect(
+					screen,
+					screenX,
+					screenY,
+					5,
+					5,
+					color.RGBA{255, 255, 255, 255},
+				)
+			}
 		}
 	}
 }

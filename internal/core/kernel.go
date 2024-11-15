@@ -5,11 +5,16 @@ import (
 	"time"
 )
 
+const (
+	FixedTimeStep = 1.0 / 60.0 // 60 FPS
+	MaxSteps      = 5          // Prevent spiral of death
+)
+
 type GameKernel struct {
 	PluginManager *PluginManager
-	EventBus      *EventBus
 	TimeScale     float64
 	DeltaTime     float64
+	accumulator   float64
 	lastUpdate    time.Time
 	mu            sync.Mutex
 }
@@ -17,7 +22,6 @@ type GameKernel struct {
 func NewGameKernel() *GameKernel {
 	return &GameKernel{
 		PluginManager: NewPluginManager(),
-		EventBus:      NewEventBus(),
 		TimeScale:     1.0,
 		lastUpdate:    time.Now(),
 	}

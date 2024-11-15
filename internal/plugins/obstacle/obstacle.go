@@ -2,7 +2,9 @@
 package obstacle
 
 import (
+	"game/internal/constants"
 	"game/internal/core"
+	"game/internal/plugins/camera"
 	"image/color"
 	"math/rand"
 
@@ -35,38 +37,56 @@ func (op *ObstaclePlugin) ID() string {
 
 func (op *ObstaclePlugin) Init(kernel *core.GameKernel) error {
 	op.kernel = kernel
+
+	op.SpawnRandomObstacle()
+	op.SpawnRandomObstacle()
+	op.SpawnRandomObstacle()
+	op.SpawnRandomObstacle()
+	op.SpawnRandomObstacle()
+	op.SpawnRandomObstacle()
+	op.SpawnRandomObstacle()
+	op.SpawnRandomObstacle()
+	op.SpawnRandomObstacle()
+	op.SpawnRandomObstacle()
+	op.SpawnRandomObstacle()
+
 	return nil
 }
 
 func (op *ObstaclePlugin) Update() error {
-	op.spawnTimer += op.kernel.DeltaTime
-	if op.spawnTimer >= 3.0 { // Spawn every 3 seconds
-		op.SpawnRandomObstacle()
-		op.spawnTimer = 0
-	}
 	return nil
 }
 
 func (op *ObstaclePlugin) Draw(screen *ebiten.Image) {
+	cameraPlugin := op.kernel.PluginManager.GetPlugin("CameraSystem").(*camera.CameraPlugin)
+	cameraX, cameraY := cameraPlugin.GetPosition()
+
 	for _, obstacle := range op.obstacles {
-		if obstacle.Active {
-			ebitenutil.DrawRect(screen,
-				obstacle.X,
-				obstacle.Y,
+		// Draw obstacle relative to camera position
+		screenX := obstacle.X - cameraX
+		screenY := obstacle.Y - cameraY
+
+		// Only draw if on screen
+		if screenX >= -obstacle.Width && screenX <= constants.ScreenWidth+obstacle.Width &&
+			screenY >= -obstacle.Height && screenY <= constants.ScreenHeight+obstacle.Height {
+			ebitenutil.DrawRect(
+				screen,
+				screenX,
+				screenY,
 				obstacle.Width,
 				obstacle.Height,
-				color.RGBA{100, 100, 100, 255})
+				color.RGBA{0, 255, 0, 255},
+			)
 		}
 	}
 }
-
 func (op *ObstaclePlugin) SpawnRandomObstacle() {
 	width := 30.0 + rand.Float64()*50.0  // Random width between 30-80
 	height := 30.0 + rand.Float64()*50.0 // Random height between 30-80
 
 	obstacle := &Obstacle{
-		X:      rand.Float64() * (800 - width),
-		Y:      rand.Float64() * (600 - height),
+		X:      rand.Float64() * (constants.WorldWidth - width),
+		Y:      rand.Float64() * (constants.WorldHeight - height),
 		Width:  width,
 		Height: height,
 		Active: true,

@@ -15,3 +15,11 @@ type EnemyPlugin interface {
 	Spawn(x, y float64)
 	GetEnemies() []*enemyentity.Enemy
 }
+
+type PlayerPlugin interface {
+	ID() string
+	Init(kernel *core.GameKernel) error
+	Update() error
+	Draw(screen *ebiten.Image)
+	GetPosition() (float64, float64)
+}

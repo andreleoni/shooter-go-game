@@ -1,8 +1,10 @@
 package main
 
 import (
+	"game/internal/constants"
 	"game/internal/core"
 	"game/internal/plugins/bullet"
+	"game/internal/plugins/camera"
 	"game/internal/plugins/combat"
 	"game/internal/plugins/enemy"
 	"game/internal/plugins/obstacle"
@@ -25,7 +27,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return 800, 600
+	return constants.ScreenWidth, constants.ScreenHeight
 }
 
 func main() {
@@ -33,6 +35,7 @@ func main() {
 
 	// Register plugins
 	playerPlugin := player.NewPlayerPlugin()
+	cameraPlugin := camera.NewCameraPlugin(playerPlugin)
 	enemyPlugin := enemy.NewEnemyPlugin(playerPlugin)
 	bulletPlugin := bullet.NewBulletPlugin()
 	combatPlugin := combat.NewCombatPlugin(bulletPlugin, enemyPlugin)
@@ -43,12 +46,14 @@ func main() {
 	kernel.PluginManager.Register(enemyPlugin)
 	kernel.PluginManager.Register(combatPlugin)
 	kernel.PluginManager.Register(obstaclePlugin)
+	kernel.PluginManager.Register(cameraPlugin)
 
 	playerPlugin.Init(kernel)
 	bulletPlugin.Init(kernel)
 	enemyPlugin.Init(kernel)
 	combatPlugin.Init(kernel)
 	obstaclePlugin.Init(kernel)
+	cameraPlugin.Init(kernel)
 
 	game := &Game{kernel: kernel}
 

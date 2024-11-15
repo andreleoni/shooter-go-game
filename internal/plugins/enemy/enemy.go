@@ -1,7 +1,10 @@
 package enemy
 
 import (
+	"fmt"
+	"game/internal/constants"
 	"game/internal/core"
+	"game/internal/plugins/camera"
 	entity "game/internal/plugins/enemy/entities"
 	"game/internal/plugins/enemy/factory"
 	"game/internal/plugins/enemy/templates"
@@ -41,6 +44,7 @@ func (ep *EnemyPlugin) Init(kernel *core.GameKernel) error {
 
 func (ep *EnemyPlugin) Update() error {
 	ep.spawnTimer += ep.kernel.DeltaTime
+
 	if ep.spawnTimer >= 1.0 {
 		ep.Spawn(rand.Float64()*800, 0)
 		ep.spawnTimer = 0
@@ -81,14 +85,33 @@ func (ep *EnemyPlugin) Update() error {
 	return nil
 }
 func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
+	cameraPlugin := ep.kernel.PluginManager.GetPlugin("CameraSystem").(*camera.CameraPlugin)
+	cameraX, cameraY := cameraPlugin.GetPosition()
+
 	for _, enemy := range ep.enemies {
 		if enemy.Active {
-			ebitenutil.DrawRect(screen, enemy.X, enemy.Y, 20, 20, color.RGBA{255, 0, 0, 255})
+			// Draw enemy relative to camera position
+			screenX := enemy.X - cameraX
+			screenY := enemy.Y - cameraY
+
+			// Only draw if on screen
+			if screenX >= -20 && screenX <= constants.ScreenWidth+20 &&
+				screenY >= -20 && screenY <= constants.ScreenHeight+20 {
+				ebitenutil.DrawRect(
+					screen,
+					screenX,
+					screenY,
+					20,
+					20,
+					color.RGBA{255, 0, 0, 255},
+				)
+			}
 		}
 	}
 }
 
 func (ep *EnemyPlugin) Spawn(x, y float64) {
+	fmt.Println("Spawn enemy at", x, y)
 	ep.enemies = append(ep.enemies, factory.CreateEnemy(templates.TankEnemy, x, y))
 }
 
