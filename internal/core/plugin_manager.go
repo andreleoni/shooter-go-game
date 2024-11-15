@@ -3,7 +3,6 @@ package core
 import (
 	"fmt"
 	"sort"
-	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -50,8 +49,6 @@ func (pm *PluginManager) UpdateAll() error {
 }
 
 func (pm *PluginManager) DrawAll(screen *ebiten.Image) {
-	time.Sleep(100 * time.Millisecond)
-
 	for _, plugin := range retrieveSortedPlugins(pm.plugins) {
 		plugin.plugin.Draw(screen)
 	}

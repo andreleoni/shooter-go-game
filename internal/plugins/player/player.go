@@ -6,12 +6,9 @@ import (
 	"game/internal/plugins/bullet"
 	"game/internal/plugins/camera"
 	"game/internal/plugins/obstacle"
-	"image/color"
 	"log"
-	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 type PlayerPlugin struct {
@@ -99,17 +96,6 @@ func (p *PlayerPlugin) Draw(screen *ebiten.Image) {
 
 	screenX := p.x - cameraX
 	screenY := p.y - cameraY
-
-	if os.Getenv("DEBUG") == "true" {
-		ebitenutil.DrawRect(
-			screen,
-			screenX,
-			screenY,
-			p.width,
-			p.height,
-			color.RGBA{255, 0, 0, 255},
-		)
-	}
 
 	p.animation.Draw(screen, screenX, screenY, !p.facingRight)
 }

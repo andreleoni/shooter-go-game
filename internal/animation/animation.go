@@ -1,14 +1,19 @@
 package animation
 
 import (
+	"embed"
 	"encoding/json"
 	"image"
 	"image/color"
-	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+
+	_ "embed"
 )
+
+//go:embed assets/*
+var assets embed.FS
 
 type Frame struct {
 	Filename         string `json:"filename"`
@@ -51,7 +56,7 @@ func NewAnimation(frameDelay float64) *Animation {
 
 func (a *Animation) LoadFromJSON(jsonPath, tilesetPath string) error {
 	// Carregar o tileset
-	file, err := os.Open(tilesetPath)
+	file, err := assets.Open(tilesetPath)
 	if err != nil {
 		return err
 	}
@@ -65,7 +70,7 @@ func (a *Animation) LoadFromJSON(jsonPath, tilesetPath string) error {
 	tileset := ebiten.NewImageFromImage(img)
 
 	// Carregar e parsear o arquivo JSON
-	jsonFile, err := os.Open(jsonPath)
+	jsonFile, err := assets.Open(jsonPath)
 	if err != nil {
 		return err
 	}

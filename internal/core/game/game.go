@@ -2,12 +2,11 @@
 package game
 
 import (
+	"game/internal/animation"
 	"game/internal/constants"
 	"game/internal/core"
-	"image"
 	"image/color"
 	"log"
-	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text"
@@ -25,7 +24,7 @@ type Game struct {
 	canTransition  bool // Prevent multiple transitions
 	selectionDelay float64
 
-	wallpaper *ebiten.Image
+	wallpaper *animation.Animation
 }
 
 type Character struct {
@@ -49,16 +48,13 @@ func NewGame(kernel *core.GameKernel) *Game {
 		log.Fatal(err)
 	}
 
-	// Load the wallpaper image
-	file, err := os.Open("assets/images/menu/wallpaper.png")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
+	animation := animation.NewAnimation(0.1)
 
-	img, _, err := image.Decode(file)
+	err = animation.LoadFromJSON(
+		"assets/images/menu/tileset.json",
+		"assets/images/menu/tileset.png")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to wallpaper load animation:", err)
 	}
 
 	return &Game{
@@ -70,7 +66,7 @@ func NewGame(kernel *core.GameKernel) *Game {
 		},
 		selectionDelay: 0,
 		gameFont:       gameFont,
-		wallpaper:      ebiten.NewImageFromImage(img),
+		wallpaper:      animation,
 	}
 }
 
@@ -79,6 +75,8 @@ func (g *Game) Update() error {
 		g.canTransition = true
 	}
 
+	g.selectionDelay += g.kernel.DeltaTime
+
 	switch g.currentState {
 	case MenuState:
 		if g.canTransition && ebiten.IsKeyPressed(ebiten.KeyEnter) {
@@ -86,10 +84,10 @@ func (g *Game) Update() error {
 			g.canTransition = false
 		}
 
+		g.wallpaper.Update(g.kernel.DeltaTime)
+
 	case CharacterSelectState:
 		g.kernel.Update()
-
-		g.selectionDelay += g.kernel.DeltaTime
 
 		if g.selectionDelay > 0.05 {
 			if ebiten.IsKeyPressed(ebiten.KeyArrowRight) {
@@ -117,6 +115,8 @@ func (g *Game) Update() error {
 			}
 		}
 
+		g.wallpaper.Update(g.kernel.DeltaTime)
+
 	case GameOverState:
 		if g.canTransition && ebiten.IsKeyPressed(ebiten.KeyEnter) {
 			g.currentState = MenuState
@@ -134,33 +134,35 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	switch g.currentState {
 	case MenuState:
 		// Calculate the scale to fit the wallpaper to the screen width
-		screenWidth, screenHeight := screen.Size()
-		wallpaperWidth, wallpaperHeight := g.wallpaper.Size()
-		scaleX := float64(screenWidth) / float64(wallpaperWidth)
-		scaleY := float64(screenHeight) / float64(wallpaperHeight)
+		// screenWidth, screenHeight := screen.Size()
+		// wallpaperWidth, wallpaperHeight := g.wallpaper.Size()
+		// scaleX := float64(screenWidth) / float64(wallpaperWidth)
+		// scaleY := float64(screenHeight) / float64(wallpaperHeight)
 
-		// Create options to scale the wallpaper
-		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Scale(scaleX, scaleY)
+		// // Create options to scale the wallpaper
+		// op := &ebiten.DrawImageOptions{}
+		// op.GeoM.Scale(scaleX, scaleY)
 
 		// Draw the wallpaper
-		screen.DrawImage(g.wallpaper, op)
+		g.wallpaper.Draw(screen, 0, 0, false)
 
 		text.Draw(screen, "Press ENTER to Start", g.gameFont, 300, 200, color.White)
 
 	case CharacterSelectState:
 		// Calculate the scale to fit the wallpaper to the screen width
-		screenWidth, screenHeight := screen.Size()
-		wallpaperWidth, wallpaperHeight := g.wallpaper.Size()
-		scaleX := float64(screenWidth) / float64(wallpaperWidth)
-		scaleY := float64(screenHeight) / float64(wallpaperHeight)
+		// screenWidth, screenHeight := screen.Size()
+		// wallpaperWidth, wallpaperHeight := g.wallpaper.Size()
+		// scaleX := float64(screenWidth) / float64(wallpaperWidth)
+		// scaleY := float64(screenHeight) / float64(wallpaperHeight)
 
-		// Create options to scale the wallpaper
-		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Scale(scaleX, scaleY)
+		// // Create options to scale the wallpaper
+		// op := &ebiten.DrawImageOptions{}
+		// op.GeoM.Scale(scaleX, scaleY)
 
 		// Draw the wallpaper
-		screen.DrawImage(g.wallpaper, op)
+		// screen.DrawImage(g.wallpaper, op)
+
+		g.wallpaper.Draw(screen, 0, 0, false)
 
 		text.Draw(screen, "Select Character:", g.gameFont, 300, 150, color.White)
 

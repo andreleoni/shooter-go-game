@@ -11,14 +11,11 @@ import (
 	"game/internal/plugins/enemy/templates"
 	"game/internal/plugins/obstacle"
 	"game/internal/plugins/player"
-	"image/color"
 	"log"
 	"math"
 	"math/rand"
-	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 type EnemyPlugin struct {
@@ -103,17 +100,6 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 			// Only draw if on screen
 			if screenX >= -enemy.Width && screenX <= constants.ScreenWidth+enemy.Width &&
 				screenY >= -enemy.Height && screenY <= constants.ScreenHeight+enemy.Height {
-
-				if os.Getenv("DEBUG") == "true" {
-					ebitenutil.DrawRect(
-						screen,
-						screenX,
-						screenY,
-						enemy.Width,
-						enemy.Height,
-						color.RGBA{255, 0, 0, 255},
-					)
-				}
 
 				ep.animation.Draw(screen, screenX, screenY, true)
 			}
