@@ -38,17 +38,19 @@ func (pm *PluginManager) Register(plugin Plugin, priority int) {
 
 func (pm *PluginManager) UpdateAll() error {
 	for _, plugin := range retrieveSortedPlugins(pm.plugins) {
-		fmt.Println(plugin.plugin.ID())
-
 		if err := plugin.plugin.Update(); err != nil {
 			return err
 		}
 	}
 
+	fmt.Println("##### ATUALIZADOOOOOO")
+
 	return nil
 }
 
 func (pm *PluginManager) DrawAll(screen *ebiten.Image) {
+	fmt.Println("##### DRAWWWWW")
+
 	for _, plugin := range retrieveSortedPlugins(pm.plugins) {
 		plugin.plugin.Draw(screen)
 	}
@@ -68,7 +70,6 @@ func retrieveSortedPlugins(plugins map[string]RegisteredPlugin) []RegisteredPlug
 	sort.Slice(arrayPlugins, func(i, j int) bool {
 		return arrayPlugins[i].priority < arrayPlugins[j].priority
 	})
-	fmt.Println(arrayPlugins)
 
 	return arrayPlugins
 }
