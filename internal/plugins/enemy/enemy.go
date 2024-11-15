@@ -75,15 +75,28 @@ func (ep *EnemyPlugin) Update() error {
 					enemy.X += desiredX
 					enemy.Y += desiredY
 				} else {
-					// Simple obstacle avoidance by steering to the side
-					if !obstaclePlugin.CheckCollisionRect(enemy.X-desiredY, enemy.Y+desiredX, enemy.Width, enemy.Height) {
-						enemy.X -= desiredY
-						enemy.Y += desiredX
-					} else if !obstaclePlugin.CheckCollisionRect(enemy.X+desiredY, enemy.Y-desiredX, enemy.Width, enemy.Height) {
-						enemy.X += desiredY
-						enemy.Y -= desiredX
-					} else {
-						// Revert position if no clear path is found
+					// Enhanced obstacle avoidance by trying multiple directions
+					directions := [][2]float64{
+						{-desiredY, desiredX},  // Left
+						{desiredY, -desiredX},  // Right
+						{-desiredX, -desiredY}, // Backward
+					}
+
+					moved := false
+
+					for _, dir := range directions {
+						if !obstaclePlugin.CheckCollisionRect(enemy.X+dir[0], enemy.Y+dir[1], enemy.Width, enemy.Height) {
+							enemy.X += dir[0]
+							enemy.Y += dir[1]
+
+							moved = true
+
+							break
+						}
+					}
+
+					// If no direction is found, revert to old position
+					if !moved {
 						enemy.X = oldX
 						enemy.Y = oldY
 					}
@@ -103,9 +116,9 @@ func (ep *EnemyPlugin) Update() error {
 			}
 		}
 	}
-
 	return nil
 }
+
 func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 	cameraPlugin := ep.kernel.PluginManager.GetPlugin("CameraSystem").(*camera.CameraPlugin)
 	cameraX, cameraY := cameraPlugin.GetPosition()
