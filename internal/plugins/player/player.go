@@ -25,7 +25,7 @@ func NewPlayerPlugin() *PlayerPlugin {
 	return &PlayerPlugin{
 		x:             400,
 		y:             300,
-		speed:         200,
+		speed:         200.0,
 		shootCooldown: 1.0, // 1 second between shots
 		shootTimer:    0,
 		width:         20,
@@ -45,8 +45,6 @@ func (p *PlayerPlugin) Init(kernel *core.GameKernel) error {
 func (p *PlayerPlugin) Update() error {
 	newX, newY := p.x, p.y
 
-	oldX, oldY := p.x, p.y
-
 	if ebiten.IsKeyPressed(ebiten.KeyW) {
 		newY -= p.speed * p.kernel.DeltaTime
 	}
@@ -63,8 +61,6 @@ func (p *PlayerPlugin) Update() error {
 	obstaclePlugin := p.kernel.PluginManager.GetPlugin("ObstacleSystem").(*obstacle.ObstaclePlugin)
 	if !obstaclePlugin.CheckCollisionRect(newX, newY, 20, 20) {
 		p.x, p.y = newX, newY
-	} else {
-		p.x, p.y = oldX, oldY
 	}
 
 	// Auto-shooting

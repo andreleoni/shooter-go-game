@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	FixedTimeStep = 1.0 / 60.0 // 60 FPS
-	MaxSteps      = 5          // Prevent spiral of death
+	FixedTimeStep = 1.0 / 60.0
+	MaxSteps      = 5
 )
 
 type GameKernel struct {
@@ -48,9 +48,11 @@ func (k *GameKernel) Update() error {
 	steps := 0
 	for k.accumulator >= FixedTimeStep && steps < MaxSteps {
 		k.DeltaTime = FixedTimeStep
+
 		if err := k.PluginManager.UpdateAll(); err != nil {
 			return err
 		}
+
 		k.accumulator -= FixedTimeStep
 		steps++
 	}
