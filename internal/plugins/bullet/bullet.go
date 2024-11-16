@@ -2,21 +2,22 @@
 package bullet
 
 import (
+	"game/internal/assets"
 	"game/internal/constants"
 	"game/internal/core"
 	"game/internal/plugins"
 	entities "game/internal/plugins/bullet/entities"
 	"game/internal/plugins/camera"
-	"image/color"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 type BulletPlugin struct {
 	kernel  *core.GameKernel
 	bullets []*entities.Bullet
+
+	sprite *assets.StaticSprite
 }
 
 func NewBulletPlugin() *BulletPlugin {
@@ -31,6 +32,10 @@ func (bp *BulletPlugin) ID() string {
 
 func (bp *BulletPlugin) Init(kernel *core.GameKernel) error {
 	bp.kernel = kernel
+
+	bp.sprite = assets.NewStaticSprite()
+	bp.sprite.Load("assets/images/bullets/arrow/arrow.png")
+
 	return nil
 }
 
@@ -65,14 +70,10 @@ func (bp *BulletPlugin) Draw(screen *ebiten.Image) {
 			// Only draw if on screen
 			if screenX >= -5 && screenX <= constants.ScreenWidth+5 &&
 				screenY >= -5 && screenY <= constants.ScreenHeight+5 {
-				ebitenutil.DrawRect(
-					screen,
-					screenX,
-					screenY,
-					5,
-					5,
-					color.RGBA{255, 255, 255, 255},
-				)
+
+				angle := math.Atan2(bullet.DirectionY, bullet.DirectionX)
+
+				bp.sprite.DrawAngle(screen, screenX, screenY, angle)
 			}
 		}
 	}

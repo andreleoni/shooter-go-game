@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -43,14 +42,10 @@ func (pm *PluginManager) UpdateAll() error {
 		}
 	}
 
-	fmt.Println("##### ATUALIZADOOOOOO")
-
 	return nil
 }
 
 func (pm *PluginManager) DrawAll(screen *ebiten.Image) {
-	fmt.Println("##### DRAWWWWW")
-
 	for _, plugin := range retrieveSortedPlugins(pm.plugins) {
 		plugin.plugin.Draw(screen)
 	}

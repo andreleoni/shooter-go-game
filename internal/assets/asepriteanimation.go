@@ -1,19 +1,11 @@
-package animation
+package assets
 
 import (
-	"embed"
 	"encoding/json"
 	"image"
-	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-
-	_ "embed"
 )
-
-//go:embed assets/*
-var assets embed.FS
 
 type Frame struct {
 	Filename         string `json:"filename"`
@@ -99,17 +91,20 @@ func (a *Animation) Update(deltaTime float64) {
 	}
 }
 
-func (a *Animation) Draw(screen *ebiten.Image, x, y float64, invertHorizontal bool) {
+func (a *Animation) Draw(
+	screen *ebiten.Image,
+	x, y, width, height float64,
+	invertHorizontal bool) {
+
 	op := &ebiten.DrawImageOptions{}
+
 	if invertHorizontal {
 		op.GeoM.Scale(-1, 1)
 	}
 
+	op.GeoM.Scale(width/float64(a.Frames[a.CurrentFrame].Bounds().Dx()), height/float64(a.Frames[a.CurrentFrame].Bounds().Dy()))
+
 	op.GeoM.Translate(x, y)
 
-	if len(a.Frames) == 0 {
-		ebitenutil.DrawRect(screen, x, y, 20, 20, color.RGBA{255, 0, 0, 255})
-	} else {
-		screen.DrawImage(a.Frames[a.CurrentFrame], op)
-	}
+	screen.DrawImage(a.Frames[a.CurrentFrame], op)
 }

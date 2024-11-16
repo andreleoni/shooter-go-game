@@ -12,7 +12,7 @@ type EnemyPlugin interface {
 	Init(kernel *core.GameKernel) error
 	Update() error
 	Draw(screen *ebiten.Image)
-	Spawn(x, y float64)
+	Spawn()
 	GetEnemies() []*enemyentity.Enemy
 }
 

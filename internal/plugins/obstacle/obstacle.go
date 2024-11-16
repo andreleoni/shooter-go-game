@@ -38,17 +38,17 @@ func (op *ObstaclePlugin) ID() string {
 func (op *ObstaclePlugin) Init(kernel *core.GameKernel) error {
 	op.kernel = kernel
 
-	op.SpawnRandomObstacle()
-	op.SpawnRandomObstacle()
-	op.SpawnRandomObstacle()
-	op.SpawnRandomObstacle()
-	op.SpawnRandomObstacle()
-	op.SpawnRandomObstacle()
-	op.SpawnRandomObstacle()
-	op.SpawnRandomObstacle()
-	op.SpawnRandomObstacle()
-	op.SpawnRandomObstacle()
-	op.SpawnRandomObstacle()
+	// op.SpawnRandomObstacle()
+	// op.SpawnRandomObstacle()
+	// op.SpawnRandomObstacle()
+	// op.SpawnRandomObstacle()
+	// op.SpawnRandomObstacle()
+	// op.SpawnRandomObstacle()
+	// op.SpawnRandomObstacle()
+	// op.SpawnRandomObstacle()
+	// op.SpawnRandomObstacle()
+	// op.SpawnRandomObstacle()
+	// op.SpawnRandomObstacle()
 
 	return nil
 }

@@ -1,8 +1,7 @@
 package enemy
 
 import (
-	"fmt"
-	"game/internal/animation"
+	"game/internal/assets"
 	"game/internal/constants"
 	"game/internal/core"
 	"game/internal/plugins/camera"
@@ -23,7 +22,8 @@ type EnemyPlugin struct {
 	enemies      []*entity.Enemy
 	spawnTimer   float64
 	playerPlugin *player.PlayerPlugin
-	animation    *animation.Animation
+	animation    *assets.Animation
+	staticasset  *assets.StaticSprite
 }
 
 func NewEnemyPlugin(playerPlugin *player.PlayerPlugin) *EnemyPlugin {
@@ -41,13 +41,20 @@ func (ep *EnemyPlugin) ID() string {
 func (ep *EnemyPlugin) Init(kernel *core.GameKernel) error {
 	ep.kernel = kernel
 
-	ep.animation = animation.NewAnimation(0.01)
+	ep.animation = assets.NewAnimation(0.01)
 	err := ep.animation.LoadFromJSON(
 		"assets/images/player/gunner/run/tileset.json",
 		"assets/images/player/gunner/run/tileset.png")
 
 	if err != nil {
 		log.Fatal("Failed to load enemy animation:", err)
+	}
+
+	ep.staticasset = assets.NewStaticSprite()
+	err = ep.staticasset.Load("assets/images/enemies/troll/image.png")
+
+	if err != nil {
+		log.Fatal("Failed to load enemy asset:", err)
 	}
 
 	return nil
@@ -57,7 +64,7 @@ func (ep *EnemyPlugin) Update() error {
 	ep.spawnTimer += ep.kernel.DeltaTime
 
 	if ep.spawnTimer >= 1.0 {
-		ep.Spawn(rand.Float64()*800, 0)
+		ep.Spawn()
 		ep.spawnTimer = 0
 	}
 
@@ -101,14 +108,39 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 			if screenX >= -enemy.Width && screenX <= constants.ScreenWidth+enemy.Width &&
 				screenY >= -enemy.Height && screenY <= constants.ScreenHeight+enemy.Height {
 
-				ep.animation.Draw(screen, screenX, screenY, true)
+				// ep.animation.Draw(screen, screenX, screenY, enemy.Width, enemy.Height, true)
+				ep.staticasset.Draw(screen, screenX, screenY, false)
 			}
 		}
 	}
 }
 
-func (ep *EnemyPlugin) Spawn(x, y float64) {
-	fmt.Println("Spawn enemy at", x, y)
+func (ep *EnemyPlugin) Spawn() {
+	playerX, playerY := ep.playerPlugin.GetPosition()
+
+	// Escolher uma borda aleatória (0: superior, 1: inferior, 2: esquerda, 3: direita)
+	border := rand.Intn(4)
+	var x, y float64
+
+	switch border {
+	case 0: // Superior
+		x = playerX + rand.Float64()*constants.ScreenWidth - constants.ScreenWidth/2
+		y = playerY - constants.ScreenHeight/2
+	case 1: // Inferior
+		x = playerX + rand.Float64()*constants.ScreenWidth - constants.ScreenWidth/2
+		y = playerY + constants.ScreenHeight/2
+	case 2: // Esquerda
+		x = playerX - constants.ScreenWidth/2
+		y = playerY + rand.Float64()*constants.ScreenHeight - constants.ScreenHeight/2
+	case 3: // Direita
+		x = playerX + constants.ScreenWidth/2
+		y = playerY + rand.Float64()*constants.ScreenHeight - constants.ScreenHeight/2
+	}
+
+	// Garantir que a posição de spawn esteja dentro dos limites do mundo
+	x = math.Max(0, math.Min(x, constants.WorldWidth))
+	y = math.Max(0, math.Min(y, constants.WorldHeight))
+
 	ep.enemies = append(ep.enemies, factory.CreateEnemy(templates.TankEnemy, x, y))
 }
 

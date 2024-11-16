@@ -11,7 +11,6 @@ import (
 	"game/internal/plugins/obstacle"
 	"game/internal/plugins/player"
 	"log"
-	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -45,8 +44,6 @@ func main() {
 		combatPlugin.Init(kernel)
 		obstaclePlugin.Init(kernel)
 		cameraPlugin.Init(kernel)
-
-		time.Sleep(100 * time.Millisecond)
 	})
 
 	ebiten.SetWindowSize(800, 600)

@@ -1,7 +1,7 @@
 package player
 
 import (
-	"game/internal/animation"
+	"game/internal/assets"
 	"game/internal/core"
 	"game/internal/plugins/bullet"
 	"game/internal/plugins/camera"
@@ -17,7 +17,8 @@ type PlayerPlugin struct {
 	width         float64
 	height        float64
 	speed         float64
-	animation     *animation.Animation
+	animation     *assets.Animation
+	staticsprite  *assets.StaticSprite
 	shootTimer    float64
 	shootCooldown float64
 	facingRight   bool
@@ -30,8 +31,8 @@ func NewPlayerPlugin() *PlayerPlugin {
 		speed:         200.0,
 		shootCooldown: 1.0, // 1 second between shots
 		shootTimer:    0,
-		width:         20,
-		height:        20,
+		width:         32,
+		height:        32,
 	}
 }
 
@@ -42,13 +43,10 @@ func (p *PlayerPlugin) ID() string {
 func (p *PlayerPlugin) Init(kernel *core.GameKernel) error {
 	p.kernel = kernel
 
-	p.animation = animation.NewAnimation(0.1) // Tempo entre frames (em segundos)
-	err := p.animation.LoadFromJSON(
-		"assets/images/player/gunner/run/tileset.json",
-		"assets/images/player/gunner/run/tileset.png")
-
+	p.staticsprite = assets.NewStaticSprite()
+	err := p.staticsprite.Load("assets/images/player/player.png")
 	if err != nil {
-		log.Fatal("Failed to load animation:", err)
+		log.Fatal("Failed to load player asset:", err)
 	}
 
 	return nil
@@ -85,8 +83,6 @@ func (p *PlayerPlugin) Update() error {
 		p.shootTimer = 0
 	}
 
-	p.animation.Update(p.kernel.DeltaTime)
-
 	return nil
 }
 
@@ -97,7 +93,19 @@ func (p *PlayerPlugin) Draw(screen *ebiten.Image) {
 	screenX := p.x - cameraX
 	screenY := p.y - cameraY
 
-	p.animation.Draw(screen, screenX, screenY, !p.facingRight)
+	p.staticsprite.Draw(
+		screen,
+		screenX-p.width/2,
+		screenY-p.height/2,
+		false)
+
+	// p.animation.Draw(
+	// 	screen,
+	// 	screenX-p.width/2,
+	// 	screenY-p.height/2,
+	// 	p.width,
+	// 	p.height,
+	// 	!p.facingRight)
 }
 
 func (p *PlayerPlugin) GetPosition() (float64, float64) {

@@ -2,7 +2,7 @@
 package game
 
 import (
-	"game/internal/animation"
+	"game/internal/assets"
 	"game/internal/constants"
 	"game/internal/core"
 	"image/color"
@@ -21,10 +21,12 @@ type Game struct {
 	characters     []Character
 	selectedChar   int
 	gameFont       font.Face
-	canTransition  bool // Prevent multiple transitions
+	canTransition  bool
 	selectionDelay float64
 
-	wallpaper *animation.Animation
+	wallpaper  *assets.StaticSprite
+	mapImage   *assets.StaticSprite
+	grassImage *assets.StaticSprite
 }
 
 type Character struct {
@@ -48,13 +50,25 @@ func NewGame(kernel *core.GameKernel) *Game {
 		log.Fatal(err)
 	}
 
-	animation := animation.NewAnimation(0.1)
+	wallpaper := assets.NewStaticSprite()
 
-	err = animation.LoadFromJSON(
-		"assets/images/menu/tileset.json",
-		"assets/images/menu/tileset.png")
+	err = wallpaper.Load("assets/images/menu/wallpaper.png")
 	if err != nil {
 		log.Fatal("Failed to wallpaper load animation:", err)
+	}
+
+	// Load the map image
+	mapImage := assets.NewStaticSprite()
+	err = mapImage.Load("assets/images/tileset/image.png")
+	if err != nil {
+		log.Fatal("Failed to open map image:", err)
+	}
+
+	// Load the grass image
+	grassimage := assets.NewStaticSprite()
+	err = mapImage.Load("assets/images/tileset/ground.png")
+	if err != nil {
+		log.Fatal("Failed to open map image:", err)
 	}
 
 	return &Game{
@@ -66,7 +80,9 @@ func NewGame(kernel *core.GameKernel) *Game {
 		},
 		selectionDelay: 0,
 		gameFont:       gameFont,
-		wallpaper:      animation,
+		wallpaper:      wallpaper,
+		mapImage:       mapImage,
+		grassImage:     grassimage,
 	}
 }
 
@@ -83,8 +99,6 @@ func (g *Game) Update() error {
 			g.currentState = CharacterSelectState
 			g.canTransition = false
 		}
-
-		g.wallpaper.Update(g.kernel.DeltaTime)
 
 	case CharacterSelectState:
 		g.kernel.Update()
@@ -115,8 +129,6 @@ func (g *Game) Update() error {
 			}
 		}
 
-		g.wallpaper.Update(g.kernel.DeltaTime)
-
 	case GameOverState:
 		if g.canTransition && ebiten.IsKeyPressed(ebiten.KeyEnter) {
 			g.currentState = MenuState
@@ -144,7 +156,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		// op.GeoM.Scale(scaleX, scaleY)
 
 		// Draw the wallpaper
-		g.wallpaper.Draw(screen, 0, 0, false)
+		g.wallpaper.DrawWithSize(screen, 0, 0, constants.ScreenWidth, constants.ScreenHeight, false)
 
 		text.Draw(screen, "Press ENTER to Start", g.gameFont, 300, 200, color.White)
 
@@ -162,7 +174,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		// Draw the wallpaper
 		// screen.DrawImage(g.wallpaper, op)
 
-		g.wallpaper.Draw(screen, 0, 0, false)
+		g.wallpaper.DrawWithSize(screen, 0, 0, constants.ScreenWidth, constants.ScreenHeight, false)
 
 		text.Draw(screen, "Select Character:", g.gameFont, 300, 150, color.White)
 
@@ -181,6 +193,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		text.Draw(screen, "Press ENTER to Restart", g.gameFont, 300, 250, color.White)
 
 	case PlayingState:
+		g.mapImage.DrawWithSize(screen, 0, 0, constants.ScreenWidth, constants.ScreenHeight, false)
+
 		g.kernel.PluginManager.DrawAll(screen)
 	}
 }
