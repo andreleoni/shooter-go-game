@@ -202,3 +202,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return constants.ScreenWidth, constants.ScreenHeight
 }
+
+func (g *Game) SetStateGameOver() {
+	g.currentState = GameOverState
+}

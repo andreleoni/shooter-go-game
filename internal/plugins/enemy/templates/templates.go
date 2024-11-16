@@ -19,6 +19,7 @@ var EnemyTemplates = map[entities.EnemyType]entities.EnemyStats{
 		Damage:    10,
 		Size:      20,
 		Color:     color.RGBA{255, 0, 0, 255},
+		Power:     10,
 	},
 	FastEnemy: {
 		MaxHealth: 50,
@@ -26,6 +27,7 @@ var EnemyTemplates = map[entities.EnemyType]entities.EnemyStats{
 		Damage:    5,
 		Size:      15,
 		Color:     color.RGBA{0, 255, 0, 255},
+		Power:     5,
 	},
 	TankEnemy: {
 		MaxHealth: 200,
@@ -33,6 +35,7 @@ var EnemyTemplates = map[entities.EnemyType]entities.EnemyStats{
 		Damage:    20,
 		Size:      30,
 		Color:     color.RGBA{0, 0, 255, 255},
+		Power:     20,
 	},
 	RangedEnemy: {
 		MaxHealth: 75,
@@ -40,5 +43,6 @@ var EnemyTemplates = map[entities.EnemyType]entities.EnemyStats{
 		Damage:    15,
 		Size:      18,
 		Color:     color.RGBA{255, 255, 0, 255},
+		Power:     15,
 	},
 }

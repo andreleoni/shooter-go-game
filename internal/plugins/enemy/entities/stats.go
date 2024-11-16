@@ -8,4 +8,5 @@ type EnemyStats struct {
 	Damage    float64
 	Size      float64
 	Color     color.RGBA
+	Power     float64
 }

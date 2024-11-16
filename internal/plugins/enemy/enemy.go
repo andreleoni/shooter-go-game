@@ -5,6 +5,7 @@ import (
 	"game/internal/constants"
 	"game/internal/core"
 	"game/internal/plugins/camera"
+	"game/internal/plugins/enemy/entities"
 	entity "game/internal/plugins/enemy/entities"
 	"game/internal/plugins/enemy/factory"
 	"game/internal/plugins/enemy/templates"
@@ -74,12 +75,31 @@ func (ep *EnemyPlugin) Update() error {
 	for _, enemy := range ep.enemies {
 		if enemy.Active {
 			ep.moveTowardsPlayer(enemy, playerX, playerY, obstaclePlugin)
+
+			// Verificar colisão com o jogador e cooldown de dano
+			if ep.checkCollisionWithPlayer(enemy) {
+				if enemy.LastDamageTime >= 0.5 {
+					ep.playerPlugin.DecreaseHealth(enemy.Power)
+					enemy.LastDamageTime = 0
+				} else {
+					enemy.LastDamageTime += ep.kernel.DeltaTime
+				}
+			}
 		}
+
 	}
 
 	ep.animation.Update(ep.kernel.DeltaTime)
 
 	return nil
+}
+
+func (ep *EnemyPlugin) checkCollisionWithPlayer(enemy *entities.Enemy) bool {
+	playerX, playerY := ep.playerPlugin.GetPosition()
+	playerWidth, playerHeight := ep.playerPlugin.GetSize()
+
+	return math.Abs(enemy.X-playerX) < (enemy.Width+playerWidth)/2 &&
+		math.Abs(enemy.Y-playerY) < (enemy.Height+playerHeight)/2
 }
 
 func (ep *EnemyPlugin) checkEnemyCollision(x, y float64, currentEnemy *entity.Enemy) bool {

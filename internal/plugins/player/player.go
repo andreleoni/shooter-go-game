@@ -13,6 +13,7 @@ import (
 
 type PlayerPlugin struct {
 	kernel        *core.GameKernel
+	health        float64
 	x, y          float64
 	width         float64
 	height        float64
@@ -33,6 +34,7 @@ func NewPlayerPlugin() *PlayerPlugin {
 		shootTimer:    0,
 		width:         32,
 		height:        32,
+		health:        100,
 	}
 }
 
@@ -110,4 +112,21 @@ func (p *PlayerPlugin) Draw(screen *ebiten.Image) {
 
 func (p *PlayerPlugin) GetPosition() (float64, float64) {
 	return p.x, p.y
+}
+
+func (p *PlayerPlugin) DecreaseHealth(amount float64) {
+	p.health -= amount
+
+	if p.health < 0 {
+		p.health = 0
+		p.kernel.EventBus.Publish("GameOver", nil)
+	}
+}
+
+func (p *PlayerPlugin) GetSize() (float64, float64) {
+	return p.width, p.height
+}
+
+func (p *PlayerPlugin) GetHealth() float64 {
+	return p.health
 }
