@@ -123,7 +123,7 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 			if screenX >= -enemy.Width && screenX <= constants.ScreenWidth+enemy.Width &&
 				screenY >= -enemy.Height && screenY <= constants.ScreenHeight+enemy.Height {
 
-				enemy.Stats.StaticSprite.Draw(screen, screenX, screenY, false)
+				enemy.Stats.StaticSprite.DrawWithSize(screen, screenX, screenY, enemy.Width, enemy.Height, false)
 			}
 		}
 	}

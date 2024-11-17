@@ -95,10 +95,12 @@ func (p *PlayerPlugin) Draw(screen *ebiten.Image) {
 	screenX := p.x - cameraX
 	screenY := p.y - cameraY
 
-	p.staticsprite.Draw(
+	p.staticsprite.DrawWithSize(
 		screen,
 		screenX-p.width/2,
 		screenY-p.height/2,
+		p.width,
+		p.height,
 		false)
 
 	// p.animation.Draw(
