@@ -10,4 +10,7 @@ type Projectile struct {
 	Speed      float64
 	DirectionX float64
 	DirectionY float64
+
+	TargetX float64
+	TargetY float64
 }

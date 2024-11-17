@@ -3,22 +3,20 @@ package combat
 import (
 	"game/internal/core"
 	"game/internal/helpers/collision"
-	"game/internal/plugins/bullet"
 	"game/internal/plugins/enemy"
+	"game/internal/plugins/weapon"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type CombatPlugin struct {
-	kernel       *core.GameKernel
-	bulletPlugin *bullet.BulletPlugin
-	enemyPlugin  *enemy.EnemyPlugin
+	kernel      *core.GameKernel
+	enemyPlugin *enemy.EnemyPlugin
 }
 
-func NewCombatPlugin(bulletPlugin *bullet.BulletPlugin, enemyPlugin *enemy.EnemyPlugin) *CombatPlugin {
+func NewCombatPlugin(enemyPlugin *enemy.EnemyPlugin) *CombatPlugin {
 	return &CombatPlugin{
-		bulletPlugin: bulletPlugin,
-		enemyPlugin:  enemyPlugin,
+		enemyPlugin: enemyPlugin,
 	}
 }
 
@@ -36,25 +34,21 @@ func (cp *CombatPlugin) Draw(*ebiten.Image) {
 }
 
 func (cp *CombatPlugin) Update() error {
-	bullets := cp.bulletPlugin.GetBullets()
+	wp := cp.kernel.PluginManager.GetPlugin("WeaponSystem").(*weapon.WeaponPlugin)
 	enemies := cp.enemyPlugin.GetEnemies()
 
-	for _, bullet := range bullets {
-		if bullet.Active {
-			for _, enemy := range enemies {
+	for _, weapon := range wp.GetWeapons() {
+		for _, enemy := range enemies {
+			for _, projectil := range weapon.Projectiles {
 				if enemy.Active {
-					if collision.Check(bullet.X, bullet.Y, 5, 10, enemy.X, enemy.Y, 20, 20) {
-						bullet.Active = false
+					if collision.Check(projectil.X, projectil.Y, 5, 10, enemy.X, enemy.Y, 20, 20) {
+						projectil.Active = false
 
-						enemy.Health -= bullet.Power
+						enemy.Health -= projectil.Power
 
 						if enemy.Health <= 0 {
 							enemy.Active = false
 						}
-
-						// Here we could add effects, sounds, score etc
-						// Enemy have blood
-						// Weapon have different collision skill
 					}
 				}
 			}

@@ -3,7 +3,6 @@ package player
 import (
 	"game/internal/assets"
 	"game/internal/core"
-	"game/internal/plugins/bullet"
 	"game/internal/plugins/camera"
 	"game/internal/plugins/obstacle"
 	"game/internal/plugins/weapon"
@@ -81,12 +80,10 @@ func (p *PlayerPlugin) Update() error {
 	// Auto-shooting
 	p.shootTimer += p.kernel.DeltaTime
 	if p.shootTimer >= p.shootCooldown {
-		bulletPlugin := p.kernel.PluginManager.GetPlugin("BulletSystem").(*bullet.BulletPlugin)
-		bulletPlugin.Shoot(p.x, p.y)
-		p.shootTimer = 0
-
 		weapons := p.kernel.PluginManager.GetPlugin("WeaponSystem").(*weapon.WeaponPlugin)
 		weapons.Shoot(p.x, p.y)
+		p.shootTimer = 0
+
 	}
 
 	return nil

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"game/internal/core"
 	"game/internal/core/game"
-	"game/internal/plugins/bullet"
 	"game/internal/plugins/camera"
 	"game/internal/plugins/combat"
 	"game/internal/plugins/enemy"
@@ -29,14 +28,12 @@ func main() {
 		playerPlugin := player.NewPlayerPlugin()
 		cameraPlugin := camera.NewCameraPlugin(playerPlugin)
 		enemyPlugin := enemy.NewEnemyPlugin(playerPlugin)
-		bulletPlugin := bullet.NewBulletPlugin()
-		combatPlugin := combat.NewCombatPlugin(bulletPlugin, enemyPlugin)
+		combatPlugin := combat.NewCombatPlugin(enemyPlugin)
 		obstaclePlugin := obstacle.NewObstaclePlugin()
 		statsPlugin := stats.NewStatsPlugin(playerPlugin)
 		weaponPlugin := weapon.NewWeaponPlugin()
 
 		kernel.PluginManager.Register(playerPlugin, 0)
-		kernel.PluginManager.Register(bulletPlugin, 1)
 		kernel.PluginManager.Register(weaponPlugin, 2)
 		kernel.PluginManager.Register(enemyPlugin, 3)
 		kernel.PluginManager.Register(combatPlugin, 4)
@@ -45,7 +42,6 @@ func main() {
 		kernel.PluginManager.Register(statsPlugin, 7)
 
 		playerPlugin.Init(kernel)
-		bulletPlugin.Init(kernel)
 		enemyPlugin.Init(kernel)
 		combatPlugin.Init(kernel)
 		obstaclePlugin.Init(kernel)
