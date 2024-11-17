@@ -120,6 +120,7 @@ func (bp *BulletPlugin) Shoot(x, y float64) {
 			Y:          y,
 			Speed:      300,
 			Active:     true,
+			Power:      50,
 			TargetX:    closestEnemy.X,
 			TargetY:    closestEnemy.Y,
 			DirectionX: dirX,

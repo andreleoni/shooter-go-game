@@ -6,13 +6,13 @@ import (
 )
 
 const (
-	BasicEnemy  entities.EnemyType = "basic"
-	FastEnemy   entities.EnemyType = "fast"
-	TankEnemy   entities.EnemyType = "tank"
-	RangedEnemy entities.EnemyType = "ranged"
+	BasicEnemy entities.EnemyType = iota
+	FastEnemy
+	TankEnemy
+	RangedEnemy
 )
 
-var EnemyTemplates = map[entities.EnemyType]entities.EnemyStats{
+var EnemyTemplates = map[entities.EnemyType]*entities.EnemyStats{
 	BasicEnemy: {
 		MaxHealth: 100,
 		Speed:     100,

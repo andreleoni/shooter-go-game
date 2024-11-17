@@ -7,6 +7,7 @@ type Bullet struct {
 	Width  float64
 	Height float64
 	Speed  float64
+	Power  float64
 	Active bool
 
 	TargetX float64

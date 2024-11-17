@@ -1,7 +1,5 @@
 package entities
 
-type EnemyType string
-
 type Enemy struct {
 	X, Y           float64
 	Width          float64

@@ -1,6 +1,7 @@
 package enemy
 
 import (
+	"fmt"
 	"game/internal/assets"
 	"game/internal/constants"
 	"game/internal/core"
@@ -23,7 +24,6 @@ type EnemyPlugin struct {
 	enemies      []*entity.Enemy
 	spawnTimer   float64
 	playerPlugin *player.PlayerPlugin
-	animation    *assets.Animation
 	staticasset  *assets.StaticSprite
 }
 
@@ -42,20 +42,17 @@ func (ep *EnemyPlugin) ID() string {
 func (ep *EnemyPlugin) Init(kernel *core.GameKernel) error {
 	ep.kernel = kernel
 
-	ep.animation = assets.NewAnimation(0.01)
-	err := ep.animation.LoadFromJSON(
-		"assets/images/player/gunner/run/tileset.json",
-		"assets/images/player/gunner/run/tileset.png")
+	// Assign sprite to enemy
+	for enemytype, template := range templates.EnemyTemplates {
+		enemypath := "assets/images/enemies/" + fmt.Sprint(enemytype) + ".png"
 
-	if err != nil {
-		log.Fatal("Failed to load enemy animation:", err)
-	}
+		ep.staticasset = assets.NewStaticSprite()
+		err := ep.staticasset.Load(enemypath)
+		if err != nil {
+			log.Fatal("Failed to load enemy asset:", err)
+		}
 
-	ep.staticasset = assets.NewStaticSprite()
-	err = ep.staticasset.Load("assets/images/enemies/troll/image.png")
-
-	if err != nil {
-		log.Fatal("Failed to load enemy asset:", err)
+		template.StaticSprite = ep.staticasset
 	}
 
 	return nil
@@ -88,8 +85,6 @@ func (ep *EnemyPlugin) Update() error {
 		}
 
 	}
-
-	ep.animation.Update(ep.kernel.DeltaTime)
 
 	return nil
 }
@@ -128,8 +123,7 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 			if screenX >= -enemy.Width && screenX <= constants.ScreenWidth+enemy.Width &&
 				screenY >= -enemy.Height && screenY <= constants.ScreenHeight+enemy.Height {
 
-				// ep.animation.Draw(screen, screenX, screenY, enemy.Width, enemy.Height, true)
-				ep.staticasset.Draw(screen, screenX, screenY, false)
+				enemy.Stats.StaticSprite.Draw(screen, screenX, screenY, false)
 			}
 		}
 	}
@@ -161,7 +155,10 @@ func (ep *EnemyPlugin) Spawn() {
 	x = math.Max(0, math.Min(x, constants.WorldWidth))
 	y = math.Max(0, math.Min(y, constants.WorldHeight))
 
-	ep.enemies = append(ep.enemies, factory.CreateEnemy(templates.TankEnemy, x, y))
+	// Escolher um tipo aleatório de inimigo
+	enemyType := entities.EnemyType(rand.Intn(len(templates.EnemyTemplates)))
+
+	ep.enemies = append(ep.enemies, factory.CreateEnemy(enemyType, x, y))
 }
 
 func (ep *EnemyPlugin) GetEnemies() []*entity.Enemy {

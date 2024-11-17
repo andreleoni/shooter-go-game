@@ -45,7 +45,13 @@ func (cp *CombatPlugin) Update() error {
 				if enemy.Active {
 					if collision.Check(bullet.X, bullet.Y, 5, 10, enemy.X, enemy.Y, 20, 20) {
 						bullet.Active = false
-						enemy.Active = false
+
+						enemy.Health -= bullet.Power
+
+						if enemy.Health <= 0 {
+							enemy.Active = false
+						}
+
 						// Here we could add effects, sounds, score etc
 						// Enemy have blood
 						// Weapon have different collision skill

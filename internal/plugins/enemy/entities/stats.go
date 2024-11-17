@@ -1,6 +1,9 @@
 package entities
 
-import "image/color"
+import (
+	"game/internal/assets"
+	"image/color"
+)
 
 type EnemyStats struct {
 	MaxHealth float64
@@ -9,4 +12,6 @@ type EnemyStats struct {
 	Size      float64
 	Color     color.RGBA
 	Power     float64
+
+	StaticSprite *assets.StaticSprite
 }

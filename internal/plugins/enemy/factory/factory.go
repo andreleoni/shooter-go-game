@@ -14,7 +14,7 @@ func CreateEnemy(enemyType entities.EnemyType, x, y float64) *entities.Enemy {
 		Height: template.Size,
 		Active: true,
 		Type:   enemyType,
-		Stats:  template,
+		Stats:  *template,
 		Speed:  template.Speed,
 		Health: template.MaxHealth,
 		Power:  template.Power,
