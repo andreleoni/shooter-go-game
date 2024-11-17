@@ -57,16 +57,9 @@ func NewGame(kernel *core.GameKernel) *Game {
 		log.Fatal("Failed to wallpaper load animation:", err)
 	}
 
-	// Load the map image
-	mapImage := assets.NewStaticSprite()
-	err = mapImage.Load("assets/images/tileset/image.png")
-	if err != nil {
-		log.Fatal("Failed to open map image:", err)
-	}
-
 	// Load the grass image
 	grassimage := assets.NewStaticSprite()
-	err = mapImage.Load("assets/images/tileset/ground.png")
+	err = grassimage.Load("assets/images/tileset/ground.png")
 	if err != nil {
 		log.Fatal("Failed to open map image:", err)
 	}
@@ -81,7 +74,6 @@ func NewGame(kernel *core.GameKernel) *Game {
 		selectionDelay: 0,
 		gameFont:       gameFont,
 		wallpaper:      wallpaper,
-		mapImage:       mapImage,
 		grassImage:     grassimage,
 	}
 }
@@ -193,7 +185,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		text.Draw(screen, "Press ENTER to Restart", g.gameFont, 300, 250, color.White)
 
 	case PlayingState:
-		g.mapImage.DrawWithSize(screen, 0, 0, constants.ScreenWidth, constants.ScreenHeight, false)
+		g.grassImage.DrawWithSize(screen, 0, 0, constants.ScreenWidth, constants.ScreenHeight, false)
 
 		g.kernel.PluginManager.DrawAll(screen)
 	}

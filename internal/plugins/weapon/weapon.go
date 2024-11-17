@@ -110,7 +110,7 @@ func (wp *WeaponPlugin) Draw(screen *ebiten.Image) {
 					screenX := weapon.X - cameraX
 					screenY := weapon.Y - cameraY
 
-					ebitenutil.DrawRect(screen, screenX, screenY, 5, 5, color.RGBA{255, 255, 255, 255})
+					ebitenutil.DrawRect(screen, screenX, screenY, 5, 5, color.RGBA{255, 255, 0, 255})
 				}
 			}
 		} else if weapon.Type == templates.BasicWeapon {
