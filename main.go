@@ -11,6 +11,7 @@ import (
 	"game/internal/plugins/obstacle"
 	"game/internal/plugins/player"
 	"game/internal/plugins/stats"
+	"game/internal/plugins/weapon"
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -32,14 +33,16 @@ func main() {
 		combatPlugin := combat.NewCombatPlugin(bulletPlugin, enemyPlugin)
 		obstaclePlugin := obstacle.NewObstaclePlugin()
 		statsPlugin := stats.NewStatsPlugin(playerPlugin)
+		weaponPlugin := weapon.NewWeaponPlugin()
 
 		kernel.PluginManager.Register(playerPlugin, 0)
 		kernel.PluginManager.Register(bulletPlugin, 1)
-		kernel.PluginManager.Register(enemyPlugin, 2)
-		kernel.PluginManager.Register(combatPlugin, 3)
-		kernel.PluginManager.Register(obstaclePlugin, 4)
-		kernel.PluginManager.Register(cameraPlugin, 5)
-		kernel.PluginManager.Register(statsPlugin, 6)
+		kernel.PluginManager.Register(weaponPlugin, 2)
+		kernel.PluginManager.Register(enemyPlugin, 3)
+		kernel.PluginManager.Register(combatPlugin, 4)
+		kernel.PluginManager.Register(obstaclePlugin, 5)
+		kernel.PluginManager.Register(cameraPlugin, 6)
+		kernel.PluginManager.Register(statsPlugin, 7)
 
 		playerPlugin.Init(kernel)
 		bulletPlugin.Init(kernel)
@@ -48,6 +51,7 @@ func main() {
 		obstaclePlugin.Init(kernel)
 		cameraPlugin.Init(kernel)
 		statsPlugin.Init(kernel)
+		weaponPlugin.Init(kernel)
 	})
 
 	kernel.EventBus.Subscribe("GameOver", func(data interface{}) {

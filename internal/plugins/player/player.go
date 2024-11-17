@@ -6,6 +6,7 @@ import (
 	"game/internal/plugins/bullet"
 	"game/internal/plugins/camera"
 	"game/internal/plugins/obstacle"
+	"game/internal/plugins/weapon"
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -83,6 +84,9 @@ func (p *PlayerPlugin) Update() error {
 		bulletPlugin := p.kernel.PluginManager.GetPlugin("BulletSystem").(*bullet.BulletPlugin)
 		bulletPlugin.Shoot(p.x, p.y)
 		p.shootTimer = 0
+
+		weapons := p.kernel.PluginManager.GetPlugin("WeaponSystem").(*weapon.WeaponPlugin)
+		weapons.Shoot(p.x, p.y)
 	}
 
 	return nil

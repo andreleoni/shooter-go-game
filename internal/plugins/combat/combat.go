@@ -60,5 +60,6 @@ func (cp *CombatPlugin) Update() error {
 			}
 		}
 	}
+
 	return nil
 }
