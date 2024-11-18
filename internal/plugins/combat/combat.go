@@ -39,6 +39,8 @@ func (cp *CombatPlugin) Update() error {
 	wp := cp.kernel.PluginManager.GetPlugin("WeaponSystem").(*weapon.WeaponPlugin)
 	enemies := cp.enemyPlugin.GetEnemies()
 
+	enemyGotDamaged := false
+
 	for _, weapon := range wp.GetWeapons() {
 		for _, enemy := range enemies {
 			for _, projectil := range weapon.Projectiles {
@@ -50,6 +52,7 @@ func (cp *CombatPlugin) Update() error {
 
 						if enemy.Health <= 0 {
 							enemy.Active = false
+							enemyGotDamaged = true
 						}
 					}
 				}
@@ -72,10 +75,11 @@ func (cp *CombatPlugin) Update() error {
 						if enemy.LastProtectionDeltaTime >= 0.5 {
 							enemy.Health -= weapon.Power
 							enemy.LastProtectionDeltaTime = 0
-							enemy.DamageFlashTime = 0.1
 
 							if enemy.Health <= 0 {
 								enemy.Active = false
+							} else {
+								enemyGotDamaged = true
 							}
 
 						} else {
@@ -83,6 +87,10 @@ func (cp *CombatPlugin) Update() error {
 						}
 					}
 				}
+			}
+
+			if enemyGotDamaged {
+				enemy.DamageFlashTime = 0.1
 			}
 		}
 	}

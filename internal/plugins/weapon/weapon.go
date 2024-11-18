@@ -34,15 +34,15 @@ func (wp *WeaponPlugin) ID() string {
 func (wp *WeaponPlugin) Init(kernel *core.GameKernel) error {
 	wp.kernel = kernel
 
-	// wp.weapons = append(wp.weapons, &entities.Weapon{
-	// 	Power: 10,
-	// 	Type:  templates.DaggersWeapon,
-	// })
+	wp.weapons = append(wp.weapons, &entities.Weapon{
+		Power: 10,
+		Type:  templates.DaggersWeapon,
+	})
 
-	// wp.weapons = append(wp.weapons, &entities.Weapon{
-	// 	Power: 50,
-	// 	Type:  templates.BasicWeapon,
-	// })
+	wp.weapons = append(wp.weapons, &entities.Weapon{
+		Power: 20,
+		Type:  templates.BasicWeapon,
+	})
 
 	wp.weapons = append(wp.weapons, &entities.Weapon{
 		Power: 50,
