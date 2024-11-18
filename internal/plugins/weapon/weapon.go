@@ -34,14 +34,19 @@ func (wp *WeaponPlugin) ID() string {
 func (wp *WeaponPlugin) Init(kernel *core.GameKernel) error {
 	wp.kernel = kernel
 
-	wp.weapons = append(wp.weapons, &entities.Weapon{
-		Power: 10,
-		Type:  templates.DaggersWeapon,
-	})
+	// wp.weapons = append(wp.weapons, &entities.Weapon{
+	// 	Power: 10,
+	// 	Type:  templates.DaggersWeapon,
+	// })
+
+	// wp.weapons = append(wp.weapons, &entities.Weapon{
+	// 	Power: 50,
+	// 	Type:  templates.BasicWeapon,
+	// })
 
 	wp.weapons = append(wp.weapons, &entities.Weapon{
 		Power: 50,
-		Type:  templates.BasicWeapon,
+		Type:  templates.ProtectionWeapon,
 	})
 
 	return nil
@@ -103,6 +108,9 @@ func (wp *WeaponPlugin) Draw(screen *ebiten.Image) {
 	cameraPlugin := wp.kernel.PluginManager.GetPlugin("CameraSystem").(*camera.CameraPlugin)
 	cameraX, cameraY := cameraPlugin.GetPosition()
 
+	playerPlugin := wp.kernel.PluginManager.GetPlugin("PlayerSystem").(plugins.PlayerPlugin)
+	playerX, playerY := playerPlugin.GetPosition()
+
 	for _, weapon := range wp.weapons {
 		if weapon.Type == templates.DaggersWeapon {
 			for _, weapon := range weapon.Projectiles {
@@ -133,6 +141,14 @@ func (wp *WeaponPlugin) Draw(screen *ebiten.Image) {
 					}
 				}
 			}
+		} else if weapon.Type == templates.ProtectionWeapon {
+			screenX := playerX - cameraX
+			screenY := playerY - cameraY
+
+			circleX := screenX
+			circleY := screenY
+
+			ebitenutil.DrawCircle(screen, circleX, circleY, 50, color.RGBA{111, 222, 111, 255})
 		}
 	}
 }

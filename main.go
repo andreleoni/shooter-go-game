@@ -33,8 +33,8 @@ func main() {
 		statsPlugin := stats.NewStatsPlugin(playerPlugin)
 		weaponPlugin := weapon.NewWeaponPlugin()
 
-		kernel.PluginManager.Register(playerPlugin, 0)
-		kernel.PluginManager.Register(weaponPlugin, 2)
+		kernel.PluginManager.Register(weaponPlugin, 0)
+		kernel.PluginManager.Register(playerPlugin, 1)
 		kernel.PluginManager.Register(enemyPlugin, 3)
 		kernel.PluginManager.Register(combatPlugin, 4)
 		kernel.PluginManager.Register(obstaclePlugin, 5)

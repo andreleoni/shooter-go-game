@@ -12,11 +12,13 @@ import (
 	"game/internal/plugins/enemy/templates"
 	"game/internal/plugins/obstacle"
 	"game/internal/plugins/player"
+	"image/color"
 	"log"
 	"math"
 	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 type EnemyPlugin struct {
@@ -84,6 +86,10 @@ func (ep *EnemyPlugin) Update() error {
 			}
 		}
 
+		// Atualizar o temporizador de flash de dano
+		if enemy.DamageFlashTime > 0 {
+			enemy.DamageFlashTime -= ep.kernel.DeltaTime
+		}
 	}
 
 	return nil
@@ -123,7 +129,12 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 			if screenX >= -enemy.Width && screenX <= constants.ScreenWidth+enemy.Width &&
 				screenY >= -enemy.Height && screenY <= constants.ScreenHeight+enemy.Height {
 
-				enemy.Stats.StaticSprite.DrawWithSize(screen, screenX, screenY, enemy.Width, enemy.Height, false)
+				if enemy.DamageFlashTime > 0 {
+					// Draw enemy in white if DamageFlashTime is active
+					ebitenutil.DrawRect(screen, screenX, screenY, enemy.Width, enemy.Height, color.RGBA{255, 255, 255, 255})
+				} else {
+					enemy.Stats.StaticSprite.DrawWithSize(screen, screenX, screenY, enemy.Width, enemy.Height, false)
+				}
 			}
 		}
 	}

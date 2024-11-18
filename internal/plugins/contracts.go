@@ -22,4 +22,6 @@ type PlayerPlugin interface {
 	Update() error
 	Draw(screen *ebiten.Image)
 	GetPosition() (float64, float64)
+	DecreaseHealth(float64)
+	GetSize() (float64, float64)
 }
