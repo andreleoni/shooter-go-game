@@ -22,6 +22,8 @@ func main() {
 	gameInstance := game.NewGame(kernel)
 
 	kernel.EventBus.Subscribe("StartGame", func(data interface{}) {
+		kernel.PluginManager.UnregisterAll()
+
 		fmt.Println("Game started", data)
 		// Level design com apenas os plugins necessários para aquele level
 

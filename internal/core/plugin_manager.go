@@ -51,6 +51,10 @@ func (pm *PluginManager) DrawAll(screen *ebiten.Image) {
 	}
 }
 
+func (pm *PluginManager) UnregisterAll() {
+	pm.plugins = make(map[string]RegisteredPlugin)
+}
+
 func (pm *PluginManager) GetPlugin(id string) Plugin {
 	return pm.plugins[id].plugin
 }
