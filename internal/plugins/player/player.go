@@ -23,6 +23,8 @@ type PlayerPlugin struct {
 	shootTimer    float64
 	shootCooldown float64
 	facingRight   bool
+
+	level int
 }
 
 func NewPlayerPlugin() *PlayerPlugin {
