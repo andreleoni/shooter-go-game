@@ -13,12 +13,14 @@ import (
 
 type CombatPlugin struct {
 	kernel      *core.GameKernel
+	plugins     *core.PluginManager
 	enemyPlugin *enemy.EnemyPlugin
 }
 
-func NewCombatPlugin(enemyPlugin *enemy.EnemyPlugin) *CombatPlugin {
+func NewCombatPlugin(enemyPlugin *enemy.EnemyPlugin, plugins *core.PluginManager) *CombatPlugin {
 	return &CombatPlugin{
 		enemyPlugin: enemyPlugin,
+		plugins:     plugins,
 	}
 }
 
@@ -36,7 +38,7 @@ func (cp *CombatPlugin) Draw(*ebiten.Image) {
 }
 
 func (cp *CombatPlugin) Update() error {
-	wp := cp.kernel.PluginManager.GetPlugin("WeaponSystem").(*weapon.WeaponPlugin)
+	wp := cp.plugins.GetPlugin("WeaponSystem").(*weapon.WeaponPlugin)
 	enemies := cp.enemyPlugin.GetEnemies()
 
 	enemyGotDamaged := false
@@ -60,7 +62,7 @@ func (cp *CombatPlugin) Update() error {
 
 			if weapon.Type == templates.ProtectionWeapon {
 				if enemy.Active {
-					playerPlugin := cp.kernel.PluginManager.GetPlugin("PlayerSystem").(plugins.PlayerPlugin)
+					playerPlugin := cp.plugins.GetPlugin("PlayerSystem").(plugins.PlayerPlugin)
 					playerX, playerY := playerPlugin.GetPosition()
 
 					if collision.CheckCircle(

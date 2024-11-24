@@ -22,18 +22,21 @@ import (
 )
 
 type EnemyPlugin struct {
-	kernel       *core.GameKernel
+	kernel  *core.GameKernel
+	plugins *core.PluginManager
+
 	enemies      []*entity.Enemy
 	spawnTimer   float64
 	playerPlugin *player.PlayerPlugin
 	staticasset  *assets.StaticSprite
 }
 
-func NewEnemyPlugin(playerPlugin *player.PlayerPlugin) *EnemyPlugin {
+func NewEnemyPlugin(playerPlugin *player.PlayerPlugin, plugins *core.PluginManager) *EnemyPlugin {
 	return &EnemyPlugin{
 		enemies:      []*entity.Enemy{},
 		spawnTimer:   0,
 		playerPlugin: playerPlugin,
+		plugins:      plugins,
 	}
 }
 
@@ -69,7 +72,6 @@ func (ep *EnemyPlugin) Update() error {
 	}
 
 	playerX, playerY := ep.playerPlugin.GetPosition()
-	obstaclePlugin := ep.kernel.PluginManager.GetPlugin("ObstacleSystem").(*obstacle.ObstaclePlugin)
 
 	for _, enemy := range ep.enemies {
 		if enemy.Active {
@@ -116,7 +118,7 @@ func (ep *EnemyPlugin) checkEnemyCollision(x, y float64, currentEnemy *entity.En
 }
 
 func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
-	cameraPlugin := ep.kernel.PluginManager.GetPlugin("CameraSystem").(*camera.CameraPlugin)
+	cameraPlugin := ep.plugins.GetPlugin("CameraSystem").(*camera.CameraPlugin)
 	cameraX, cameraY := cameraPlugin.GetPosition()
 
 	for _, enemy := range ep.enemies {

@@ -12,17 +12,18 @@ import (
 )
 
 type PlayerPlugin struct {
-	kernel        *core.GameKernel
-	health        float64
-	x, y          float64
-	width         float64
-	height        float64
-	speed         float64
-	animation     *assets.Animation
-	staticsprite  *assets.StaticSprite
-	shootTimer    float64
-	shootCooldown float64
-	facingRight   bool
+	kernel         *core.GameKernel
+	playingPlugins *core.PluginManager
+	health         float64
+	x, y           float64
+	width          float64
+	height         float64
+	speed          float64
+	animation      *assets.Animation
+	staticsprite   *assets.StaticSprite
+	shootTimer     float64
+	shootCooldown  float64
+	facingRight    bool
 
 	level int
 }
@@ -59,22 +60,9 @@ func (p *PlayerPlugin) Init(kernel *core.GameKernel) error {
 func (p *PlayerPlugin) Update() error {
 	newX, newY := p.x, p.y
 
-	if ebiten.IsKeyPressed(ebiten.KeyW) {
-		newY -= p.speed * p.kernel.DeltaTime
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyS) {
-		newY += p.speed * p.kernel.DeltaTime
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyA) {
-		newX -= p.speed * p.kernel.DeltaTime
-		p.facingRight = false
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyD) {
-		newX += p.speed * p.kernel.DeltaTime
-		p.facingRight = true
-	}
+	InputHandler(p, newX, newY)
 
-	obstaclePlugin := p.kernel.PluginManager.GetPlugin("ObstacleSystem").(*obstacle.ObstaclePlugin)
+	obstaclePlugin := p.playingPlugins.GetPlugin("ObstacleSystem").(*obstacle.ObstaclePlugin)
 	if !obstaclePlugin.CheckCollisionRect(newX, newY, 20, 20) {
 		p.x, p.y = newX, newY
 	}
@@ -82,7 +70,7 @@ func (p *PlayerPlugin) Update() error {
 	// Auto-shooting
 	p.shootTimer += p.kernel.DeltaTime
 	if p.shootTimer >= p.shootCooldown {
-		weapons := p.kernel.PluginManager.GetPlugin("WeaponSystem").(*weapon.WeaponPlugin)
+		weapons := p.playingPlugins.GetPlugin("WeaponSystem").(*weapon.WeaponPlugin)
 		weapons.Shoot(p.x, p.y)
 		p.shootTimer = 0
 
@@ -92,7 +80,7 @@ func (p *PlayerPlugin) Update() error {
 }
 
 func (p *PlayerPlugin) Draw(screen *ebiten.Image) {
-	cameraPlugin := p.kernel.PluginManager.GetPlugin("CameraSystem").(*camera.CameraPlugin)
+	cameraPlugin := p.playingPlugins.GetPlugin("CameraSystem").(*camera.CameraPlugin)
 	cameraX, cameraY := cameraPlugin.GetPosition()
 
 	screenX := p.x - cameraX

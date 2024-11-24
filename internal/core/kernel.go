@@ -13,25 +13,23 @@ const (
 )
 
 type GameKernel struct {
-	PluginManager *PluginManager
-	EventBus      *eventbus.EventBus
-	TimeScale     float64
-	DeltaTime     float64
-	accumulator   float64
-	lastUpdate    time.Time
-	mu            sync.Mutex
+	EventBus    *eventbus.EventBus
+	TimeScale   float64
+	DeltaTime   float64
+	accumulator float64
+	lastUpdate  time.Time
+	mu          sync.Mutex
 }
 
 func NewGameKernel() *GameKernel {
 	return &GameKernel{
-		PluginManager: NewPluginManager(),
-		EventBus:      eventbus.NewEventBus(),
-		TimeScale:     1.0,
-		lastUpdate:    time.Now(),
+		EventBus:   eventbus.NewEventBus(),
+		TimeScale:  1.0,
+		lastUpdate: time.Now(),
 	}
 }
 
-func (k *GameKernel) Update() error {
+func (k *GameKernel) Update(pm *PluginManager) error {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 
@@ -49,7 +47,7 @@ func (k *GameKernel) Update() error {
 	for k.accumulator >= FixedTimeStep && steps < MaxSteps {
 		k.DeltaTime = FixedTimeStep
 
-		if err := k.PluginManager.UpdateAll(); err != nil {
+		if err := pm.UpdateAll(); err != nil {
 			return err
 		}
 
