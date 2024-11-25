@@ -64,7 +64,9 @@ func (p *PlayerPlugin) Init(
 func (p *PlayerPlugin) Update() error {
 	newX, newY := p.x, p.y
 
-	InputHandler(p, newX, newY)
+	newX, newY = InputHandler(p, newX, newY)
+
+	p.x, p.y = newX, newY
 
 	// Auto-shooting
 	p.shootTimer += p.kernel.DeltaTime

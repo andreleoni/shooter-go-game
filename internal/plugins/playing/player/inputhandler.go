@@ -2,7 +2,7 @@ package player
 
 import "github.com/hajimehoshi/ebiten/v2"
 
-func InputHandler(p *PlayerPlugin, newX, newY float64) {
+func InputHandler(p *PlayerPlugin, newX, newY float64) (float64, float64) {
 	if ebiten.IsKeyPressed(ebiten.KeyW) {
 		newY -= p.speed * p.kernel.DeltaTime
 	}
@@ -17,4 +17,6 @@ func InputHandler(p *PlayerPlugin, newX, newY float64) {
 		newX += p.speed * p.kernel.DeltaTime
 		p.facingRight = true
 	}
+
+	return newX, newY
 }
