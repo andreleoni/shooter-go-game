@@ -3,7 +3,7 @@ package stats
 import (
 	"fmt"
 	"game/internal/core"
-	"game/internal/plugins/player"
+	"game/internal/plugins/playing/player"
 	"image/color"
 	"log"
 

@@ -1,8 +1,8 @@
 package factory
 
 import (
-	"game/internal/plugins/enemy/entities"
-	"game/internal/plugins/enemy/templates"
+	"game/internal/plugins/playing/enemy/entities"
+	"game/internal/plugins/playing/enemy/templates"
 )
 
 func CreateEnemy(enemyType entities.EnemyType, x, y float64) *entities.Enemy {

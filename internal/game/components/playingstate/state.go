@@ -22,17 +22,18 @@ func NewComponentPlayingState(kernel *core.GameKernel) *ComponentPlayingState {
 	pluginManager := core.NewPluginManager()
 
 	kernel.EventBus.Subscribe("StartGame", func(data interface{}) {
+		fmt.Println("Game started", data)
+
 		pluginManager.UnregisterAll()
 
-		fmt.Println("Game started", data)
 		// Level design com apenas os plugins necessários para aquele level
 
-		playerPlugin := player.NewPlayerPlugin()
+		playerPlugin := player.NewPlayerPlugin(pluginManager)
 		cameraPlugin := camera.NewCameraPlugin(playerPlugin)
-		enemyPlugin := enemy.NewEnemyPlugin(playerPlugin)
-		combatPlugin := combat.NewCombatPlugin(enemyPlugin)
+		enemyPlugin := enemy.NewEnemyPlugin(playerPlugin, pluginManager)
+		combatPlugin := combat.NewCombatPlugin(enemyPlugin, pluginManager)
 		statsPlugin := stats.NewStatsPlugin(playerPlugin)
-		weaponPlugin := weapon.NewWeaponPlugin()
+		weaponPlugin := weapon.NewWeaponPlugin(pluginManager)
 
 		pluginManager.Register(weaponPlugin, 0)
 		pluginManager.Register(playerPlugin, 1)
@@ -52,10 +53,10 @@ func NewComponentPlayingState(kernel *core.GameKernel) *ComponentPlayingState {
 	return &ComponentPlayingState{kernel: kernel}
 }
 
-func (cps *ComponentPlayingState) Update() {
-	cps.pluginManager.UpdateAll()
-}
-
 func (cps *ComponentPlayingState) Draw(screen *ebiten.Image) {
 	cps.pluginManager.DrawAll(screen)
+}
+
+func (cps *ComponentPlayingState) PluginManager() *core.PluginManager {
+	return cps.pluginManager
 }

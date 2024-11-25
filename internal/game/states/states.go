@@ -1,6 +1,10 @@
 package states
 
-import "github.com/hajimehoshi/ebiten/v2"
+import (
+	"game/internal/core"
+
+	"github.com/hajimehoshi/ebiten/v2"
+)
 
 type State int
 
@@ -10,6 +14,6 @@ const (
 )
 
 type GameState interface {
-	Update()
+	PluginManager() *core.PluginManager
 	Draw(screen *ebiten.Image)
 }

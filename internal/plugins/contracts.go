@@ -2,7 +2,7 @@ package plugins
 
 import (
 	"game/internal/core"
-	enemyentity "game/internal/plugins/enemy/entities"
+	"game/internal/plugins/playing/enemy/entities"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -13,7 +13,7 @@ type EnemyPlugin interface {
 	Update() error
 	Draw(screen *ebiten.Image)
 	Spawn()
-	GetEnemies() []*enemyentity.Enemy
+	GetEnemies() []*entities.Enemy
 }
 
 type PlayerPlugin interface {

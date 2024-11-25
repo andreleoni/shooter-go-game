@@ -3,9 +3,9 @@ package player
 import (
 	"game/internal/assets"
 	"game/internal/core"
-	"game/internal/plugins/camera"
-	"game/internal/plugins/obstacle"
-	"game/internal/plugins/weapon"
+	"game/internal/plugins/playing/camera"
+	"game/internal/plugins/playing/weapon"
+
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -28,16 +28,17 @@ type PlayerPlugin struct {
 	level int
 }
 
-func NewPlayerPlugin() *PlayerPlugin {
+func NewPlayerPlugin(plugins *core.PluginManager) *PlayerPlugin {
 	return &PlayerPlugin{
-		x:             400,
-		y:             300,
-		speed:         200.0,
-		shootCooldown: 1.0, // 1 second between shots
-		shootTimer:    0,
-		width:         32,
-		height:        32,
-		health:        100,
+		x:              400,
+		y:              300,
+		speed:          200.0,
+		shootCooldown:  1.0, // 1 second between shots
+		shootTimer:     0,
+		width:          32,
+		height:         32,
+		health:         100,
+		playingPlugins: plugins,
 	}
 }
 
@@ -45,7 +46,10 @@ func (p *PlayerPlugin) ID() string {
 	return "PlayerSystem"
 }
 
-func (p *PlayerPlugin) Init(kernel *core.GameKernel) error {
+func (p *PlayerPlugin) Init(
+	kernel *core.GameKernel,
+) error {
+
 	p.kernel = kernel
 
 	p.staticsprite = assets.NewStaticSprite()
@@ -61,11 +65,6 @@ func (p *PlayerPlugin) Update() error {
 	newX, newY := p.x, p.y
 
 	InputHandler(p, newX, newY)
-
-	obstaclePlugin := p.playingPlugins.GetPlugin("ObstacleSystem").(*obstacle.ObstaclePlugin)
-	if !obstaclePlugin.CheckCollisionRect(newX, newY, 20, 20) {
-		p.x, p.y = newX, newY
-	}
 
 	// Auto-shooting
 	p.shootTimer += p.kernel.DeltaTime

@@ -18,15 +18,22 @@ func NewComponentMenuState(kernel *core.GameKernel) *ComponentMenuState {
 	menuPlugin := menu.NewMenuPlugin(kernel)
 	pluginManager.Register(menuPlugin, 0)
 
+	kernel.EventBus.Subscribe("GameOver", func(data interface{}) {
+		pluginManager.UnregisterAll()
+
+		menuPlugin := menu.NewMenuPlugin(kernel)
+		pluginManager.Register(menuPlugin, 0)
+	})
+
 	menuPlugin.Init(kernel)
 
 	return &ComponentMenuState{kernel: kernel, pluginManager: pluginManager}
 }
 
-func (cms *ComponentMenuState) Update() {
-	cms.pluginManager.UpdateAll()
-}
-
 func (cms *ComponentMenuState) Draw(screen *ebiten.Image) {
 	cms.pluginManager.DrawAll(screen)
+}
+
+func (cps *ComponentMenuState) PluginManager() *core.PluginManager {
+	return cps.pluginManager
 }

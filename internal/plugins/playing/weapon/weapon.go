@@ -5,9 +5,9 @@ import (
 	"game/internal/constants"
 	"game/internal/core"
 	"game/internal/plugins"
-	"game/internal/plugins/camera"
-	"game/internal/plugins/weapon/entities"
-	"game/internal/plugins/weapon/templates"
+	"game/internal/plugins/playing/camera"
+	"game/internal/plugins/playing/weapon/entities"
+	"game/internal/plugins/playing/weapon/templates"
 
 	"image/color"
 	"math"
@@ -18,26 +18,32 @@ import (
 )
 
 type WeaponPlugin struct {
-	kernel *core.GameKernel
+	kernel  *core.GameKernel
+	plugins *core.PluginManager
 
 	weapons []*entities.Weapon
 }
 
-func NewWeaponPlugin() *WeaponPlugin {
-	return &WeaponPlugin{}
+func NewWeaponPlugin(plugins *core.PluginManager) *WeaponPlugin {
+	return &WeaponPlugin{
+		plugins: plugins,
+	}
 }
 
 func (wp *WeaponPlugin) ID() string {
 	return "WeaponSystem"
 }
 
-func (wp *WeaponPlugin) Init(kernel *core.GameKernel) error {
+func (wp *WeaponPlugin) Init(
+	kernel *core.GameKernel,
+) error {
+
 	wp.kernel = kernel
 
-	// wp.weapons = append(wp.weapons, &entities.Weapon{
-	// 	Power: 10,
-	// 	Type:  templates.DaggersWeapon,
-	// })
+	wp.weapons = append(wp.weapons, &entities.Weapon{
+		Power: 10,
+		Type:  templates.DaggersWeapon,
+	})
 
 	// wp.weapons = append(wp.weapons, &entities.Weapon{
 	// 	Power: 20,
@@ -105,10 +111,10 @@ func (wp *WeaponPlugin) Update() error {
 }
 
 func (wp *WeaponPlugin) Draw(screen *ebiten.Image) {
-	cameraPlugin := wp.kernel.PluginManager.GetPlugin("CameraSystem").(*camera.CameraPlugin)
+	cameraPlugin := wp.plugins.GetPlugin("CameraSystem").(*camera.CameraPlugin)
 	cameraX, cameraY := cameraPlugin.GetPosition()
 
-	playerPlugin := wp.kernel.PluginManager.GetPlugin("PlayerSystem").(plugins.PlayerPlugin)
+	playerPlugin := wp.plugins.GetPlugin("PlayerSystem").(plugins.PlayerPlugin)
 	playerX, playerY := playerPlugin.GetPosition()
 
 	for _, weapon := range wp.weapons {
@@ -175,7 +181,7 @@ func (wp *WeaponPlugin) Shoot(x, y float64) {
 			}
 		} else if weapon.Type == templates.BasicWeapon {
 			// Get enemy plugin to find closest enemy
-			enemyPlugin := wp.kernel.PluginManager.GetPlugin("EnemySystem").(plugins.EnemyPlugin)
+			enemyPlugin := wp.plugins.GetPlugin("EnemySystem").(plugins.EnemyPlugin)
 
 			enemies := enemyPlugin.GetEnemies()
 

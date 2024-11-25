@@ -5,13 +5,14 @@ import (
 	"game/internal/assets"
 	"game/internal/constants"
 	"game/internal/core"
-	"game/internal/plugins/camera"
-	"game/internal/plugins/enemy/entities"
-	entity "game/internal/plugins/enemy/entities"
-	"game/internal/plugins/enemy/factory"
-	"game/internal/plugins/enemy/templates"
-	"game/internal/plugins/obstacle"
-	"game/internal/plugins/player"
+
+	"game/internal/plugins/playing/camera"
+	"game/internal/plugins/playing/enemy/entities"
+	entity "game/internal/plugins/playing/enemy/entities"
+	"game/internal/plugins/playing/enemy/factory"
+	"game/internal/plugins/playing/enemy/templates"
+	"game/internal/plugins/playing/player"
+
 	"image/color"
 	"log"
 	"math"
@@ -28,7 +29,7 @@ type EnemyPlugin struct {
 	enemies      []*entity.Enemy
 	spawnTimer   float64
 	playerPlugin *player.PlayerPlugin
-	staticasset  *assets.StaticSprite
+	StaticAsset  *assets.StaticSprite
 }
 
 func NewEnemyPlugin(playerPlugin *player.PlayerPlugin, plugins *core.PluginManager) *EnemyPlugin {
@@ -51,13 +52,13 @@ func (ep *EnemyPlugin) Init(kernel *core.GameKernel) error {
 	for enemytype, template := range templates.EnemyTemplates {
 		enemypath := "assets/images/enemies/" + fmt.Sprint(enemytype) + ".png"
 
-		ep.staticasset = assets.NewStaticSprite()
-		err := ep.staticasset.Load(enemypath)
+		ep.StaticAsset = assets.NewStaticSprite()
+		err := ep.StaticAsset.Load(enemypath)
 		if err != nil {
 			log.Fatal("Failed to load enemy asset:", err)
 		}
 
-		template.StaticSprite = ep.staticasset
+		template.StaticSprite = ep.StaticAsset
 	}
 
 	return nil
@@ -75,7 +76,7 @@ func (ep *EnemyPlugin) Update() error {
 
 	for _, enemy := range ep.enemies {
 		if enemy.Active {
-			ep.moveTowardsPlayer(enemy, playerX, playerY, obstaclePlugin)
+			ep.moveTowardsPlayer(enemy, playerX, playerY)
 
 			// Verificar colisão com o jogador e cooldown de dano
 			if ep.checkCollisionWithPlayer(enemy) {
@@ -178,7 +179,7 @@ func (ep *EnemyPlugin) GetEnemies() []*entity.Enemy {
 	return ep.enemies
 }
 
-func (ep *EnemyPlugin) moveTowardsPlayer(enemy *entity.Enemy, playerX, playerY float64, obstaclePlugin *obstacle.ObstaclePlugin) {
+func (ep *EnemyPlugin) moveTowardsPlayer(enemy *entity.Enemy, playerX, playerY float64) {
 	// Calculate desired velocity towards player
 	dx := playerX - enemy.X
 	dy := playerY - enemy.Y
@@ -192,8 +193,7 @@ func (ep *EnemyPlugin) moveTowardsPlayer(enemy *entity.Enemy, playerX, playerY f
 		desiredY := dy * enemy.Speed * ep.kernel.DeltaTime
 
 		// Check for obstacles and steer around them
-		if !obstaclePlugin.CheckCollisionRect(enemy.X+desiredX, enemy.Y+desiredY, enemy.Width, enemy.Height) &&
-			!ep.checkEnemyCollision(enemy.X+desiredX, enemy.Y+desiredY, enemy) {
+		if !ep.checkEnemyCollision(enemy.X+desiredX, enemy.Y+desiredY, enemy) {
 			enemy.X += desiredX
 			enemy.Y += desiredY
 		} else {
@@ -216,34 +216,11 @@ func (ep *EnemyPlugin) moveTowardsPlayer(enemy *entity.Enemy, playerX, playerY f
 				}
 			}
 
-			moved := false
 			for _, dir := range perpendicularDirections {
-				if !obstaclePlugin.CheckCollisionRect(enemy.X+dir[0], enemy.Y+dir[1], enemy.Width, enemy.Height) &&
-					!ep.checkEnemyCollision(enemy.X+dir[0], enemy.Y+dir[1], enemy) {
+				if !ep.checkEnemyCollision(enemy.X+dir[0], enemy.Y+dir[1], enemy) {
 					enemy.X += dir[0]
 					enemy.Y += dir[1]
-					moved = true
 					break
-				}
-			}
-
-			// If no direction is found, revert to old position and move randomly left or right
-			if !moved {
-				directions := [][2]float64{
-					{-enemy.Speed * ep.kernel.DeltaTime, 0}, // Left
-					{enemy.Speed * ep.kernel.DeltaTime, 0},  // Right
-					{0, -enemy.Speed * ep.kernel.DeltaTime}, // Up
-					{0, enemy.Speed * ep.kernel.DeltaTime},  // Down
-				}
-
-				for {
-					randomDirection := rand.Intn(4)
-					dir := directions[randomDirection]
-					if !obstaclePlugin.CheckCollisionRect(enemy.X+dir[0], enemy.Y+dir[1], enemy.Width, enemy.Height) {
-						enemy.X += dir[0]
-						enemy.Y += dir[1]
-						break
-					}
 				}
 			}
 		}

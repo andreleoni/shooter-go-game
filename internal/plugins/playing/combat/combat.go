@@ -4,9 +4,9 @@ import (
 	"game/internal/core"
 	"game/internal/helpers/collision"
 	"game/internal/plugins"
-	"game/internal/plugins/enemy"
-	"game/internal/plugins/weapon"
-	"game/internal/plugins/weapon/templates"
+	"game/internal/plugins/playing/enemy"
+	"game/internal/plugins/playing/weapon"
+	"game/internal/plugins/playing/weapon/templates"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -17,7 +17,10 @@ type CombatPlugin struct {
 	enemyPlugin *enemy.EnemyPlugin
 }
 
-func NewCombatPlugin(enemyPlugin *enemy.EnemyPlugin, plugins *core.PluginManager) *CombatPlugin {
+func NewCombatPlugin(
+	enemyPlugin *enemy.EnemyPlugin,
+	plugins *core.PluginManager) *CombatPlugin {
+
 	return &CombatPlugin{
 		enemyPlugin: enemyPlugin,
 		plugins:     plugins,

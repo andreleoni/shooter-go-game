@@ -1,6 +1,6 @@
 package templates
 
-import "game/internal/plugins/weapon/entities"
+import "game/internal/plugins/playing/weapon/entities"
 
 const (
 	BasicWeapon entities.WeaponType = iota

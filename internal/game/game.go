@@ -7,7 +7,7 @@ import (
 	"game/internal/game/components/menu"
 	"game/internal/game/components/playingstate"
 	"game/internal/game/states"
-	"game/internal/helpers/fontface"
+	"game/internal/plugins/menu/fontface"
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -51,7 +51,7 @@ func NewGame(kernel *core.GameKernel) *Game {
 }
 
 func (g *Game) Update() error {
-	g.componentsByState[g.currentState].Update()
+	g.kernel.Update(g.componentsByState[g.currentState].PluginManager())
 
 	return nil
 }
@@ -66,4 +66,14 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 
 func (g *Game) SetState(state states.State) {
 	g.currentState = state
+}
+
+func ObserveStateChanges(g *Game) {
+	g.kernel.EventBus.Subscribe("StartGame", func(data interface{}) {
+		g.SetState(states.PlayingState)
+	})
+
+	g.kernel.EventBus.Subscribe("GameOver", func(data interface{}) {
+		g.SetState(states.MenuState)
+	})
 }

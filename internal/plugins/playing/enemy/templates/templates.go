@@ -1,7 +1,7 @@
 package templates
 
 import (
-	"game/internal/plugins/enemy/entities"
+	"game/internal/plugins/playing/enemy/entities"
 	"image/color"
 )
 
