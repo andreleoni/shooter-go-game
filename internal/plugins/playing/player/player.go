@@ -92,14 +92,6 @@ func (p *PlayerPlugin) Draw(screen *ebiten.Image) {
 		p.width,
 		p.height,
 		false)
-
-	// p.animation.Draw(
-	// 	screen,
-	// 	screenX-p.width/2,
-	// 	screenY-p.height/2,
-	// 	p.width,
-	// 	p.height,
-	// 	!p.facingRight)
 }
 
 func (p *PlayerPlugin) GetPosition() (float64, float64) {

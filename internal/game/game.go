@@ -40,7 +40,7 @@ func NewGame(kernel *core.GameKernel) *Game {
 	menuState := menu.NewComponentMenuState(kernel)
 	playingState := playingstate.NewComponentPlayingState(kernel)
 
-	return &Game{
+	game := &Game{
 		kernel:       kernel,
 		currentState: states.MenuState,
 		componentsByState: map[states.State]states.GameState{
@@ -48,6 +48,10 @@ func NewGame(kernel *core.GameKernel) *Game {
 			states.PlayingState: playingState,
 		},
 	}
+
+	ObserveStateChanges(game)
+
+	return game
 }
 
 func (g *Game) Update() error {

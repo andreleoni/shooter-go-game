@@ -50,7 +50,7 @@ func NewComponentPlayingState(kernel *core.GameKernel) *ComponentPlayingState {
 		weaponPlugin.Init(kernel)
 	})
 
-	return &ComponentPlayingState{kernel: kernel}
+	return &ComponentPlayingState{kernel: kernel, pluginManager: pluginManager}
 }
 
 func (cps *ComponentPlayingState) Draw(screen *ebiten.Image) {

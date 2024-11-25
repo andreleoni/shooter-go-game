@@ -1,7 +1,6 @@
 package menu
 
 import (
-	"fmt"
 	"game/internal/assets"
 	"game/internal/constants"
 	"game/internal/core"
@@ -91,8 +90,6 @@ func (m *MenuPlugin) Update() error {
 		}
 
 	case menu.CharacterSelectState:
-		fmt.Println("charselectstate")
-
 		if m.selectionDelay > 0.05 {
 			if ebiten.IsKeyPressed(ebiten.KeyW) {
 				m.selectedChar = (m.selectedChar + 1) % len(m.characters)
@@ -110,7 +107,6 @@ func (m *MenuPlugin) Update() error {
 			}
 
 			if m.canTransition && ebiten.IsKeyPressed(ebiten.KeyEnter) {
-				fmt.Println("pressed enter")
 				m.currentState = menu.PlayingState
 				m.canTransition = false
 

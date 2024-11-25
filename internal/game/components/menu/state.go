@@ -22,7 +22,10 @@ func NewComponentMenuState(kernel *core.GameKernel) *ComponentMenuState {
 		pluginManager.UnregisterAll()
 
 		menuPlugin := menu.NewMenuPlugin(kernel)
+
 		pluginManager.Register(menuPlugin, 0)
+
+		menuPlugin.Init(kernel)
 	})
 
 	menuPlugin.Init(kernel)
