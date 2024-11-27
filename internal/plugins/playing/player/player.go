@@ -5,25 +5,28 @@ import (
 	"game/internal/core"
 	"game/internal/plugins/playing/camera"
 	"game/internal/plugins/playing/weapon"
+	"image/color"
 
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 type PlayerPlugin struct {
-	kernel         *core.GameKernel
-	playingPlugins *core.PluginManager
-	health         float64
-	x, y           float64
-	width          float64
-	height         float64
-	speed          float64
-	animation      *assets.Animation
-	staticsprite   *assets.StaticSprite
-	shootTimer     float64
-	shootCooldown  float64
-	facingRight    bool
+	kernel          *core.GameKernel
+	playingPlugins  *core.PluginManager
+	health          float64
+	x, y            float64
+	width           float64
+	height          float64
+	speed           float64
+	animation       *assets.Animation
+	staticsprite    *assets.StaticSprite
+	shootTimer      float64
+	shootCooldown   float64
+	facingRight     bool
+	DamageFlashTime float64
 
 	level int
 }
@@ -74,7 +77,11 @@ func (p *PlayerPlugin) Update() error {
 		weapons := p.playingPlugins.GetPlugin("WeaponSystem").(*weapon.WeaponPlugin)
 		weapons.Shoot(p.x, p.y)
 		p.shootTimer = 0
+	}
 
+	// Atualizar o temporizador de flash de dano
+	if p.DamageFlashTime > 0 {
+		p.DamageFlashTime -= p.kernel.DeltaTime
 	}
 
 	return nil
@@ -87,13 +94,24 @@ func (p *PlayerPlugin) Draw(screen *ebiten.Image) {
 	screenX := p.x - cameraX
 	screenY := p.y - cameraY
 
-	p.staticsprite.DrawWithSize(
-		screen,
-		screenX-p.width/2,
-		screenY-p.height/2,
-		p.width,
-		p.height,
-		false)
+	if p.DamageFlashTime > 0 {
+		ebitenutil.DrawRect(
+			screen,
+			screenX-p.width/2,
+			screenY-p.height/2,
+			p.width,
+			p.height,
+			color.RGBA{255, 255, 0, 255})
+
+	} else {
+		p.staticsprite.DrawWithSize(
+			screen,
+			screenX-p.width/2,
+			screenY-p.height/2,
+			p.width,
+			p.height,
+			false)
+	}
 }
 
 func (p *PlayerPlugin) GetPosition() (float64, float64) {

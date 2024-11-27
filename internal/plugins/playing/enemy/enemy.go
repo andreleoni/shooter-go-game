@@ -67,7 +67,7 @@ func (ep *EnemyPlugin) Init(kernel *core.GameKernel) error {
 func (ep *EnemyPlugin) Update() error {
 	ep.spawnTimer += ep.kernel.DeltaTime
 
-	if ep.spawnTimer >= 1.0 {
+	if ep.spawnTimer >= 0.5 {
 		ep.Spawn()
 		ep.spawnTimer = 0
 	}
@@ -83,8 +83,10 @@ func (ep *EnemyPlugin) Update() error {
 				if enemy.LastDamageTime >= 0.5 {
 					ep.playerPlugin.DecreaseHealth(enemy.Power)
 					enemy.LastDamageTime = 0
+					ep.playerPlugin.DamageFlashTime = 0.3
 				} else {
 					enemy.LastDamageTime += ep.kernel.DeltaTime
+					ep.playerPlugin.DamageFlashTime += ep.kernel.DeltaTime
 				}
 			}
 		}

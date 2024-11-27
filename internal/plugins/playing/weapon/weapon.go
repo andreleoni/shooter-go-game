@@ -40,10 +40,10 @@ func (wp *WeaponPlugin) Init(
 
 	wp.kernel = kernel
 
-	wp.weapons = append(wp.weapons, &entities.Weapon{
-		Power: 10,
-		Type:  templates.DaggersWeapon,
-	})
+	// wp.weapons = append(wp.weapons, &entities.Weapon{
+	// 	Power: 10,
+	// 	Type:  templates.DaggersWeapon,
+	// })
 
 	// wp.weapons = append(wp.weapons, &entities.Weapon{
 	// 	Power: 20,
@@ -51,7 +51,7 @@ func (wp *WeaponPlugin) Init(
 	// })
 
 	// wp.weapons = append(wp.weapons, &entities.Weapon{
-	// 	Power: 50,
+	// 	Power: 10,
 	// 	Type:  templates.ProtectionWeapon,
 	// })
 
