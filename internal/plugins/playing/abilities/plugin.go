@@ -2,7 +2,6 @@ package abilities
 
 import (
 	"game/internal/core"
-	"game/internal/plugins"
 
 	"github.com/hajimehoshi/ebiten"
 )
@@ -11,7 +10,7 @@ type AbilitiesPlugin struct {
 	kernel *core.GameKernel
 }
 
-func NewAbilitiesPlugin(target plugins.PlayerPlugin) *AbilitiesPlugin {
+func NewAbilitiesPlugin(plugins *core.PluginManager) *AbilitiesPlugin {
 	return &AbilitiesPlugin{}
 }
 

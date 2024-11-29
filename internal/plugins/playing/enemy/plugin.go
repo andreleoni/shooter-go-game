@@ -80,6 +80,8 @@ func (ep *EnemyPlugin) Update() error {
 
 			// Verificar colisão com o jogador e cooldown de dano
 			if ep.checkCollisionWithPlayer(enemy) {
+				ep.kernel.EventBus.Publish("ChoosingAbility", nil)
+
 				if enemy.LastDamageTime >= 0.5 {
 					ep.playerPlugin.DecreaseHealth(enemy.Power)
 					enemy.LastDamageTime = 0
@@ -138,6 +140,8 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 					// Draw enemy in white if DamageFlashTime is active
 					ebitenutil.DrawRect(screen, screenX, screenY, enemy.Width, enemy.Height, color.RGBA{255, 255, 255, 255})
 				} else {
+					ebitenutil.DrawRect(screen, screenX, screenY, enemy.Width, enemy.Height, color.RGBA{255, 0, 255, 255})
+
 					enemy.Stats.StaticSprite.DrawWithSize(screen, screenX, screenY, enemy.Width, enemy.Height, false)
 				}
 			}
@@ -182,49 +186,21 @@ func (ep *EnemyPlugin) GetEnemies() []*entity.Enemy {
 }
 
 func (ep *EnemyPlugin) moveTowardsPlayer(enemy *entity.Enemy, playerX, playerY float64) {
-	// Calculate desired velocity towards player
 	dx := playerX - enemy.X
 	dy := playerY - enemy.Y
 	distance := math.Sqrt(dx*dx + dy*dy)
 
-	if distance > 0 {
-		dx /= distance
-		dy /= distance
+	// Normalizar a direção
+	dx /= distance
+	dy /= distance
 
-		desiredX := dx * enemy.Speed * ep.kernel.DeltaTime
-		desiredY := dy * enemy.Speed * ep.kernel.DeltaTime
+	// Mover o inimigo em direção ao jogador
+	enemy.X += dx * enemy.Speed * ep.kernel.DeltaTime
+	enemy.Y += dy * enemy.Speed * ep.kernel.DeltaTime
 
-		// Check for obstacles and steer around them
-		if !ep.checkEnemyCollision(enemy.X+desiredX, enemy.Y+desiredY, enemy) {
-			enemy.X += desiredX
-			enemy.Y += desiredY
-		} else {
-			// Move perpendicularly to avoid collision
-			perpendicularDirections := [][2]float64{
-				{0, -enemy.Speed * ep.kernel.DeltaTime}, // Up
-				{0, enemy.Speed * ep.kernel.DeltaTime},  // Down
-			}
-
-			// Determine which perpendicular direction is closer to the player
-			if math.Abs(playerY-(enemy.Y-perpendicularDirections[0][1])) < math.Abs(playerY-(enemy.Y+perpendicularDirections[1][1])) {
-				perpendicularDirections = [][2]float64{
-					{0, -enemy.Speed * ep.kernel.DeltaTime}, // Up
-					{0, enemy.Speed * ep.kernel.DeltaTime},  // Down
-				}
-			} else {
-				perpendicularDirections = [][2]float64{
-					{0, enemy.Speed * ep.kernel.DeltaTime},  // Down
-					{0, -enemy.Speed * ep.kernel.DeltaTime}, // Up
-				}
-			}
-
-			for _, dir := range perpendicularDirections {
-				if !ep.checkEnemyCollision(enemy.X+dir[0], enemy.Y+dir[1], enemy) {
-					enemy.X += dir[0]
-					enemy.Y += dir[1]
-					break
-				}
-			}
-		}
+	// Verificar colisão com outros inimigos
+	if ep.checkEnemyCollision(enemy.X, enemy.Y, enemy) {
+		enemy.X -= dx * enemy.Speed * ep.kernel.DeltaTime
+		enemy.Y -= dy * enemy.Speed * ep.kernel.DeltaTime
 	}
 }

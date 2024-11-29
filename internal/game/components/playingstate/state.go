@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"game/internal/core"
 	"game/internal/plugins/playing/camera"
+	"game/internal/plugins/playing/chooseability"
 	"game/internal/plugins/playing/combat"
 	"game/internal/plugins/playing/enemy"
 	"game/internal/plugins/playing/player"
@@ -13,34 +14,43 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+type State int
+
+const (
+	Playing State = iota
+	Paused
+	ChooseAbility
+)
+
 type ComponentPlayingState struct {
-	kernel        *core.GameKernel
-	pluginManager *core.PluginManager
+	kernel               *core.GameKernel
+	pluginManagerByState map[State]*core.PluginManager
+	state                State
 }
 
 func NewComponentPlayingState(kernel *core.GameKernel) *ComponentPlayingState {
-	pluginManager := core.NewPluginManager()
+	componentPlayingState := &ComponentPlayingState{kernel: kernel}
+
+	pluginManagerByState := make(map[State]*core.PluginManager)
+	pluginManagerByState[Playing] = core.NewPluginManager()
+	pluginManagerByState[ChooseAbility] = core.NewPluginManager()
 
 	kernel.EventBus.Subscribe("StartGame", func(data interface{}) {
-		fmt.Println("Game started", data)
+		pluginManagerByState[Playing].UnregisterAll()
 
-		pluginManager.UnregisterAll()
-
-		// Level design com apenas os plugins necessários para aquele level
-
-		playerPlugin := player.NewPlayerPlugin(pluginManager)
+		playerPlugin := player.NewPlayerPlugin(pluginManagerByState[Playing])
 		cameraPlugin := camera.NewCameraPlugin(playerPlugin)
-		enemyPlugin := enemy.NewEnemyPlugin(playerPlugin, pluginManager)
-		combatPlugin := combat.NewCombatPlugin(enemyPlugin, pluginManager)
+		enemyPlugin := enemy.NewEnemyPlugin(playerPlugin, pluginManagerByState[Playing])
+		combatPlugin := combat.NewCombatPlugin(enemyPlugin, pluginManagerByState[Playing])
 		statsPlugin := stats.NewStatsPlugin(playerPlugin)
-		weaponPlugin := weapon.NewWeaponPlugin(pluginManager)
+		weaponPlugin := weapon.NewWeaponPlugin(pluginManagerByState[Playing])
 
-		pluginManager.Register(weaponPlugin, 0)
-		pluginManager.Register(playerPlugin, 1)
-		pluginManager.Register(enemyPlugin, 3)
-		pluginManager.Register(combatPlugin, 4)
-		pluginManager.Register(cameraPlugin, 6)
-		pluginManager.Register(statsPlugin, 7)
+		pluginManagerByState[Playing].Register(weaponPlugin, 0)
+		pluginManagerByState[Playing].Register(playerPlugin, 1)
+		pluginManagerByState[Playing].Register(enemyPlugin, 3)
+		pluginManagerByState[Playing].Register(combatPlugin, 4)
+		pluginManagerByState[Playing].Register(cameraPlugin, 6)
+		pluginManagerByState[Playing].Register(statsPlugin, 7)
 
 		playerPlugin.Init(kernel)
 		enemyPlugin.Init(kernel)
@@ -50,13 +60,31 @@ func NewComponentPlayingState(kernel *core.GameKernel) *ComponentPlayingState {
 		weaponPlugin.Init(kernel)
 	})
 
-	return &ComponentPlayingState{kernel: kernel, pluginManager: pluginManager}
+	kernel.EventBus.Subscribe("ChoosingAbility", func(data interface{}) {
+		fmt.Println("Choosing ability", data)
+
+		chooseabilityPlugin := chooseability.NewChooseAbilityPlugin(pluginManagerByState[ChooseAbility])
+
+		pluginManagerByState[ChooseAbility].Register(chooseabilityPlugin, 0)
+
+		chooseabilityPlugin.Init(kernel)
+
+		componentPlayingState.SetState(ChooseAbility)
+	})
+
+	componentPlayingState.pluginManagerByState = pluginManagerByState
+
+	return componentPlayingState
 }
 
 func (cps *ComponentPlayingState) Draw(screen *ebiten.Image) {
-	cps.pluginManager.DrawAll(screen)
+	cps.pluginManagerByState[cps.state].DrawAll(screen)
 }
 
 func (cps *ComponentPlayingState) PluginManager() *core.PluginManager {
-	return cps.pluginManager
+	return cps.pluginManagerByState[cps.state]
+}
+
+func (cps *ComponentPlayingState) SetState(s State) {
+	cps.state = s
 }
