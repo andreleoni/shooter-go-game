@@ -135,7 +135,6 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 				screenY >= -enemy.Height && screenY <= constants.ScreenHeight+enemy.Height {
 
 				if enemy.DamageFlashTime > 0 {
-					// Draw enemy in white if DamageFlashTime is active
 					ebitenutil.DrawRect(screen, screenX, screenY, enemy.Width, enemy.Height, color.RGBA{255, 255, 255, 255})
 				} else {
 					ebitenutil.DrawRect(screen, screenX, screenY, enemy.Width, enemy.Height, color.RGBA{255, 0, 255, 255})

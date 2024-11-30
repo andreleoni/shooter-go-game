@@ -65,12 +65,12 @@ func (ep *ExperiencePlugin) Update() error {
 			crystal.Y += dy * crystal.Speed * ep.kernel.DeltaTime
 
 			if ep.inPlayerCollectionRadius(crystal, playerX, playerY, playerWidth, playerHeight) {
-				crystal.Speed = 200
+				crystal.Speed = 450
 			}
 
 			if ep.checkCollisionWithPlayer(crystal, playerX, playerY, playerWidth, playerHeight) {
 				crystal.Active = false
-				playerPlugin.AddExperience(10)
+				playerPlugin.AddExperience(1)
 			}
 		}
 	}

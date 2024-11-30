@@ -33,16 +33,16 @@ type PlayerPlugin struct {
 }
 
 var levelUpExperience = map[int]int{
-	1:  100,
-	2:  120,
-	3:  150,
-	4:  200,
-	5:  270,
-	6:  400,
-	7:  600,
-	8:  900,
-	9:  1300,
-	10: 2000,
+	1:  10,
+	2:  12,
+	3:  15,
+	4:  20,
+	5:  27,
+	6:  40,
+	7:  60,
+	8:  90,
+	9:  130,
+	10: 200,
 }
 
 func NewPlayerPlugin(plugins *core.PluginManager) *PlayerPlugin {
