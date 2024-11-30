@@ -7,6 +7,7 @@ import (
 	"game/internal/plugins/playing/chooseability"
 	"game/internal/plugins/playing/combat"
 	"game/internal/plugins/playing/enemy"
+	"game/internal/plugins/playing/experience"
 	"game/internal/plugins/playing/player"
 	"game/internal/plugins/playing/stats"
 	"game/internal/plugins/playing/weapon"
@@ -45,15 +46,18 @@ func NewComponentPlayingState(kernel *core.GameKernel) *ComponentPlayingState {
 		combatPlugin := combat.NewCombatPlugin(enemyPlugin, pluginManagerByState[Playing])
 		statsPlugin := stats.NewStatsPlugin(playerPlugin)
 		weaponPlugin := weapon.NewWeaponPlugin(pluginManagerByState[Playing])
+		experiencePlugin := experience.NewExperiencePlugin(pluginManagerByState[Playing])
 
 		pluginManagerByState[Playing].Register(weaponPlugin, 0)
 		pluginManagerByState[Playing].Register(playerPlugin, 1)
+		pluginManagerByState[Playing].Register(experiencePlugin, 2)
 		pluginManagerByState[Playing].Register(enemyPlugin, 3)
 		pluginManagerByState[Playing].Register(combatPlugin, 4)
 		pluginManagerByState[Playing].Register(cameraPlugin, 6)
 		pluginManagerByState[Playing].Register(statsPlugin, 7)
 
 		playerPlugin.Init(kernel)
+		experiencePlugin.Init(kernel)
 		enemyPlugin.Init(kernel)
 		combatPlugin.Init(kernel)
 		cameraPlugin.Init(kernel)

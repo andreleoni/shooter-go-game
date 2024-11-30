@@ -28,7 +28,8 @@ type PlayerPlugin struct {
 	facingRight     bool
 	DamageFlashTime float64
 
-	level int
+	experience int
+	level      int
 }
 
 func NewPlayerPlugin(plugins *core.PluginManager) *PlayerPlugin {
@@ -42,6 +43,8 @@ func NewPlayerPlugin(plugins *core.PluginManager) *PlayerPlugin {
 		height:         32,
 		health:         100,
 		playingPlugins: plugins,
+		experience:     0,
+		level:          1,
 	}
 }
 
@@ -133,4 +136,23 @@ func (p *PlayerPlugin) GetSize() (float64, float64) {
 
 func (p *PlayerPlugin) GetHealth() float64 {
 	return p.health
+}
+
+func (p *PlayerPlugin) AddExperience(amount int) {
+	p.experience += amount
+
+	if p.experience >= p.level*100 {
+		p.experience = 0
+		p.level++
+
+		p.kernel.EventBus.Publish("ChoosingAbility", nil)
+	}
+}
+
+func (p *PlayerPlugin) GetLevel() float64 {
+	return float64(p.level)
+}
+
+func (p *PlayerPlugin) GetExperience() float64 {
+	return float64(p.experience)
 }

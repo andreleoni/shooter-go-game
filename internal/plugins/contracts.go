@@ -24,4 +24,6 @@ type PlayerPlugin interface {
 	GetPosition() (float64, float64)
 	DecreaseHealth(float64)
 	GetSize() (float64, float64)
+	GetLevel() float64
+	GetExperience() float64
 }

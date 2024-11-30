@@ -5,6 +5,7 @@ import (
 	"game/internal/helpers/collision"
 	"game/internal/plugins"
 	"game/internal/plugins/playing/enemy"
+	"game/internal/plugins/playing/experience"
 	"game/internal/plugins/playing/weapon"
 	"game/internal/plugins/playing/weapon/templates"
 
@@ -42,6 +43,8 @@ func (cp *CombatPlugin) Draw(*ebiten.Image) {
 
 func (cp *CombatPlugin) Update() error {
 	wp := cp.plugins.GetPlugin("WeaponSystem").(*weapon.WeaponPlugin)
+	ep := cp.plugins.GetPlugin("ExperienceSystem").(*experience.ExperiencePlugin)
+
 	enemies := cp.enemyPlugin.GetEnemies()
 
 	enemyGotDamaged := false
@@ -58,6 +61,8 @@ func (cp *CombatPlugin) Update() error {
 						if enemy.Health <= 0 {
 							enemy.Active = false
 							enemyGotDamaged = true
+
+							ep.DropCrystal(enemy.X, enemy.Y)
 						}
 					}
 				}
