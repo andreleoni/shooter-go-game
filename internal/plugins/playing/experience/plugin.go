@@ -5,6 +5,7 @@ import (
 	"game/internal/plugins/playing/camera"
 	"game/internal/plugins/playing/player"
 	"image/color"
+	"math"
 	"math/rand"
 	"time"
 
@@ -84,6 +85,12 @@ func (ep *ExperiencePlugin) DropCrystal(x, y float64) {
 }
 
 func (ep *ExperiencePlugin) checkCollisionWithPlayer(crystal *Crystal, playerX, playerY, playerWidth, playerHeight float64) bool {
-	return crystal.X < playerX+playerWidth && crystal.X+10 > playerX &&
-		crystal.Y < playerY+playerHeight && crystal.Y+10 > playerY
+	collectionRadius := 50.0
+
+	dx := (playerX + playerWidth/2) - (crystal.X + 5)
+	dy := (playerY + playerHeight/2) - (crystal.Y + 5)
+
+	distance := math.Sqrt(dx*dx + dy*dy)
+
+	return distance <= collectionRadius
 }
