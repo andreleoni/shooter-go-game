@@ -22,6 +22,7 @@ type ExperiencePlugin struct {
 type Crystal struct {
 	X, Y   float64
 	Active bool
+	Speed  float64
 }
 
 func NewExperiencePlugin(plugins *core.PluginManager) *ExperiencePlugin {
@@ -48,9 +49,29 @@ func (ep *ExperiencePlugin) Update() error {
 	playerWidth, playerHeight := playerPlugin.GetSize()
 
 	for _, crystal := range ep.crystals {
-		if crystal.Active && ep.checkCollisionWithPlayer(crystal, playerX, playerY, playerWidth, playerHeight) {
-			crystal.Active = false
-			playerPlugin.AddExperience(10) // Adicionar experiência ao jogador
+		if crystal.Active {
+			// Calcular a direção do movimento
+			dx := (playerX + playerWidth/2) - (crystal.X + 5)
+			dy := (playerY + playerHeight/2) - (crystal.Y + 5)
+			distance := math.Sqrt(dx*dx + dy*dy)
+
+			if distance > 0 {
+				dx /= distance
+				dy /= distance
+			}
+
+			// Atualizar a posição do cristal
+			crystal.X += dx * crystal.Speed * ep.kernel.DeltaTime
+			crystal.Y += dy * crystal.Speed * ep.kernel.DeltaTime
+
+			if ep.inPlayerCollectionRadius(crystal, playerX, playerY, playerWidth, playerHeight) {
+				crystal.Speed = 200
+			}
+
+			if ep.checkCollisionWithPlayer(crystal, playerX, playerY, playerWidth, playerHeight) {
+				crystal.Active = false
+				playerPlugin.AddExperience(10)
+			}
 		}
 	}
 
@@ -84,7 +105,7 @@ func (ep *ExperiencePlugin) DropCrystal(x, y float64) {
 	})
 }
 
-func (ep *ExperiencePlugin) checkCollisionWithPlayer(crystal *Crystal, playerX, playerY, playerWidth, playerHeight float64) bool {
+func (ep *ExperiencePlugin) inPlayerCollectionRadius(crystal *Crystal, playerX, playerY, playerWidth, playerHeight float64) bool {
 	collectionRadius := 50.0
 
 	dx := (playerX + playerWidth/2) - (crystal.X + 5)
@@ -93,4 +114,9 @@ func (ep *ExperiencePlugin) checkCollisionWithPlayer(crystal *Crystal, playerX, 
 	distance := math.Sqrt(dx*dx + dy*dy)
 
 	return distance <= collectionRadius
+}
+
+func (ep *ExperiencePlugin) checkCollisionWithPlayer(crystal *Crystal, playerX, playerY, playerWidth, playerHeight float64) bool {
+	return crystal.X < playerX+playerWidth && crystal.X+10 > playerX &&
+		crystal.Y < playerY+playerHeight && crystal.Y+10 > playerY
 }
