@@ -53,7 +53,7 @@ func (cp *CombatPlugin) Update() error {
 		for _, enemy := range enemies {
 			for _, projectil := range weapon.Projectiles {
 				if enemy.Active {
-					if collision.Check(projectil.X, projectil.Y, 5, 10, enemy.X, enemy.Y, 20, 20) {
+					if collision.Check(projectil.X, projectil.Y, 5, 10, enemy.X, enemy.Y, enemy.Width, enemy.Height) {
 						projectil.Active = false
 
 						enemy.Health -= projectil.Power
@@ -88,6 +88,8 @@ func (cp *CombatPlugin) Update() error {
 
 							if enemy.Health <= 0 {
 								enemy.Active = false
+
+								ep.DropCrystal(enemy.X, enemy.Y)
 							} else {
 								enemyGotDamaged = true
 							}

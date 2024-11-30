@@ -2,7 +2,6 @@ package entities
 
 import (
 	"game/internal/assets"
-	"image/color"
 )
 
 type EnemyStats struct {
@@ -10,7 +9,6 @@ type EnemyStats struct {
 	Speed     float64
 	Damage    float64
 	Size      float64
-	Color     color.RGBA
 	Power     float64
 
 	StaticSprite *assets.StaticSprite

@@ -24,9 +24,7 @@ type MenuPlugin struct {
 	canTransition  bool
 	selectionDelay float64
 
-	wallpaper  *assets.StaticSprite
-	mapImage   *assets.StaticSprite
-	grassImage *assets.StaticSprite
+	wallpaper *assets.StaticSprite
 }
 
 type Character struct {
@@ -45,13 +43,6 @@ func NewMenuPlugin(kernel *core.GameKernel) *MenuPlugin {
 		log.Fatal("Failed to wallpaper load animation:", err)
 	}
 
-	// Load the grass image
-	grassimage := assets.NewStaticSprite()
-	err = grassimage.Load("assets/images/tileset/ground.png")
-	if err != nil {
-		log.Fatal("Failed to open map image:", err)
-	}
-
 	return &MenuPlugin{
 		kernel:       kernel,
 		currentState: menu.MenuState,
@@ -61,7 +52,6 @@ func NewMenuPlugin(kernel *core.GameKernel) *MenuPlugin {
 		},
 		selectionDelay: 0,
 		wallpaper:      wallpaper,
-		grassImage:     grassimage,
 	}
 }
 

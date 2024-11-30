@@ -132,7 +132,8 @@ func (wp *WeaponPlugin) Draw(screen *ebiten.Image) {
 					if screenX >= -5 && screenX <= constants.ScreenWidth+5 &&
 						screenY >= -5 && screenY <= constants.ScreenHeight+5 {
 
-						angle := math.Atan2(projectile.DirectionY, projectile.DirectionX)
+						angle := math.Atan2(
+							projectile.DirectionY, projectile.DirectionX)
 
 						staticsprite := assets.NewStaticSprite()
 						staticsprite.Load("assets/images/bullets/arrow/arrow.png")
@@ -189,8 +190,8 @@ func (wp *WeaponPlugin) Shoot(x, y float64) {
 						continue
 					}
 
-					dx := enemy.X - x
-					dy := enemy.Y - y
+					dx := (enemy.X + enemy.Width/2) - x
+					dy := (enemy.Y + enemy.Height/2) - y
 					dist := math.Sqrt(dx*dx + dy*dy)
 
 					if dist < closestDist {
@@ -200,8 +201,8 @@ func (wp *WeaponPlugin) Shoot(x, y float64) {
 				}
 
 				// Calcular direção
-				dx := closestEnemy.X - x
-				dy := closestEnemy.Y - y
+				dx := (closestEnemy.X + closestEnemy.Width/2) - x
+				dy := (closestEnemy.Y + closestEnemy.Height/2) - y
 
 				distance := math.Sqrt(dx*dx + dy*dy)
 
@@ -215,8 +216,8 @@ func (wp *WeaponPlugin) Shoot(x, y float64) {
 					Speed:      300,
 					Active:     true,
 					Power:      weapon.Power,
-					TargetX:    closestEnemy.X,
-					TargetY:    closestEnemy.Y,
+					TargetX:    closestEnemy.X + closestEnemy.Width/2,
+					TargetY:    closestEnemy.Y + closestEnemy.Height/2,
 					DirectionX: dirX,
 					DirectionY: dirY,
 				}
