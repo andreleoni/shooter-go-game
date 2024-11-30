@@ -121,6 +121,14 @@ func (p *PlayerPlugin) Draw(screen *ebiten.Image) {
 			color.RGBA{255, 255, 0, 255})
 
 	} else {
+		ebitenutil.DrawRect(
+			screen,
+			screenX-p.width/2,
+			screenY-p.height/2,
+			p.width,
+			p.height,
+			color.RGBA{255, 255, 0, 255})
+
 		p.staticsprite.DrawWithSize(
 			screen,
 			screenX-p.width/2,

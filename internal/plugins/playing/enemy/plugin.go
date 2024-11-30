@@ -5,6 +5,7 @@ import (
 	"game/internal/assets"
 	"game/internal/constants"
 	"game/internal/core"
+	"game/internal/helpers/collision"
 
 	"game/internal/plugins/playing/camera"
 	"game/internal/plugins/playing/enemy/entities"
@@ -73,13 +74,19 @@ func (ep *EnemyPlugin) Update() error {
 	}
 
 	playerX, playerY := ep.playerPlugin.GetPosition()
+	playerWidth, playerHeight := ep.playerPlugin.GetSize()
 
 	for _, enemy := range ep.enemies {
 		if enemy.Active {
 			ep.moveTowardsPlayer(enemy, playerX, playerY)
 
-			// Verificar colisão com o jogador e cooldown de dano
-			if ep.checkCollisionWithPlayer(enemy) {
+			playerCollision := collision.Check(
+				enemy.X, enemy.Y,
+				enemy.Width, enemy.Height,
+				(playerX - playerWidth/2), (playerY - playerHeight/2),
+				playerWidth, playerHeight)
+
+			if playerCollision {
 				if enemy.LastDamageTime >= 0.5 {
 					ep.playerPlugin.DecreaseHealth(enemy.Power)
 					enemy.LastDamageTime = 0
@@ -98,14 +105,6 @@ func (ep *EnemyPlugin) Update() error {
 	}
 
 	return nil
-}
-
-func (ep *EnemyPlugin) checkCollisionWithPlayer(enemy *entities.Enemy) bool {
-	playerX, playerY := ep.playerPlugin.GetPosition()
-	playerWidth, playerHeight := ep.playerPlugin.GetSize()
-
-	return math.Abs(enemy.X-playerX) < (enemy.Width+playerWidth)/2 &&
-		math.Abs(enemy.Y-playerY) < (enemy.Height+playerHeight)/2
 }
 
 func (ep *EnemyPlugin) checkEnemyCollision(x, y float64, currentEnemy *entity.Enemy) bool {

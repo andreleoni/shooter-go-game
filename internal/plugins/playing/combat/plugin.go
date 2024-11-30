@@ -55,7 +55,12 @@ func (cp *CombatPlugin) Update() error {
 		for _, enemy := range enemies {
 			for _, projectil := range weapon.Projectiles {
 				if enemy.Active && projectil.Active {
-					if collision.Check(projectil.X, projectil.Y, projectil.Width, projectil.Height, enemy.X, enemy.Y, enemy.Width, enemy.Height) {
+					if collision.Check(
+						projectil.X, projectil.Y,
+						projectil.Width, projectil.Height,
+						enemy.X, enemy.Y,
+						enemy.Width, enemy.Height) {
+
 						projectil.Active = false
 
 						enemy.Health -= projectil.Power
