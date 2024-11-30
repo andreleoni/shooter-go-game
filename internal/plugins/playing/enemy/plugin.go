@@ -80,9 +80,8 @@ func (ep *EnemyPlugin) Update() error {
 
 			// Verificar colisão com o jogador e cooldown de dano
 			if ep.checkCollisionWithPlayer(enemy) {
-				ep.kernel.EventBus.Publish("ChoosingAbility", nil)
-
 				if enemy.LastDamageTime >= 0.5 {
+					ep.kernel.EventBus.Publish("ChoosingAbility", nil)
 					ep.playerPlugin.DecreaseHealth(enemy.Power)
 					enemy.LastDamageTime = 0
 					ep.playerPlugin.DamageFlashTime = 0.3

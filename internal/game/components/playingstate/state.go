@@ -10,6 +10,7 @@ import (
 	"game/internal/plugins/playing/player"
 	"game/internal/plugins/playing/stats"
 	"game/internal/plugins/playing/weapon"
+	"game/internal/plugins/playing/weapon/entities"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -58,10 +59,19 @@ func NewComponentPlayingState(kernel *core.GameKernel) *ComponentPlayingState {
 		cameraPlugin.Init(kernel)
 		statsPlugin.Init(kernel)
 		weaponPlugin.Init(kernel)
+
+		kernel.EventBus.Subscribe("NewAbility", func(weapon interface{}) {
+			weaponType := weapon.(entities.WeaponType)
+			weaponPlugin.AddWeapon(&entities.Weapon{Power: 20, Type: weaponType})
+
+			componentPlayingState.SetState(Playing)
+		})
 	})
 
 	kernel.EventBus.Subscribe("ChoosingAbility", func(data interface{}) {
 		fmt.Println("Choosing ability", data)
+
+		pluginManagerByState[ChooseAbility].UnregisterAll()
 
 		chooseabilityPlugin := chooseability.NewChooseAbilityPlugin(pluginManagerByState[ChooseAbility])
 

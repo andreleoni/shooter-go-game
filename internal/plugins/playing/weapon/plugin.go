@@ -58,6 +58,10 @@ func (wp *WeaponPlugin) Init(
 	return nil
 }
 
+func (wp *WeaponPlugin) AddWeapon(weapon *entities.Weapon) {
+	wp.weapons = append(wp.weapons, weapon)
+}
+
 func (wp *WeaponPlugin) GetWeapons() []*entities.Weapon {
 	return wp.weapons
 }
