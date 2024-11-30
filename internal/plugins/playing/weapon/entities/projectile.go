@@ -13,4 +13,7 @@ type Projectile struct {
 
 	TargetX float64
 	TargetY float64
+
+	Width  float64
+	Height float64
 }

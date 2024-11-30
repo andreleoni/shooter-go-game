@@ -118,7 +118,7 @@ func (wp *WeaponPlugin) Draw(screen *ebiten.Image) {
 					screenX := weapon.X - cameraX
 					screenY := weapon.Y - cameraY
 
-					ebitenutil.DrawRect(screen, screenX, screenY, 5, 5, color.RGBA{255, 255, 0, 255})
+					ebitenutil.DrawRect(screen, screenX, screenY, weapon.Width, weapon.Height, color.RGBA{255, 255, 0, 255})
 				}
 			}
 		} else if weapon.Type == templates.BasicWeapon {
@@ -137,8 +137,9 @@ func (wp *WeaponPlugin) Draw(screen *ebiten.Image) {
 
 						staticsprite := assets.NewStaticSprite()
 						staticsprite.Load("assets/images/bullets/arrow/arrow.png")
-
 						staticsprite.DrawAngle(screen, screenX, screenY, angle)
+
+						ebitenutil.DrawRect(screen, screenX, screenY, projectile.Width, projectile.Height, color.RGBA{200, 255, 0, 255})
 					}
 				}
 			}
@@ -170,6 +171,8 @@ func (wp *WeaponPlugin) Shoot(x, y float64) {
 					DirectionY: directionY,
 					Active:     true,
 					Power:      weapon.Power,
+					Height:     5,
+					Width:      5,
 				}
 
 				weapon.Projectiles = append(weapon.Projectiles, projectile)
@@ -220,6 +223,8 @@ func (wp *WeaponPlugin) Shoot(x, y float64) {
 					TargetY:    closestEnemy.Y + closestEnemy.Height/2,
 					DirectionX: dirX,
 					DirectionY: dirY,
+					Height:     10,
+					Width:      10,
 				}
 
 				weapon.Projectiles = append(weapon.Projectiles, projectile)

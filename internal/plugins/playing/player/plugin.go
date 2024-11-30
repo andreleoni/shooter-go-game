@@ -89,6 +89,7 @@ func (p *PlayerPlugin) Update() error {
 
 	// Auto-shooting
 	p.shootTimer += p.kernel.DeltaTime
+
 	if p.shootTimer >= p.shootCooldown {
 		weapons := p.playingPlugins.GetPlugin("WeaponSystem").(*weapon.WeaponPlugin)
 		weapons.Shoot(p.x, p.y)

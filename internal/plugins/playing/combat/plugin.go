@@ -1,6 +1,7 @@
 package combat
 
 import (
+	"fmt"
 	"game/internal/core"
 	"game/internal/helpers/collision"
 	"game/internal/plugins"
@@ -8,6 +9,7 @@ import (
 	"game/internal/plugins/playing/experience"
 	"game/internal/plugins/playing/weapon"
 	"game/internal/plugins/playing/weapon/templates"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -52,8 +54,8 @@ func (cp *CombatPlugin) Update() error {
 	for _, weapon := range wp.GetWeapons() {
 		for _, enemy := range enemies {
 			for _, projectil := range weapon.Projectiles {
-				if enemy.Active {
-					if collision.Check(projectil.X, projectil.Y, 5, 10, enemy.X, enemy.Y, enemy.Width, enemy.Height) {
+				if enemy.Active && projectil.Active {
+					if collision.Check(projectil.X, projectil.Y, projectil.Width, projectil.Height, enemy.X, enemy.Y, enemy.Width, enemy.Height) {
 						projectil.Active = false
 
 						enemy.Health -= projectil.Power
@@ -88,6 +90,7 @@ func (cp *CombatPlugin) Update() error {
 
 							if enemy.Health <= 0 {
 								enemy.Active = false
+								fmt.Println("Enemy killed by protection weapon", time.Now().Unix())
 
 								ep.DropCrystal(enemy.X, enemy.Y)
 							} else {
