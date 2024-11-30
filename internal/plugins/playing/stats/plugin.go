@@ -62,6 +62,7 @@ func (sp *StatsPlugin) Draw(screen *ebiten.Image) {
 	playerLevel := sp.playerPlugin.GetLevel()
 	text.Draw(screen, fmt.Sprintf("Level: %.0f", playerLevel), sp.gameFont, 10, 60, color.White)
 
-	playerExperience := sp.playerPlugin.GetExperience()
-	text.Draw(screen, fmt.Sprintf("Exp: %.0f", playerExperience), sp.gameFont, 10, 90, color.White)
+	playerNextLevelPercentage := sp.playerPlugin.NextLevelPercentage()
+	percentageText := fmt.Sprintf("Next Level: %.0f%%", playerNextLevelPercentage*100)
+	text.Draw(screen, percentageText, sp.gameFont, 10, 90, color.White)
 }

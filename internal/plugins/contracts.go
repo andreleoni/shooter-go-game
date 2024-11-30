@@ -26,4 +26,5 @@ type PlayerPlugin interface {
 	GetSize() (float64, float64)
 	GetLevel() float64
 	GetExperience() float64
+	NextLevelPercentage() float64
 }

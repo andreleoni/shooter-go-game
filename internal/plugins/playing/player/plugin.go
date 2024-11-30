@@ -32,6 +32,19 @@ type PlayerPlugin struct {
 	level      int
 }
 
+var levelUpExperience = map[int]int{
+	1:  100,
+	2:  120,
+	3:  150,
+	4:  200,
+	5:  270,
+	6:  400,
+	7:  600,
+	8:  900,
+	9:  1300,
+	10: 2000,
+}
+
 func NewPlayerPlugin(plugins *core.PluginManager) *PlayerPlugin {
 	return &PlayerPlugin{
 		x:              400,
@@ -139,9 +152,10 @@ func (p *PlayerPlugin) GetHealth() float64 {
 }
 
 func (p *PlayerPlugin) AddExperience(amount int) {
+
 	p.experience += amount
 
-	if p.experience >= p.level*100 {
+	if p.experience >= levelUpExperience[p.level] {
 		p.experience = 0
 		p.level++
 
@@ -155,4 +169,8 @@ func (p *PlayerPlugin) GetLevel() float64 {
 
 func (p *PlayerPlugin) GetExperience() float64 {
 	return float64(p.experience)
+}
+
+func (p *PlayerPlugin) NextLevelPercentage() float64 {
+	return float64(p.experience) / float64(levelUpExperience[p.level])
 }
