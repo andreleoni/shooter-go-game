@@ -143,7 +143,14 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 				} else {
 					ebitenutil.DrawRect(screen, screenX, screenY, enemy.Width, enemy.Height, color.RGBA{255, 0, 255, 255})
 
-					enemy.Stats.StaticSprite.DrawWithSize(screen, screenX, screenY, enemy.Width, enemy.Height, false)
+					input := assets.DrawInput{
+						Width:  enemy.Width,
+						Height: enemy.Height,
+						X:      screenX,
+						Y:      screenY,
+					}
+
+					enemy.Stats.StaticSprite.Draw(screen, input)
 				}
 			}
 		}
