@@ -130,11 +130,9 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 
 	for _, enemy := range ep.enemies {
 		if enemy.Active {
-			// Draw enemy relative to camera position
 			screenX := enemy.X - cameraX
 			screenY := enemy.Y - cameraY
 
-			// Only draw if on screen
 			if screenX >= -enemy.Width && screenX <= constants.ScreenWidth+enemy.Width &&
 				screenY >= -enemy.Height && screenY <= constants.ScreenHeight+enemy.Height {
 
@@ -143,7 +141,16 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 				} else {
 					ebitenutil.DrawRect(screen, screenX, screenY, enemy.Width, enemy.Height, color.RGBA{255, 0, 255, 255})
 
-					enemy.Stats.StaticSprite.DrawWithSize(screen, screenX, screenY, enemy.Width, enemy.Height, false)
+					op := ebiten.DrawImageOptions{}
+					op.GeoM.Translate(screenX, screenY)
+
+					input := assets.DrawInput{
+						Width:        enemy.Width,
+						Height:       enemy.Height,
+						ImageOptions: &op,
+					}
+
+					enemy.Stats.StaticSprite.Draw(screen, input)
 				}
 			}
 		}

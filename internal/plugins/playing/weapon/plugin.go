@@ -131,15 +131,25 @@ func (wp *WeaponPlugin) Draw(screen *ebiten.Image) {
 					// Only draw if on screen
 					if screenX >= -5 && screenX <= constants.ScreenWidth+5 &&
 						screenY >= -5 && screenY <= constants.ScreenHeight+5 {
+						ebitenutil.DrawRect(screen, screenX, screenY, projectile.Width, projectile.Height, color.RGBA{200, 255, 0, 255})
+
+						staticsprite := assets.NewStaticSprite()
+						staticsprite.Load("assets/images/bullets/arrow/arrow.png")
 
 						angle := math.Atan2(
 							projectile.DirectionY, projectile.DirectionX)
 
-						staticsprite := assets.NewStaticSprite()
-						staticsprite.Load("assets/images/bullets/arrow/arrow.png")
-						staticsprite.DrawAngle(screen, screenX, screenY, angle)
+						op := &ebiten.DrawImageOptions{}
+						op.GeoM.Translate(screenX, screenY)
+						op.GeoM.Rotate(angle)
 
-						ebitenutil.DrawRect(screen, screenX, screenY, projectile.Width, projectile.Height, color.RGBA{200, 255, 0, 255})
+						input := assets.DrawInput{
+							Width:        projectile.Width,
+							Height:       projectile.Height,
+							ImageOptions: op,
+						}
+
+						staticsprite.Draw(screen, input)
 					}
 				}
 			}

@@ -119,13 +119,27 @@ func (m *MenuPlugin) Update() error {
 func (m *MenuPlugin) Draw(screen *ebiten.Image) {
 	switch m.currentState {
 	case menu.MenuState:
-		// Draw the wallpaper
-		m.wallpaper.DrawWithSize(screen, 0, 0, constants.ScreenWidth, constants.ScreenHeight, false)
+		op := &ebiten.DrawImageOptions{}
+
+		input := assets.DrawInput{
+			Width:        constants.ScreenWidth,
+			Height:       constants.ScreenHeight,
+			ImageOptions: op,
+		}
+
+		m.wallpaper.Draw(screen, input)
 
 		text.Draw(screen, "Press ENTER to Start", fontface.FontFace, 300, 200, color.White)
 
 	case menu.CharacterSelectState:
-		m.wallpaper.DrawWithSize(screen, 0, 0, constants.ScreenWidth, constants.ScreenHeight, false)
+		op := &ebiten.DrawImageOptions{}
+		input := assets.DrawInput{
+			Width:        constants.ScreenWidth,
+			Height:       constants.ScreenHeight,
+			ImageOptions: op,
+		}
+
+		m.wallpaper.Draw(screen, input)
 
 		text.Draw(screen, "Select Character:", fontface.FontFace, 300, 150, color.White)
 
