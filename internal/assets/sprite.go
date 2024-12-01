@@ -48,7 +48,11 @@ func (a *StaticSprite) Draw(screen *ebiten.Image, input DrawInput) {
 	}
 
 	if input.Angle != nil {
+		input.ImageOptions.GeoM.Translate(-float64(a.Image.Bounds().Dx())/2, -float64(a.Image.Bounds().Dy())/2)
+
 		input.ImageOptions.GeoM.Rotate(*input.Angle)
+
+		input.ImageOptions.GeoM.Translate(float64(a.Image.Bounds().Dx())/2, float64(a.Image.Bounds().Dy())/2)
 	}
 
 	input.ImageOptions.GeoM.Scale(
