@@ -49,10 +49,10 @@ func (cp *CombatPlugin) Update() error {
 
 	enemies := cp.enemyPlugin.GetEnemies()
 
-	enemyGotDamaged := false
-
 	for _, weapon := range wp.GetWeapons() {
 		for _, enemy := range enemies {
+			enemyGotDamaged := false
+
 			for _, projectil := range weapon.Projectiles {
 				if enemy.Active && projectil.Active {
 					if collision.Check(
@@ -67,9 +67,10 @@ func (cp *CombatPlugin) Update() error {
 
 						if enemy.Health <= 0 {
 							enemy.Active = false
-							enemyGotDamaged = true
 
 							ep.DropCrystal(enemy.X, enemy.Y)
+						} else {
+							enemyGotDamaged = true
 						}
 					}
 				}
@@ -92,6 +93,7 @@ func (cp *CombatPlugin) Update() error {
 						if enemy.LastProtectionDeltaTime >= 0.5 {
 							enemy.Health -= weapon.Power
 							enemy.LastProtectionDeltaTime = 0
+							enemy.DamageFlashTime = 0.1
 
 							if enemy.Health <= 0 {
 								enemy.Active = false

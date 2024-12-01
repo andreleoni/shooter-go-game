@@ -87,10 +87,15 @@ func (ep *EnemyPlugin) Update() error {
 				playerWidth, playerHeight)
 
 			if playerCollision {
-				if enemy.LastDamageTime >= 0.5 {
+				if enemy.LastDamageTime == 0 || enemy.LastDamageTime >= 0.5 {
 					ep.playerPlugin.DecreaseHealth(enemy.Power)
-					enemy.LastDamageTime = 0
 					ep.playerPlugin.DamageFlashTime = 0.3
+
+					if enemy.LastDamageTime == 0 {
+						enemy.LastDamageTime += ep.kernel.DeltaTime
+					} else {
+						enemy.LastDamageTime = 0
+					}
 				} else {
 					enemy.LastDamageTime += ep.kernel.DeltaTime
 					ep.playerPlugin.DamageFlashTime += ep.kernel.DeltaTime
