@@ -4,7 +4,6 @@ import (
 	"game/internal/assets"
 	"game/internal/core"
 	"game/internal/plugins/playing/camera"
-	"game/internal/plugins/playing/weapon"
 	"image/color"
 
 	"log"
@@ -23,8 +22,6 @@ type PlayerPlugin struct {
 	speed           float64
 	animation       *assets.Animation
 	staticsprite    *assets.StaticSprite
-	shootTimer      float64
-	shootCooldown   float64
 	facingRight     bool
 	DamageFlashTime float64
 
@@ -50,8 +47,6 @@ func NewPlayerPlugin(plugins *core.PluginManager) *PlayerPlugin {
 		x:              400,
 		y:              300,
 		speed:          200.0,
-		shootCooldown:  1.0, // 1 second between shots
-		shootTimer:     0,
 		width:          32,
 		height:         32,
 		health:         100,
@@ -82,19 +77,9 @@ func (p *PlayerPlugin) Init(
 
 func (p *PlayerPlugin) Update() error {
 	newX, newY := p.x, p.y
-
 	newX, newY = InputHandler(p, newX, newY)
 
 	p.x, p.y = newX, newY
-
-	// Auto-shooting
-	p.shootTimer += p.kernel.DeltaTime
-
-	if p.shootTimer >= p.shootCooldown {
-		weapons := p.playingPlugins.GetPlugin("WeaponSystem").(*weapon.WeaponPlugin)
-		weapons.Shoot(p.x, p.y)
-		p.shootTimer = 0
-	}
 
 	// Atualizar o temporizador de flash de dano
 	if p.DamageFlashTime > 0 {

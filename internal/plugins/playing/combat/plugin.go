@@ -8,7 +8,6 @@ import (
 	"game/internal/plugins/playing/enemy"
 	"game/internal/plugins/playing/experience"
 	"game/internal/plugins/playing/weapon"
-	"game/internal/plugins/playing/weapon/templates"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -46,20 +45,29 @@ func (cp *CombatPlugin) Draw(*ebiten.Image) {
 func (cp *CombatPlugin) Update() error {
 	wp := cp.plugins.GetPlugin("WeaponSystem").(*weapon.WeaponPlugin)
 	ep := cp.plugins.GetPlugin("ExperienceSystem").(*experience.ExperiencePlugin)
+	pp := cp.plugins.GetPlugin("PlayerSystem").(plugins.PlayerPlugin)
 
 	enemies := cp.enemyPlugin.GetEnemies()
 
+	x, y := pp.GetPosition()
+
 	for _, weapon := range wp.GetWeapons() {
+		weapon.AutoShot(cp.kernel.DeltaTime, x, y)
+
 		for _, enemy := range enemies {
 			enemyGotDamaged := false
 
-			for _, projectil := range weapon.Projectiles {
+			for _, projectil := range weapon.ActiveProjectiles() {
 				if enemy.Active && projectil.Active {
 					if collision.Check(
-						projectil.X, projectil.Y,
-						projectil.Width, projectil.Height,
-						enemy.X, enemy.Y,
-						enemy.Width, enemy.Height) {
+						projectil.X,
+						projectil.Y,
+						projectil.Width,
+						projectil.Height,
+						enemy.X,
+						enemy.Y,
+						enemy.Width,
+						enemy.Height) {
 
 						projectil.Active = false
 
@@ -76,9 +84,11 @@ func (cp *CombatPlugin) Update() error {
 				}
 			}
 
-			if weapon.Type == templates.ProtectionWeapon {
+			//if weapon.Type == templates.ProtectionWeapon
+			if false {
+				playerPlugin := cp.plugins.GetPlugin("PlayerSystem").(plugins.PlayerPlugin)
+
 				if enemy.Active {
-					playerPlugin := cp.plugins.GetPlugin("PlayerSystem").(plugins.PlayerPlugin)
 					playerX, playerY := playerPlugin.GetPosition()
 
 					if collision.CheckCircle(
@@ -91,7 +101,7 @@ func (cp *CombatPlugin) Update() error {
 						enemy.Height) {
 
 						if enemy.LastProtectionDeltaTime >= 0.5 {
-							enemy.Health -= weapon.Power
+							enemy.Health -= weapon.GetPower()
 							enemy.LastProtectionDeltaTime = 0
 							enemy.DamageFlashTime = 0.1
 
