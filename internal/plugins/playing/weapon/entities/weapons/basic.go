@@ -23,12 +23,15 @@ type Basic struct {
 	ShootCooldown float64
 }
 
-func NewBasic(plugins *core.PluginManager) *Basic {
+func NewBasic() *Basic {
 	return &Basic{
 		Power:         10,
 		ShootCooldown: 1.0,
-		plugins:       plugins,
 	}
+}
+
+func (b *Basic) SetPluginManager(plugins *core.PluginManager) {
+	b.plugins = plugins
 }
 
 func (b *Basic) ID() string {

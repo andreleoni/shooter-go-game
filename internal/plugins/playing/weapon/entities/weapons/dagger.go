@@ -29,6 +29,10 @@ func NewDagger() *Dagger {
 	}
 }
 
+func (d *Dagger) SetPluginManager(plugins *core.PluginManager) {
+	d.plugins = plugins
+}
+
 func (d *Dagger) ID() string {
 	return "Dagger"
 }

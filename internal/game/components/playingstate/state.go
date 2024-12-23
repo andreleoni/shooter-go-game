@@ -66,14 +66,14 @@ func NewComponentPlayingState(kernel *core.GameKernel) *ComponentPlayingState {
 		weaponPlugin.Init(kernel)
 
 		kernel.EventBus.Subscribe("NewAbility", func(w interface{}) {
-			weaponPlugin.AddWeapon(w.(weaponentities.Weapon))
+			weapon := w.(weaponentities.Weapon)
+			weapon.SetPluginManager(pluginManagerByState[Playing])
+			weaponPlugin.AddWeapon(weapon)
 
 			componentPlayingState.SetState(Playing)
 		})
 
-		weaponPlugin.AddWeapon(weaponentities.NewBasic(componentPlayingState.PluginManager()))
-
-		// weaponPlugin.AddWeapon(weaponentities.NewProtection())
+		kernel.EventBus.Publish("NewAbility", weaponentities.NewBasic())
 	})
 
 	kernel.EventBus.Subscribe("ChoosingAbility", func(data interface{}) {

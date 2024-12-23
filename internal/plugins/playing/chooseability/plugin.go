@@ -24,7 +24,7 @@ func NewChooseAbilityPlugin(plugins *core.PluginManager) *ChooseAbilityPlugin {
 	}
 
 	weaponsByName := map[string]weaponentities.Weapon{
-		"BasicWeapon":      weaponentities.NewBasic(plugins),
+		"BasicWeapon":      weaponentities.NewBasic(),
 		"DaggersWeapon":    weaponentities.NewDagger(),
 		"ProtectionWeapon": weaponentities.NewProtection(),
 	}

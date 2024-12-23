@@ -1,6 +1,7 @@
 package weapons
 
 import (
+	"game/internal/core"
 	"game/internal/plugins/playing/weapon/entities"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -26,6 +27,7 @@ type WeaponDrawInput struct {
 
 type Weapon interface {
 	ID() string
+	SetPluginManager(plugins *core.PluginManager)
 	AutoShot(deltaTime, x, y float64)
 	Shoot(x, y float64)
 	Update(wui WeaponUpdateInput)

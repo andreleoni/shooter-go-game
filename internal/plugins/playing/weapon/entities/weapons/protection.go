@@ -25,6 +25,10 @@ func NewProtection() *Protection {
 	}
 }
 
+func (p *Protection) SetPluginManager(plugins *core.PluginManager) {
+	p.plugins = plugins
+}
+
 func (p *Protection) ID() string {
 	return "Protection"
 }
