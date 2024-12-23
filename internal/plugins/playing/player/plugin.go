@@ -9,7 +9,7 @@ import (
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 type PlayerPlugin struct {
@@ -97,22 +97,24 @@ func (p *PlayerPlugin) Draw(screen *ebiten.Image) {
 	screenY := p.y - cameraY
 
 	if p.DamageFlashTime > 0 {
-		ebitenutil.DrawRect(
+		vector.DrawFilledRect(
 			screen,
-			screenX-p.width/2,
-			screenY-p.height/2,
-			p.width,
-			p.height,
-			color.RGBA{255, 255, 0, 255})
+			float32(screenX-p.width/2),
+			float32(screenY-p.height/2),
+			float32(p.width),
+			float32(p.height),
+			color.RGBA{255, 255, 0, 255},
+			true)
 
 	} else {
-		ebitenutil.DrawRect(
+		vector.DrawFilledRect(
 			screen,
-			screenX-p.width/2,
-			screenY-p.height/2,
-			p.width,
-			p.height,
-			color.RGBA{255, 255, 0, 255})
+			float32(screenX-p.width/2),
+			float32(screenY-p.height/2),
+			float32(p.width),
+			float32(p.height),
+			color.RGBA{255, 255, 0, 255},
+			true)
 
 		p.staticsprite.Draw(screen, assets.DrawInput{
 			Width:  p.width,

@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 type ExperiencePlugin struct {
@@ -87,12 +87,13 @@ func (ep *ExperiencePlugin) Draw(screen *ebiten.Image) {
 			screenX := crystal.X - cameraX
 			screenY := crystal.Y - cameraY
 
-			ebitenutil.DrawRect(screen,
-				screenX,
-				screenY,
-				10,
-				10,
-				color.RGBA{0, 255, 255, 255})
+			vector.DrawFilledRect(screen,
+				float32(screenX),
+				float32(screenY),
+				float32(10),
+				float32(10),
+				color.RGBA{0, 255, 255, 255},
+				true)
 		}
 	}
 }

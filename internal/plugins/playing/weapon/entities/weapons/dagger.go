@@ -9,7 +9,7 @@ import (
 	"math/rand/v2"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 type Dagger struct {
@@ -94,7 +94,14 @@ func (d *Dagger) Draw(screen *ebiten.Image, wdi WeaponDrawInput) {
 			screenX := weapon.X - wdi.CameraX
 			screenY := weapon.Y - wdi.CameraY
 
-			ebitenutil.DrawRect(screen, screenX, screenY, weapon.Width, weapon.Height, color.RGBA{255, 255, 0, 255})
+			vector.DrawFilledRect(
+				screen,
+				float32(screenX),
+				float32(screenY),
+				float32(weapon.Width),
+				float32(weapon.Height),
+				color.RGBA{255, 255, 0, 255},
+				true)
 		}
 	}
 

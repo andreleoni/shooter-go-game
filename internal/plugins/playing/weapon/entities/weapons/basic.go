@@ -10,7 +10,7 @@ import (
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 type Basic struct {
@@ -145,7 +145,14 @@ func (b *Basic) Draw(screen *ebiten.Image, wdi WeaponDrawInput) {
 			if screenX >= -5 && screenX <= constants.ScreenWidth+5 &&
 				screenY >= -5 && screenY <= constants.ScreenHeight+5 {
 
-				ebitenutil.DrawRect(screen, screenX, screenY, projectile.Width, projectile.Height, color.RGBA{200, 255, 0, 255})
+				vector.DrawFilledRect(
+					screen,
+					float32(screenX),
+					float32(screenY),
+					float32(projectile.Width),
+					float32(projectile.Height),
+					color.RGBA{200, 255, 0, 255},
+					true)
 
 				angle := math.Atan2(
 					projectile.DirectionY, projectile.DirectionX)

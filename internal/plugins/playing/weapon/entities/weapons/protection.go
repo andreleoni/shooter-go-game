@@ -6,7 +6,7 @@ import (
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 type Protection struct {
@@ -47,7 +47,13 @@ func (p *Protection) Draw(screen *ebiten.Image, wdi WeaponDrawInput) {
 	circleX := screenX
 	circleY := screenY
 
-	ebitenutil.DrawCircle(screen, circleX, circleY, 200, color.RGBA{111, 222, 111, 255})
+	vector.DrawFilledCircle(
+		screen,
+		float32(circleX),
+		float32(circleY),
+		200,
+		color.RGBA{111, 222, 111, 255},
+		true)
 
 	return
 }
