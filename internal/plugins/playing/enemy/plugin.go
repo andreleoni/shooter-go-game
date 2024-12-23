@@ -20,7 +20,8 @@ import (
 	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	_ "github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 type EnemyPlugin struct {
@@ -139,9 +140,21 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 				screenY >= -enemy.Height && screenY <= constants.ScreenHeight+enemy.Height {
 
 				if enemy.DamageFlashTime > 0 {
-					ebitenutil.DrawRect(screen, screenX, screenY, enemy.Width, enemy.Height, color.RGBA{255, 255, 255, 255})
+					vector.DrawFilledRect(screen,
+						float32(screenX),
+						float32(screenY),
+						float32(enemy.Width),
+						float32(enemy.Height),
+						color.RGBA{255, 255, 255, 255},
+						true)
 				} else {
-					ebitenutil.DrawRect(screen, screenX, screenY, enemy.Width, enemy.Height, color.RGBA{255, 0, 255, 255})
+					vector.DrawFilledRect(screen,
+						float32(screenX),
+						float32(screenY),
+						float32(enemy.Width),
+						float32(enemy.Height),
+						color.RGBA{255, 0, 255, 255},
+						true)
 
 					input := assets.DrawInput{
 						Width:  enemy.Width,
