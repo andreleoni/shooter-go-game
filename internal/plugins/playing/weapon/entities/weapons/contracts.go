@@ -16,13 +16,26 @@ type WeaponUpdateInput struct {
 	CameraY float64
 }
 
+type WeaponDrawInput struct {
+	PlayerX float64
+	PlayerY float64
+
+	CameraX float64
+	CameraY float64
+}
+
 type Weapon interface {
+	ID() string
 	AutoShot(deltaTime, x, y float64)
 	Shoot(x, y float64)
-	Update(WeaponUpdateInput)
-	Draw(screen *ebiten.Image, cameraX, cameraY float64)
+	Update(wui WeaponUpdateInput)
+	Draw(screen *ebiten.Image, wdi WeaponDrawInput)
 
 	ActiveProjectiles() []*entities.Projectile
 
 	GetPower() float64
+
+	DamageType() string
+
+	AttackSpeed() float64
 }

@@ -131,12 +131,12 @@ func (b *Basic) Update(wui WeaponUpdateInput) {
 	}
 }
 
-func (b *Basic) Draw(screen *ebiten.Image, cameraX, cameraY float64) {
+func (b *Basic) Draw(screen *ebiten.Image, wdi WeaponDrawInput) {
 	for _, projectile := range b.Projectiles {
 		if projectile.Active {
 			// Draw bullet relative to camera position
-			screenX := projectile.X - cameraX
-			screenY := projectile.Y - cameraY
+			screenX := projectile.X - wdi.CameraX
+			screenY := projectile.Y - wdi.CameraY
 
 			// Only draw if on screen
 			if screenX >= -5 && screenX <= constants.ScreenWidth+5 &&
@@ -164,10 +164,18 @@ func (b *Basic) Draw(screen *ebiten.Image, cameraX, cameraY float64) {
 	return
 }
 
-func (d *Basic) ActiveProjectiles() []*entities.Projectile {
-	return d.Projectiles
+func (b *Basic) ActiveProjectiles() []*entities.Projectile {
+	return b.Projectiles
 }
 
-func (d *Basic) GetPower() float64 {
-	return d.Power
+func (b *Basic) GetPower() float64 {
+	return b.Power
+}
+
+func (*Basic) DamageType() string {
+	return "projectil"
+}
+
+func (*Basic) AttackSpeed() float64 {
+	return 1.0
 }

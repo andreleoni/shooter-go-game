@@ -72,6 +72,8 @@ func NewComponentPlayingState(kernel *core.GameKernel) *ComponentPlayingState {
 		})
 
 		weaponPlugin.AddWeapon(weaponentities.NewBasic(componentPlayingState.PluginManager()))
+
+		// weaponPlugin.AddWeapon(weaponentities.NewProtection())
 	})
 
 	kernel.EventBus.Subscribe("ChoosingAbility", func(data interface{}) {

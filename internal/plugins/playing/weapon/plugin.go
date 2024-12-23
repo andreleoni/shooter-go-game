@@ -2,6 +2,7 @@ package weapon
 
 import (
 	"game/internal/core"
+	"game/internal/plugins"
 	"game/internal/plugins/playing/camera"
 	"game/internal/plugins/playing/player"
 
@@ -70,7 +71,17 @@ func (wp *WeaponPlugin) Draw(screen *ebiten.Image) {
 	cameraPlugin := wp.plugins.GetPlugin("CameraSystem").(*camera.CameraPlugin)
 	cameraX, cameraY := cameraPlugin.GetPosition()
 
+	playerPlugin := wp.plugins.GetPlugin("PlayerSystem").(plugins.PlayerPlugin)
+	playerX, playerY := playerPlugin.GetPosition()
+
+	wdi := entitiesweapon.WeaponDrawInput{
+		CameraX: cameraX,
+		CameraY: cameraY,
+		PlayerX: playerX,
+		PlayerY: playerY,
+	}
+
 	for _, weapon := range wp.weapons {
-		weapon.Draw(screen, cameraX, cameraY)
+		weapon.Draw(screen, wdi)
 	}
 }

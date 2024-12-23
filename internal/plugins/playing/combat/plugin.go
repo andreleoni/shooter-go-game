@@ -49,76 +49,86 @@ func (cp *CombatPlugin) Update() error {
 
 	enemies := cp.enemyPlugin.GetEnemies()
 
-	x, y := pp.GetPosition()
+	playerX, playerY := pp.GetPosition()
 
 	for _, weapon := range wp.GetWeapons() {
-		weapon.AutoShot(cp.kernel.DeltaTime, x, y)
+		weapon.AutoShot(cp.kernel.DeltaTime, playerX, playerY)
 
 		for _, enemy := range enemies {
 			enemyGotDamaged := false
+			enemykilled := false
 
-			for _, projectil := range weapon.ActiveProjectiles() {
-				if enemy.Active && projectil.Active {
-					if collision.Check(
-						projectil.X,
-						projectil.Y,
-						projectil.Width,
-						projectil.Height,
-						enemy.X,
-						enemy.Y,
-						enemy.Width,
-						enemy.Height) {
+			if weapon.DamageType() == "projectil" {
+				for _, projectil := range weapon.ActiveProjectiles() {
+					if enemy.Active && projectil.Active {
+						if collision.Check(
+							projectil.X,
+							projectil.Y,
+							projectil.Width,
+							projectil.Height,
+							enemy.X,
+							enemy.Y,
+							enemy.Width,
+							enemy.Height) {
 
-						projectil.Active = false
+							projectil.Active = false
 
-						enemy.Health -= projectil.Power
+							enemy.Health -= projectil.Power
 
-						if enemy.Health <= 0 {
-							enemy.Active = false
+							if enemy.Health <= 0 {
+								enemy.Active = false
+								enemykilled = true
 
-							ep.DropCrystal(enemy.X, enemy.Y)
-						} else {
-							enemyGotDamaged = true
+							} else {
+								enemyGotDamaged = true
+							}
 						}
 					}
 				}
 			}
 
-			//if weapon.Type == templates.ProtectionWeapon
-			if false {
-				playerPlugin := cp.plugins.GetPlugin("PlayerSystem").(plugins.PlayerPlugin)
-
+			if weapon.DamageType() == "area" {
 				if enemy.Active {
-					playerX, playerY := playerPlugin.GetPosition()
+					weaponID := weapon.ID()
 
 					if collision.CheckCircle(
 						playerX,
 						playerY,
-						50,
+						200, //implementar interface com radius
 						enemy.X,
 						enemy.Y,
 						enemy.Width,
 						enemy.Height) {
 
-						if enemy.LastProtectionDeltaTime >= 0.5 {
+						lastAreaDamageDeltaTime, exists := enemy.LastAreaDamageDeltaTimeByWeapon[weaponID]
+						if !exists {
+							lastAreaDamageDeltaTime = 0
+						}
+
+						if lastAreaDamageDeltaTime >= weapon.AttackSpeed() {
 							enemy.Health -= weapon.GetPower()
-							enemy.LastProtectionDeltaTime = 0
-							enemy.DamageFlashTime = 0.1
+							lastAreaDamageDeltaTime = 0
 
 							if enemy.Health <= 0 {
 								enemy.Active = false
+								enemykilled = true
 								fmt.Println("Enemy killed by protection weapon", time.Now().Unix())
 
-								ep.DropCrystal(enemy.X, enemy.Y)
 							} else {
 								enemyGotDamaged = true
 							}
 
 						} else {
-							enemy.LastProtectionDeltaTime += cp.kernel.DeltaTime
+							lastAreaDamageDeltaTime += cp.kernel.DeltaTime
 						}
+
+						enemy.LastAreaDamageDeltaTimeByWeapon[weaponID] = lastAreaDamageDeltaTime
 					}
 				}
+			}
+
+			if enemykilled {
+				ep.DropCrystal(enemy.X, enemy.Y)
 			}
 
 			if enemyGotDamaged {

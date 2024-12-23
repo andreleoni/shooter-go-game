@@ -2,7 +2,6 @@ package weapons
 
 import (
 	"game/internal/core"
-	"game/internal/plugins"
 	"game/internal/plugins/playing/weapon/entities"
 	"image/color"
 
@@ -30,24 +29,21 @@ func (p *Protection) ID() string {
 	return "Protection"
 }
 
-func (p *Protection) Shoot(deltaTime, x, y float64) {
+func (p *Protection) Shoot(x, y float64) {
 	return
 }
 
-func (p *Protection) Update(deltaTime, px, py float64) {
+func (p *Protection) Update(wui WeaponUpdateInput) {
 }
 
-func (p *Protection) Draw(screen *ebiten.Image, cameraX, cameraY float64) {
-	playerPlugin := p.plugins.GetPlugin("PlayerSystem").(plugins.PlayerPlugin)
-	playerX, playerY := playerPlugin.GetPosition()
-
-	screenX := playerX - cameraX
-	screenY := playerY - cameraY
+func (p *Protection) Draw(screen *ebiten.Image, wdi WeaponDrawInput) {
+	screenX := wdi.PlayerX - wdi.CameraX
+	screenY := wdi.PlayerY - wdi.CameraY
 
 	circleX := screenX
 	circleY := screenY
 
-	ebitenutil.DrawCircle(screen, circleX, circleY, 50, color.RGBA{111, 222, 111, 255})
+	ebitenutil.DrawCircle(screen, circleX, circleY, 200, color.RGBA{111, 222, 111, 255})
 
 	return
 }
@@ -58,4 +54,15 @@ func (d *Protection) ActiveProjectiles() []*entities.Projectile {
 
 func (d *Protection) GetPower() float64 {
 	return d.Power
+}
+
+func (*Protection) DamageType() string {
+	return "area"
+}
+
+func (*Protection) AttackSpeed() float64 {
+	return 0.5
+}
+
+func (*Protection) AutoShot(deltaTime, x, y float64) {
 }

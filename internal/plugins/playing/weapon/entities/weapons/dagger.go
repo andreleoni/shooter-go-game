@@ -84,11 +84,11 @@ func (d *Dagger) Update(wui WeaponUpdateInput) {
 	}
 }
 
-func (d *Dagger) Draw(screen *ebiten.Image, cameraX, cameraY float64) {
+func (d *Dagger) Draw(screen *ebiten.Image, wdi WeaponDrawInput) {
 	for _, weapon := range d.Projectiles {
 		if weapon.Active {
-			screenX := weapon.X - cameraX
-			screenY := weapon.Y - cameraY
+			screenX := weapon.X - wdi.CameraX
+			screenY := weapon.Y - wdi.CameraY
 
 			ebitenutil.DrawRect(screen, screenX, screenY, weapon.Width, weapon.Height, color.RGBA{255, 255, 0, 255})
 		}
@@ -103,4 +103,12 @@ func (d *Dagger) ActiveProjectiles() []*entities.Projectile {
 
 func (d *Dagger) GetPower() float64 {
 	return d.Power
+}
+
+func (d *Dagger) DamageType() string {
+	return "projectil"
+}
+
+func (*Dagger) AttackSpeed() float64 {
+	return 2.5
 }

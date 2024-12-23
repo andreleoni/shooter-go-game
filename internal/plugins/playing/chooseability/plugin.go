@@ -13,17 +13,25 @@ import (
 type ChooseAbilityPlugin struct {
 	kernel             *core.GameKernel
 	availableAbilities map[string]weaponentities.Weapon
+	weapons            []string
 }
 
 func NewChooseAbilityPlugin(plugins *core.PluginManager) *ChooseAbilityPlugin {
+	weapons := []string{
+		"BasicWeapon",
+		"DaggersWeapon",
+		"ProtectionWeapon",
+	}
+
 	weaponsByName := map[string]weaponentities.Weapon{
-		"BasicWeapon":   weaponentities.NewBasic(plugins),
-		"DaggersWeapon": weaponentities.NewDagger(),
-		// "ProtectionWeapon": weaponentities.NewProtection(),
+		"BasicWeapon":      weaponentities.NewBasic(plugins),
+		"DaggersWeapon":    weaponentities.NewDagger(),
+		"ProtectionWeapon": weaponentities.NewProtection(),
 	}
 
 	cp := ChooseAbilityPlugin{
 		availableAbilities: weaponsByName,
+		weapons:            weapons,
 	}
 
 	return &cp
@@ -54,11 +62,7 @@ func (cp *ChooseAbilityPlugin) Update() error {
 func (cp *ChooseAbilityPlugin) Draw(screen *ebiten.Image) {
 	text.Draw(screen, "Qual abilidade você quer?:", fontface.FontFace, 300, 150, color.White)
 
-	i := 0
-
-	for key, _ := range cp.availableAbilities {
-		i += 1
-
+	for i, key := range cp.weapons {
 		col := color.White
 
 		name := ""
