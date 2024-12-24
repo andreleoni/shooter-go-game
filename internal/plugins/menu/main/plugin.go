@@ -10,6 +10,8 @@ import (
 	"image/color"
 	"log"
 
+	playerentities "game/internal/plugins/playing/player/entities"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text"
 )
@@ -19,18 +21,12 @@ type MenuPlugin struct {
 
 	currentState menu.State
 
-	characters     []Character
+	characters     []playerentities.Character
 	selectedChar   int
 	canTransition  bool
 	selectionDelay float64
 
 	wallpaper *assets.StaticSprite
-}
-
-type Character struct {
-	Name   string
-	Speed  float64
-	Health float64
 }
 
 func NewMenuPlugin(kernel *core.GameKernel) *MenuPlugin {
@@ -46,9 +42,10 @@ func NewMenuPlugin(kernel *core.GameKernel) *MenuPlugin {
 	return &MenuPlugin{
 		kernel:       kernel,
 		currentState: menu.MenuState,
-		characters: []Character{
-			{Name: "Character 1", Speed: 1, Health: 100},
-			{Name: "Character 2", Speed: 2, Health: 200},
+		characters: []playerentities.Character{
+			{Name: "Archer", Speed: 100, Health: 100, Weapon: "BasicWeapon"},
+			{Name: "Rogue", Speed: 200, Health: 30, Weapon: "DaggersWeapon"},
+			{Name: "Knight", Speed: 75, Health: 200, Weapon: "ProtectionWeapon"},
 		},
 		selectionDelay: 0,
 		wallpaper:      wallpaper,
@@ -80,7 +77,7 @@ func (m *MenuPlugin) Update() error {
 		}
 
 	case menu.CharacterSelectState:
-		if m.selectionDelay > 0.05 {
+		if m.selectionDelay > 0.1 {
 			if ebiten.IsKeyPressed(ebiten.KeyW) {
 				m.selectedChar = (m.selectedChar + 1) % len(m.characters)
 				m.selectionDelay = 0

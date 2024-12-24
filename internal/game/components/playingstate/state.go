@@ -12,6 +12,7 @@ import (
 	"game/internal/plugins/playing/stats"
 	"game/internal/plugins/playing/weapon"
 
+	playerentities "game/internal/plugins/playing/player/entities"
 	weaponentities "game/internal/plugins/playing/weapon/entities/weapons"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -41,7 +42,9 @@ func NewComponentPlayingState(kernel *core.GameKernel) *ComponentPlayingState {
 	kernel.EventBus.Subscribe("StartGame", func(data interface{}) {
 		pluginManagerByState[Playing].UnregisterAll()
 
-		playerPlugin := player.NewPlayerPlugin(pluginManagerByState[Playing])
+		character := data.(playerentities.Character)
+
+		playerPlugin := player.NewPlayerPlugin(pluginManagerByState[Playing], character)
 		cameraPlugin := camera.NewCameraPlugin(playerPlugin)
 		enemyPlugin := enemy.NewEnemyPlugin(playerPlugin, pluginManagerByState[Playing])
 		combatPlugin := combat.NewCombatPlugin(enemyPlugin, pluginManagerByState[Playing])
@@ -73,7 +76,13 @@ func NewComponentPlayingState(kernel *core.GameKernel) *ComponentPlayingState {
 			componentPlayingState.SetState(Playing)
 		})
 
-		kernel.EventBus.Publish("NewAbility", weaponentities.NewBasic())
+		weaponsByName := map[string]weaponentities.Weapon{
+			"BasicWeapon":      weaponentities.NewBasic(),
+			"DaggersWeapon":    weaponentities.NewDagger(),
+			"ProtectionWeapon": weaponentities.NewProtection(),
+		}
+
+		kernel.EventBus.Publish("NewAbility", weaponsByName[character.Weapon])
 	})
 
 	kernel.EventBus.Subscribe("ChoosingAbility", func(data interface{}) {
