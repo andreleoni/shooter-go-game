@@ -3,7 +3,11 @@ package chooseability
 import (
 	"game/internal/core"
 	"game/internal/plugins/menu/fontface"
-	weaponentities "game/internal/plugins/playing/weapon/entities/weapons"
+	abilitiesentities "game/internal/plugins/playing/ability/entities/abilities"
+	abilitiesentitiesbasic "game/internal/plugins/playing/ability/entities/abilities/basic"
+	abilitiesentitiesdagger "game/internal/plugins/playing/ability/entities/abilities/dagger"
+	abilitiesentitiesprotection "game/internal/plugins/playing/ability/entities/abilities/protection"
+
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -12,26 +16,27 @@ import (
 
 type ChooseAbilityPlugin struct {
 	kernel             *core.GameKernel
-	availableAbilities map[string]weaponentities.Weapon
-	weapons            []string
+	availableAbilities map[string]abilitiesentities.Ability
+	abilities          []string
 }
 
 func NewChooseAbilityPlugin(plugins *core.PluginManager) *ChooseAbilityPlugin {
-	weapons := []string{
+	abilities := []string{
 		"BasicWeapon",
 		"DaggersWeapon",
 		"ProtectionWeapon",
 	}
 
-	weaponsByName := map[string]weaponentities.Weapon{
-		"BasicWeapon":      weaponentities.NewBasic(),
-		"DaggersWeapon":    weaponentities.NewDagger(),
-		"ProtectionWeapon": weaponentities.NewProtection(),
+	abilitiesByName := map[string]abilitiesentities.Ability{
+		"BasicWeapon":      abilitiesentitiesbasic.New(),
+		"DaggersWeapon":    abilitiesentitiesdagger.New(),
+		"ProtectionWeapon": abilitiesentitiesprotection.New(),
+		// "HealAbility":      abilitiesentitiesheal.New(),
 	}
 
 	cp := ChooseAbilityPlugin{
-		availableAbilities: weaponsByName,
-		weapons:            weapons,
+		availableAbilities: abilitiesByName,
+		abilities:          abilities,
 	}
 
 	return &cp
@@ -62,7 +67,7 @@ func (cp *ChooseAbilityPlugin) Update() error {
 func (cp *ChooseAbilityPlugin) Draw(screen *ebiten.Image) {
 	text.Draw(screen, "Qual abilidade você quer?:", fontface.FontFace, 300, 150, color.White)
 
-	for i, key := range cp.weapons {
+	for i, key := range cp.abilities {
 		col := color.White
 
 		name := ""

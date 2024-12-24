@@ -1,9 +1,11 @@
-package weapons
+package dagger
 
 import (
 	"game/internal/constants"
 	"game/internal/core"
-	"game/internal/plugins/playing/weapon/entities"
+	"game/internal/plugins/playing/ability/entities"
+	entityabilities "game/internal/plugins/playing/ability/entities/abilities"
+
 	"image/color"
 	"math"
 	"math/rand/v2"
@@ -22,7 +24,7 @@ type Dagger struct {
 	ShootCooldown float64
 }
 
-func NewDagger() *Dagger {
+func New() *Dagger {
 	return &Dagger{
 		Power:         10,
 		ShootCooldown: 2.3,
@@ -68,38 +70,38 @@ func (d *Dagger) Shoot(x, y float64) {
 	}
 }
 
-func (d *Dagger) Update(wui WeaponUpdateInput) {
+func (d *Dagger) Update(wui entityabilities.AbilityUpdateInput) {
 	deltatime := wui.DeltaTime
 	d.AutoShot(deltatime, wui.PlayerX, wui.PlayerY)
 
-	for _, weapon := range d.Projectiles {
-		if !weapon.Active {
+	for _, p := range d.Projectiles {
+		if !p.Active {
 			continue
 		}
 
-		weapon.X += weapon.DirectionX * weapon.Speed * deltatime
-		weapon.Y += weapon.DirectionY * weapon.Speed * deltatime
+		p.X += p.DirectionX * p.Speed * deltatime
+		p.Y += p.DirectionY * p.Speed * deltatime
 
 		// Deactivate if off screen
-		if weapon.X < 0 || weapon.X > constants.WorldWidth ||
-			weapon.Y < 0 || weapon.Y > constants.WorldHeight {
-			weapon.Active = false
+		if p.X < 0 || p.X > constants.WorldWidth ||
+			p.Y < 0 || p.Y > constants.WorldHeight {
+			p.Active = false
 		}
 	}
 }
 
-func (d *Dagger) Draw(screen *ebiten.Image, wdi WeaponDrawInput) {
-	for _, weapon := range d.Projectiles {
-		if weapon.Active {
-			screenX := weapon.X - wdi.CameraX
-			screenY := weapon.Y - wdi.CameraY
+func (d *Dagger) Draw(screen *ebiten.Image, wdi entityabilities.AbilityDrawInput) {
+	for _, p := range d.Projectiles {
+		if p.Active {
+			screenX := p.X - wdi.CameraX
+			screenY := p.Y - wdi.CameraY
 
 			vector.DrawFilledRect(
 				screen,
 				float32(screenX),
 				float32(screenY),
-				float32(weapon.Width),
-				float32(weapon.Height),
+				float32(p.Width),
+				float32(p.Height),
 				color.RGBA{255, 255, 0, 255},
 				true)
 		}

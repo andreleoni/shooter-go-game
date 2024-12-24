@@ -1,8 +1,9 @@
-package weapons
+package protection
 
 import (
 	"game/internal/core"
-	"game/internal/plugins/playing/weapon/entities"
+	"game/internal/plugins/playing/ability/entities"
+	abilityentities "game/internal/plugins/playing/ability/entities/abilities"
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -19,7 +20,7 @@ type Protection struct {
 	ShootCooldown float64
 }
 
-func NewProtection() *Protection {
+func New() *Protection {
 	return &Protection{
 		Power: 10,
 	}
@@ -37,10 +38,10 @@ func (p *Protection) Shoot(x, y float64) {
 	return
 }
 
-func (p *Protection) Update(wui WeaponUpdateInput) {
+func (p *Protection) Update(wui abilityentities.AbilityUpdateInput) {
 }
 
-func (p *Protection) Draw(screen *ebiten.Image, wdi WeaponDrawInput) {
+func (p *Protection) Draw(screen *ebiten.Image, wdi abilityentities.AbilityDrawInput) {
 	screenX := wdi.PlayerX - wdi.CameraX
 	screenY := wdi.PlayerY - wdi.CameraY
 

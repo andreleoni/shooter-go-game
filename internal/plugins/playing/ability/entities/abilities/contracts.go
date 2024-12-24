@@ -1,13 +1,13 @@
-package weapons
+package abilities
 
 import (
 	"game/internal/core"
-	"game/internal/plugins/playing/weapon/entities"
+	"game/internal/plugins/playing/ability/entities"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-type WeaponUpdateInput struct {
+type AbilityUpdateInput struct {
 	DeltaTime float64
 
 	PlayerX float64
@@ -17,7 +17,7 @@ type WeaponUpdateInput struct {
 	CameraY float64
 }
 
-type WeaponDrawInput struct {
+type AbilityDrawInput struct {
 	PlayerX float64
 	PlayerY float64
 
@@ -25,13 +25,12 @@ type WeaponDrawInput struct {
 	CameraY float64
 }
 
-type Weapon interface {
+type Ability interface {
 	ID() string
 	SetPluginManager(plugins *core.PluginManager)
-	AutoShot(deltaTime, x, y float64)
 	Shoot(x, y float64)
-	Update(wui WeaponUpdateInput)
-	Draw(screen *ebiten.Image, wdi WeaponDrawInput)
+	Update(wui AbilityUpdateInput)
+	Draw(screen *ebiten.Image, wdi AbilityDrawInput)
 
 	ActiveProjectiles() []*entities.Projectile
 

@@ -1,8 +1,8 @@
 package playingstate
 
 import (
-	"fmt"
 	"game/internal/core"
+	"game/internal/plugins/playing/ability"
 	"game/internal/plugins/playing/camera"
 	"game/internal/plugins/playing/chooseability"
 	"game/internal/plugins/playing/combat"
@@ -10,10 +10,9 @@ import (
 	"game/internal/plugins/playing/experience"
 	"game/internal/plugins/playing/player"
 	"game/internal/plugins/playing/stats"
-	"game/internal/plugins/playing/weapon"
 
+	entitiesability "game/internal/plugins/playing/ability/entities/abilities"
 	playerentities "game/internal/plugins/playing/player/entities"
-	weaponentities "game/internal/plugins/playing/weapon/entities/weapons"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -49,10 +48,10 @@ func NewComponentPlayingState(kernel *core.GameKernel) *ComponentPlayingState {
 		enemyPlugin := enemy.NewEnemyPlugin(playerPlugin, pluginManagerByState[Playing])
 		combatPlugin := combat.NewCombatPlugin(enemyPlugin, pluginManagerByState[Playing])
 		statsPlugin := stats.NewStatsPlugin(playerPlugin)
-		weaponPlugin := weapon.NewWeaponPlugin(pluginManagerByState[Playing])
+		abilityPlugin := ability.NewAbilityPlugin(pluginManagerByState[Playing])
 		experiencePlugin := experience.NewExperiencePlugin(pluginManagerByState[Playing])
 
-		pluginManagerByState[Playing].Register(weaponPlugin, 0)
+		pluginManagerByState[Playing].Register(abilityPlugin, 0)
 		pluginManagerByState[Playing].Register(playerPlugin, 1)
 		pluginManagerByState[Playing].Register(experiencePlugin, 2)
 		pluginManagerByState[Playing].Register(enemyPlugin, 3)
@@ -66,28 +65,20 @@ func NewComponentPlayingState(kernel *core.GameKernel) *ComponentPlayingState {
 		combatPlugin.Init(kernel)
 		cameraPlugin.Init(kernel)
 		statsPlugin.Init(kernel)
-		weaponPlugin.Init(kernel)
+		abilityPlugin.Init(kernel)
 
-		kernel.EventBus.Subscribe("NewAbility", func(w interface{}) {
-			weapon := w.(weaponentities.Weapon)
-			weapon.SetPluginManager(pluginManagerByState[Playing])
-			weaponPlugin.AddWeapon(weapon)
+		kernel.EventBus.Subscribe("NewAbility", func(a interface{}) {
+			ability := a.(entitiesability.Ability)
+			ability.SetPluginManager(pluginManagerByState[Playing])
+			abilityPlugin.AcquireAbility(ability)
 
 			componentPlayingState.SetState(Playing)
 		})
 
-		weaponsByName := map[string]weaponentities.Weapon{
-			"BasicWeapon":      weaponentities.NewBasic(),
-			"DaggersWeapon":    weaponentities.NewDagger(),
-			"ProtectionWeapon": weaponentities.NewProtection(),
-		}
-
-		kernel.EventBus.Publish("NewAbility", weaponsByName[character.Weapon])
+		kernel.EventBus.Publish("NewAbility", abilityPlugin.GetAvailableAbilitiesByName(character.Ability))
 	})
 
 	kernel.EventBus.Subscribe("ChoosingAbility", func(data interface{}) {
-		fmt.Println("Choosing ability", data)
-
 		pluginManagerByState[ChooseAbility].UnregisterAll()
 
 		chooseabilityPlugin := chooseability.NewChooseAbilityPlugin(pluginManagerByState[ChooseAbility])

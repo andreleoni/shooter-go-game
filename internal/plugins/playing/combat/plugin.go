@@ -4,9 +4,9 @@ import (
 	"game/internal/core"
 	"game/internal/helpers/collision"
 	"game/internal/plugins"
+	"game/internal/plugins/playing/ability"
 	"game/internal/plugins/playing/enemy"
 	"game/internal/plugins/playing/experience"
-	"game/internal/plugins/playing/weapon"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -41,7 +41,7 @@ func (cp *CombatPlugin) Draw(*ebiten.Image) {
 }
 
 func (cp *CombatPlugin) Update() error {
-	wp := cp.plugins.GetPlugin("WeaponSystem").(*weapon.WeaponPlugin)
+	wp := cp.plugins.GetPlugin("AbilitySystem").(*ability.AbilityPlugin)
 	ep := cp.plugins.GetPlugin("ExperienceSystem").(*experience.ExperiencePlugin)
 	pp := cp.plugins.GetPlugin("PlayerSystem").(plugins.PlayerPlugin)
 
@@ -49,15 +49,13 @@ func (cp *CombatPlugin) Update() error {
 
 	playerX, playerY := pp.GetPosition()
 
-	for _, weapon := range wp.GetWeapons() {
-		weapon.AutoShot(cp.kernel.DeltaTime, playerX, playerY)
-
+	for _, a := range wp.GetAcquiredAbilities() {
 		for _, enemy := range enemies {
 			enemyGotDamaged := false
 			enemykilled := false
 
-			if weapon.DamageType() == "projectil" {
-				for _, projectil := range weapon.ActiveProjectiles() {
+			if a.DamageType() == "projectil" {
+				for _, projectil := range a.ActiveProjectiles() {
 					if enemy.Active && projectil.Active {
 						if collision.Check(
 							projectil.X,
@@ -85,9 +83,9 @@ func (cp *CombatPlugin) Update() error {
 				}
 			}
 
-			if weapon.DamageType() == "area" {
+			if a.DamageType() == "area" {
 				if enemy.Active {
-					weaponID := weapon.ID()
+					abilityID := a.ID()
 
 					if collision.CheckCircle(
 						playerX,
@@ -98,13 +96,13 @@ func (cp *CombatPlugin) Update() error {
 						enemy.Width,
 						enemy.Height) {
 
-						lastAreaDamageDeltaTime, exists := enemy.LastAreaDamageDeltaTimeByWeapon[weaponID]
+						lastAreaDamageDeltaTime, exists := enemy.LastAreaDamageDeltaTimeByAbility[abilityID]
 						if !exists {
 							lastAreaDamageDeltaTime = 0
 						}
 
-						if lastAreaDamageDeltaTime >= weapon.AttackSpeed() {
-							enemy.Health -= weapon.GetPower()
+						if lastAreaDamageDeltaTime >= a.AttackSpeed() {
+							enemy.Health -= a.GetPower()
 							lastAreaDamageDeltaTime = 0
 
 							if enemy.Health <= 0 {
@@ -119,7 +117,7 @@ func (cp *CombatPlugin) Update() error {
 							lastAreaDamageDeltaTime += cp.kernel.DeltaTime
 						}
 
-						enemy.LastAreaDamageDeltaTimeByWeapon[weaponID] = lastAreaDamageDeltaTime
+						enemy.LastAreaDamageDeltaTimeByAbility[abilityID] = lastAreaDamageDeltaTime
 					}
 				}
 			}

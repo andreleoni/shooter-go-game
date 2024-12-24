@@ -1,11 +1,12 @@
-package weapons
+package basic
 
 import (
 	"game/internal/assets"
 	"game/internal/constants"
 	"game/internal/core"
 	"game/internal/plugins"
-	"game/internal/plugins/playing/weapon/entities"
+	"game/internal/plugins/playing/ability/entities"
+	abilityentities "game/internal/plugins/playing/ability/entities/abilities"
 	"image/color"
 	"math"
 
@@ -23,7 +24,7 @@ type Basic struct {
 	ShootCooldown float64
 }
 
-func NewBasic() *Basic {
+func New() *Basic {
 	return &Basic{
 		Power:         10,
 		ShootCooldown: 1.0,
@@ -101,7 +102,7 @@ func (b *Basic) Shoot(x, y float64) {
 	}
 }
 
-func (b *Basic) Update(wui WeaponUpdateInput) {
+func (b *Basic) Update(wui abilityentities.AbilityUpdateInput) {
 	b.AutoShot(wui.DeltaTime, wui.PlayerX, wui.PlayerY)
 
 	for _, projectile := range b.Projectiles {
@@ -134,7 +135,7 @@ func (b *Basic) Update(wui WeaponUpdateInput) {
 	}
 }
 
-func (b *Basic) Draw(screen *ebiten.Image, wdi WeaponDrawInput) {
+func (b *Basic) Draw(screen *ebiten.Image, wdi abilityentities.AbilityDrawInput) {
 	for _, projectile := range b.Projectiles {
 		if projectile.Active {
 			// Draw bullet relative to camera position
