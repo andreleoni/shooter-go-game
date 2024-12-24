@@ -12,6 +12,8 @@ import (
 	abilitiesentitiesdagger "game/internal/plugins/playing/ability/entities/abilities/dagger"
 	abilitiesentitiesprotection "game/internal/plugins/playing/ability/entities/abilities/protection"
 
+	abilitiesrepository "game/internal/plugins/playing/ability/repository"
+
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -19,8 +21,8 @@ type AbilityPlugin struct {
 	kernel  *core.GameKernel
 	plugins *core.PluginManager
 
-	availableAbilities []abilitiesentities.Ability
-	acquiredAbilities  []abilitiesentities.Ability
+	availableAbilities *abilitiesrepository.Ability
+	acquiredAbilities  *abilitiesrepository.Ability
 }
 
 func NewAbilityPlugin(plugins *core.PluginManager) *AbilityPlugin {
@@ -33,33 +35,35 @@ func (wp *AbilityPlugin) ID() string {
 	return "AbilitySystem"
 }
 
-func (wp *AbilityPlugin) Init(
+func (ap *AbilityPlugin) Init(
 	kernel *core.GameKernel,
 ) error {
+	ap.availableAbilities = abilitiesrepository.NewAbility()
+	ap.acquiredAbilities = abilitiesrepository.NewAbility()
 
-	wp.kernel = kernel
+	ap.kernel = kernel
 
-	wp.AddAvailableAbility(abilitiesentitiesbasic.New())
-	wp.AddAvailableAbility(abilitiesentitiesdagger.New())
-	wp.AddAvailableAbility(abilitiesentitiesprotection.New())
+	ap.AddAvailableAbility(abilitiesentitiesbasic.New())
+	ap.AddAvailableAbility(abilitiesentitiesdagger.New())
+	ap.AddAvailableAbility(abilitiesentitiesprotection.New())
 
 	return nil
 }
 
 func (wp *AbilityPlugin) AcquireAbility(a abilitiesentities.Ability) {
-	wp.acquiredAbilities = append(wp.acquiredAbilities, a)
+	wp.acquiredAbilities.Add(a)
 }
 
 func (wp *AbilityPlugin) GetAcquiredAbilities() []abilitiesentities.Ability {
-	return wp.acquiredAbilities
+	return wp.acquiredAbilities.Get()
 }
 
 func (wp *AbilityPlugin) AddAvailableAbility(a abilitiesentities.Ability) {
-	wp.availableAbilities = append(wp.availableAbilities, a)
+	wp.availableAbilities.Add(a)
 }
 
 func (wp *AbilityPlugin) GetAvailableAbilitiesByName(a string) abilitiesentities.Ability {
-	for _, wa := range wp.availableAbilities {
+	for _, wa := range wp.availableAbilities.Get() {
 		fmt.Println("getting available abilities", wa.ID(), a)
 		if wa.ID() == a {
 			return wa
@@ -76,7 +80,7 @@ func (wp *AbilityPlugin) Update() error {
 	cameraPlugin := wp.plugins.GetPlugin("CameraSystem").(*camera.CameraPlugin)
 	cameraX, cameraY := cameraPlugin.GetPosition()
 
-	for _, a := range wp.acquiredAbilities {
+	for _, a := range wp.acquiredAbilities.Get() {
 		wui := abilitiesentities.AbilityUpdateInput{
 			DeltaTime: wp.kernel.DeltaTime,
 			PlayerX:   playerX,
@@ -105,7 +109,7 @@ func (wp *AbilityPlugin) Draw(screen *ebiten.Image) {
 		PlayerY: playerY,
 	}
 
-	for _, a := range wp.acquiredAbilities {
+	for _, a := range wp.acquiredAbilities.Get() {
 		a.Draw(screen, wdi)
 	}
 }
