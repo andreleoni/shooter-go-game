@@ -78,12 +78,12 @@ func (m *MenuPlugin) Update() error {
 
 	case menu.CharacterSelectState:
 		if m.selectionDelay > 0.1 {
-			if ebiten.IsKeyPressed(ebiten.KeyW) {
+			if ebiten.IsKeyPressed(ebiten.KeyS) {
 				m.selectedChar = (m.selectedChar + 1) % len(m.characters)
 				m.selectionDelay = 0
 			}
 
-			if ebiten.IsKeyPressed(ebiten.KeyS) {
+			if ebiten.IsKeyPressed(ebiten.KeyW) {
 				m.selectedChar--
 
 				if m.selectedChar < 0 {
