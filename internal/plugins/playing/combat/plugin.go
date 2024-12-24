@@ -1,14 +1,12 @@
 package combat
 
 import (
-	"fmt"
 	"game/internal/core"
 	"game/internal/helpers/collision"
 	"game/internal/plugins"
 	"game/internal/plugins/playing/enemy"
 	"game/internal/plugins/playing/experience"
 	"game/internal/plugins/playing/weapon"
-	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -112,7 +110,6 @@ func (cp *CombatPlugin) Update() error {
 							if enemy.Health <= 0 {
 								enemy.Active = false
 								enemykilled = true
-								fmt.Println("Enemy killed by protection weapon", time.Now().Unix())
 
 							} else {
 								enemyGotDamaged = true

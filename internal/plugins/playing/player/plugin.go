@@ -1,7 +1,6 @@
 package player
 
 import (
-	"fmt"
 	"game/internal/assets"
 	"game/internal/core"
 	"game/internal/plugins/playing/camera"
@@ -45,8 +44,6 @@ var levelUpExperience = map[int]int{
 }
 
 func NewPlayerPlugin(plugins *core.PluginManager, c entities.Character) *PlayerPlugin {
-	fmt.Println(c)
-
 	return &PlayerPlugin{
 		x:              400,
 		y:              300,
