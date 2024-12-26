@@ -14,20 +14,36 @@ import (
 )
 
 type PlayerPlugin struct {
-	kernel          *core.GameKernel
-	playingPlugins  *core.PluginManager
-	health          float64
-	x, y            float64
-	width           float64
-	height          float64
-	speed           float64
-	animation       *assets.Animation
-	staticsprite    *assets.StaticSprite
-	facingRight     bool
+	kernel         *core.GameKernel
+	playingPlugins *core.PluginManager
+
+	x, y float64
+
+	health         float64
+	width          float64
+	height         float64
+	speed          float64
+	armorPercent   float64
+	damagePercent  float64
+	criticalChance float64
+
+	maxHealth        float64
+	healthRegenRate  float64
+	healthRegenDelay float64
+	healthRegenTimer float64
+
+	animation    *assets.Animation
+	staticsprite *assets.StaticSprite
+
+	facingRight bool
+
 	DamageFlashTime float64
 
 	experience int
 	level      int
+
+	additionalDamagePercent float64
+	armor                   float64
 }
 
 var levelUpExperience = map[int]int{
@@ -45,15 +61,23 @@ var levelUpExperience = map[int]int{
 
 func NewPlayerPlugin(plugins *core.PluginManager, c entities.Character) *PlayerPlugin {
 	return &PlayerPlugin{
+		playingPlugins: plugins,
 		x:              400,
 		y:              300,
-		speed:          c.Speed,
 		width:          32,
 		height:         32,
-		health:         c.Health,
-		playingPlugins: plugins,
+		speed:          c.Speed,
 		experience:     0,
 		level:          1,
+
+		health:           c.Health,
+		maxHealth:        c.Health,
+		healthRegenRate:  5.0,
+		healthRegenDelay: 1.0,
+		healthRegenTimer: 0,
+
+		additionalDamagePercent: 0,
+		armor:                   0,
 	}
 }
 
@@ -85,6 +109,20 @@ func (p *PlayerPlugin) Update() error {
 	// Atualizar o temporizador de flash de dano
 	if p.DamageFlashTime > 0 {
 		p.DamageFlashTime -= p.kernel.DeltaTime
+	}
+
+	if p.health < p.maxHealth {
+		if p.healthRegenTimer >= p.healthRegenDelay {
+			p.health += p.healthRegenRate * p.kernel.DeltaTime
+			if p.health > p.maxHealth {
+				p.health = p.maxHealth
+			}
+
+		} else {
+			p.healthRegenTimer += p.kernel.DeltaTime
+		}
+	} else {
+		p.healthRegenTimer = 0
 	}
 
 	return nil
@@ -169,4 +207,59 @@ func (p *PlayerPlugin) GetExperience() float64 {
 
 func (p *PlayerPlugin) NextLevelPercentage() float64 {
 	return float64(p.experience) / float64(levelUpExperience[p.level])
+}
+
+func (p *PlayerPlugin) AddAdditionalDamagePercent(percent float64) {
+	p.additionalDamagePercent += percent
+}
+
+func (p *PlayerPlugin) AddArmor(amount float64) {
+	p.armor += amount
+}
+
+func (p *PlayerPlugin) ApplyDamage(damage float64) {
+	// Aplicar a armadura para reduzir o dano
+	effectiveDamage := damage * (1 - p.armor/100)
+	p.DecreaseHealth(effectiveDamage)
+}
+
+func (p *PlayerPlugin) CalculateDamage(baseDamage float64) float64 {
+	// Aplicar a porcentagem de dano adicional
+	return baseDamage * (1 + p.additionalDamagePercent/100)
+}
+
+func (p *PlayerPlugin) GetAdditionalDamagePercent() float64 {
+	return p.additionalDamagePercent
+}
+
+func (p *PlayerPlugin) GetArmor() float64 {
+	return p.armor
+}
+
+func (p *PlayerPlugin) GetSpeed() float64 {
+	return p.speed
+}
+
+func (p *PlayerPlugin) GetCriticalChance() float64 {
+	return p.criticalChance
+}
+
+func (p *PlayerPlugin) GetDamagePercent() float64 {
+	return p.damagePercent
+}
+
+func (p *PlayerPlugin) GetMaxHealth() float64 {
+	return p.maxHealth
+}
+
+func (p *PlayerPlugin) GetHealthRegenRate() float64 {
+	return p.healthRegenRate
+}
+
+func (p *PlayerPlugin) GetHealthRegenDelay() float64 {
+	return p.healthRegenDelay
+}
+
+func (p *PlayerPlugin) GetHealthRegenTimer() float64 {
+	return p.healthRegenTimer
 }

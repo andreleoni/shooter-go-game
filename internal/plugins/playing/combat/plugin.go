@@ -69,7 +69,7 @@ func (cp *CombatPlugin) Update() error {
 
 							projectil.Active = false
 
-							enemy.Health -= projectil.Power
+							enemy.Health -= pp.CalculateDamage(projectil.Power)
 
 							if enemy.Health <= 0 {
 								enemy.Active = false
@@ -102,7 +102,7 @@ func (cp *CombatPlugin) Update() error {
 						}
 
 						if lastAreaDamageDeltaTime >= a.AttackSpeed() {
-							enemy.Health -= a.GetPower()
+							enemy.Health -= pp.CalculateDamage(a.GetPower())
 							lastAreaDamageDeltaTime = 0
 
 							if enemy.Health <= 0 {
