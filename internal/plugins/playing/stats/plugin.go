@@ -39,7 +39,7 @@ func (sp *StatsPlugin) Init(kernel *core.GameKernel) error {
 	}
 
 	sp.gameFont, err = opentype.NewFace(tt, &opentype.FaceOptions{
-		Size:    24,
+		Size:    14,
 		DPI:     72,
 		Hinting: font.HintingFull,
 	})

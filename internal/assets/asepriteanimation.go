@@ -93,18 +93,13 @@ func (a *Animation) Update(deltaTime float64) {
 
 func (a *Animation) Draw(
 	screen *ebiten.Image,
-	x, y, width, height float64,
-	invertHorizontal bool) {
+	di DrawInput) {
 
 	op := &ebiten.DrawImageOptions{}
 
-	if invertHorizontal {
-		op.GeoM.Scale(-1, 1)
-	}
+	op.GeoM.Scale(di.Width/float64(a.Frames[a.CurrentFrame].Bounds().Dx()), di.Height/float64(a.Frames[a.CurrentFrame].Bounds().Dy()))
 
-	op.GeoM.Scale(width/float64(a.Frames[a.CurrentFrame].Bounds().Dx()), height/float64(a.Frames[a.CurrentFrame].Bounds().Dy()))
-
-	op.GeoM.Translate(x, y)
+	op.GeoM.Translate(di.X, di.Y)
 
 	screen.DrawImage(a.Frames[a.CurrentFrame], op)
 }

@@ -6,7 +6,6 @@ import (
 	"game/internal/plugins/playing/camera"
 	"game/internal/plugins/playing/player/entities"
 	"image/color"
-
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -91,11 +90,17 @@ func (p *PlayerPlugin) Init(
 
 	p.kernel = kernel
 
-	p.staticsprite = assets.NewStaticSprite()
-	err := p.staticsprite.Load("assets/images/player/player.png")
+	p.animation = assets.NewAnimation(0.1)
+	err := p.animation.LoadFromJSON("assets/images/player/gunner/run/player.json", "assets/images/player/gunner/run/player.png")
 	if err != nil {
 		log.Fatal("Failed to load player asset:", err)
 	}
+
+	// p.staticsprite = assets.NewStaticSprite()
+	// err := p.staticsprite.Load("assets/images/player/player.png")
+	// if err != nil {
+	// 	log.Fatal("Failed to load player asset:", err)
+	// // }
 
 	return nil
 }
@@ -154,8 +159,12 @@ func (p *PlayerPlugin) Draw(screen *ebiten.Image) {
 			float32(p.height),
 			color.RGBA{255, 255, 0, 255},
 			true)
+	}
 
-		p.staticsprite.Draw(screen, assets.DrawInput{
+	if p.animation != nil {
+		p.animation.Update(p.kernel.DeltaTime)
+
+		p.animation.Draw(screen, assets.DrawInput{
 			Width:  p.width,
 			Height: p.height,
 			X:      screenX - p.width/2,

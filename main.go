@@ -21,8 +21,9 @@ func main() {
 		gameInstance.SetState(states.MenuState)
 	})
 
-	ebiten.SetWindowSize(800, 600)
+	ebiten.SetWindowSize(1024, 768)
 	ebiten.SetWindowTitle("Survivor Game")
+
 	if err := ebiten.RunGame(gameInstance); err != nil {
 		log.Fatal(err)
 	}
