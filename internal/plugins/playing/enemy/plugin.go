@@ -6,7 +6,6 @@ import (
 	"game/internal/constants"
 	"game/internal/core"
 	"game/internal/helpers/collision"
-	"time"
 
 	"game/internal/plugins/playing/camera"
 	"game/internal/plugins/playing/enemy/entities"
@@ -305,50 +304,41 @@ func (ep *EnemyPlugin) SetEnemies(e []*entity.Enemy) {
 }
 
 func (ep *EnemyPlugin) moveTowardsPlayer(enemy *entity.Enemy, playerX, playerY float64) {
-	rand.Seed(time.Now().UnixNano())
-
 	enemy.PreviousX = enemy.X
 
+	// Direction to player
 	dx := playerX - enemy.X
 	dy := playerY - enemy.Y
 	distance := math.Sqrt(dx*dx + dy*dy)
 
-	// Normalizar a direção
-	dx /= distance
-	dy /= distance
+	// Normalize direction
+	if distance > 0 {
+		dx /= distance
+		dy /= distance
+	}
 
-	// Tentar várias direções diferentes
-	angles := []float64{0, math.Pi / 6, -math.Pi / 6, math.Pi / 4, -math.Pi / 4, math.Pi / 3, -math.Pi / 3}
+	// Simple separation to avoid stacking
+	separationX, separationY := 0.0, 0.0
+	for _, other := range ep.enemies {
+		if other != enemy && other.Active {
+			diffX := enemy.X - other.X
+			diffY := enemy.Y - other.Y
+			dist := math.Sqrt(diffX*diffX + diffY*diffY)
 
-	moved := false
-	baseAngle := math.Atan2(dy, dx)
-
-	for _, angleOffset := range angles {
-		angle := baseAngle + angleOffset
-
-		// Adicionar um pequeno deslocamento aleatório para evitar sincronização
-		jitter := (rand.Float64() - 0.5) * 0.2
-
-		dx = math.Cos(angle + jitter)
-		dy = math.Sin(angle + jitter)
-
-		newX := enemy.X + dx*enemy.Speed*ep.kernel.DeltaTime
-		newY := enemy.Y + dy*enemy.Speed*ep.kernel.DeltaTime
-
-		if !ep.checkEnemyCollision(newX, newY, enemy) {
-			enemy.X = newX
-			enemy.Y = newY
-			moved = true
-			break
+			if dist < 40 { // Minimal separation distance
+				separationX += diffX * 0.3
+				separationY += diffY * 0.3
+			}
 		}
 	}
 
-	// Se nenhuma direção funcionou, aplique um pequeno impulso aleatório
-	if !moved {
-		randomAngle := rand.Float64() * 2 * math.Pi
-		enemy.X += math.Cos(randomAngle) * enemy.Speed * ep.kernel.DeltaTime * 0.1
-		enemy.Y += math.Sin(randomAngle) * enemy.Speed * ep.kernel.DeltaTime * 0.1
-	}
+	// Combine movement (90% following, 10% separation)
+	moveX := dx*0.9 + separationX*0.1
+	moveY := dy*0.9 + separationY*0.1
+
+	// Update position
+	enemy.X += moveX * enemy.Speed * ep.kernel.DeltaTime
+	enemy.Y += moveY * enemy.Speed * ep.kernel.DeltaTime
 }
 
 func (ep *EnemyPlugin) ApplyDamage(enemy *entities.Enemy, damage float64, isCriticalDamage bool) {

@@ -23,6 +23,10 @@ type Enemy struct {
 	RunningLeftAnimationSprite  *assets.Animation
 
 	DeathAnimation *assets.Animation
+
+	VelocityX float64
+	VelocityY float64
+	StuckTime float64
 }
 
 func (e *Enemy) GetBounds() (float64, float64, float64, float64) {
