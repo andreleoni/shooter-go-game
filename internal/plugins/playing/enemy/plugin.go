@@ -15,7 +15,6 @@ import (
 	"game/internal/plugins/playing/player"
 
 	"image/color"
-	"log"
 	"math"
 	"math/rand"
 
@@ -39,6 +38,8 @@ type EnemyPlugin struct {
 
 	enemies         []*entity.Enemy
 	inactiveEnemies []*entity.Enemy
+
+	deathEnemies []*entity.Enemy
 
 	spawnTimer   float64
 	playerPlugin *player.PlayerPlugin
@@ -66,19 +67,6 @@ func (ep *EnemyPlugin) ID() string {
 func (ep *EnemyPlugin) Init(kernel *core.GameKernel) error {
 	ep.kernel = kernel
 
-	// Assign sprite to enemy
-	for enemytype, template := range templates.EnemyTemplates {
-		enemypath := "assets/images/enemies/" + fmt.Sprint(enemytype) + ".png"
-
-		ep.StaticAsset = assets.NewStaticSprite()
-		err := ep.StaticAsset.Load(enemypath)
-		if err != nil {
-			log.Fatal("Failed to load enemy asset:", err)
-		}
-
-		template.StaticSprite = ep.StaticAsset
-	}
-
 	return nil
 }
 
@@ -99,6 +87,8 @@ func (ep *EnemyPlugin) Update() error {
 	for i, enemy := range ep.enemies {
 		if enemy.Active {
 			ep.moveTowardsPlayer(enemy, playerX, playerY)
+
+			enemy.RunningAnimationSprite.Update(ep.kernel.DeltaTime)
 
 			playerCollision := collision.Check(
 				enemy.X, enemy.Y,
@@ -134,6 +124,14 @@ func (ep *EnemyPlugin) Update() error {
 		// Atualizar o temporizador de flash de dano
 		if enemy.DamageFlashTime > 0 {
 			enemy.DamageFlashTime -= ep.kernel.DeltaTime
+		}
+	}
+
+	for _, enemy := range ep.deathEnemies {
+		enemy.DeathAnimation.Update(ep.kernel.DeltaTime)
+
+		if enemy.DeathAnimation.CurrentFrame+1 >= len(enemy.DeathAnimation.Frames) {
+			ep.deathEnemies = ep.deathEnemies[:0]
 		}
 	}
 
@@ -190,9 +188,27 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 						Y:      screenY,
 					}
 
-					enemy.Stats.StaticSprite.Draw(screen, input)
+					enemy.RunningAnimationSprite.Draw(screen, input)
 				}
 			}
+		}
+	}
+
+	// Desenhar os inimigos mortos
+	fmt.Println("death enemies", ep.deathEnemies)
+	for _, enemy := range ep.deathEnemies {
+		screenX := enemy.X - cameraX
+		screenY := enemy.Y - cameraY
+
+		if enemy.DeathAnimation.CurrentFrame <= len(enemy.DeathAnimation.Frames) {
+			input := assets.DrawInput{
+				Width:  enemy.Width,
+				Height: enemy.Height,
+				X:      screenX,
+				Y:      screenY,
+			}
+
+			enemy.DeathAnimation.Draw(screen, input)
 		}
 	}
 
@@ -247,8 +263,6 @@ func (ep *EnemyPlugin) Spawn() {
 
 	var enemy *entity.Enemy
 
-	fmt.Println("Enemies:", ep.enemies, ep.inactiveEnemies)
-
 	if len(ep.inactiveEnemies) > 0 {
 		// Reutilizar um inimigo inativo
 		enemy = ep.inactiveEnemies[len(ep.inactiveEnemies)-1]
@@ -296,9 +310,10 @@ func (ep *EnemyPlugin) ApplyDamage(enemy *entities.Enemy, damage float64, isCrit
 	effectiveDamage := damage
 	enemy.Health -= effectiveDamage
 
-	if enemy.Health < 0 {
+	if enemy.Health <= 0 {
 		enemy.Health = 0
 	}
+
 	colorByType := map[bool]color.Color{
 		true:  color.RGBA{255, 0, 0, 255},
 		false: color.RGBA{255, 255, 255, 255},
@@ -312,4 +327,8 @@ func (ep *EnemyPlugin) ApplyDamage(enemy *entities.Enemy, damage float64, isCrit
 		Color: colorByType[isCriticalDamage],
 		Timer: 0.4,
 	})
+}
+
+func (ep *EnemyPlugin) AddDeathEnemies(e *entity.Enemy) {
+	ep.deathEnemies = append(ep.deathEnemies, e)
 }

@@ -4,12 +4,14 @@ import (
 	"game/internal/assets"
 )
 
-type EnemyStats struct {
+type EnemyTemplate struct {
+	Name      string
 	MaxHealth float64
 	Speed     float64
 	Damage    float64
 	Size      float64
 	Power     float64
 
-	StaticSprite *assets.StaticSprite
+	RunningAnimationSprite *assets.Animation
+	DeathAnimation         *assets.Animation
 }

@@ -32,8 +32,7 @@ type PlayerPlugin struct {
 	healthRegenDelay float64
 	healthRegenTimer float64
 
-	animation    *assets.Animation
-	staticsprite *assets.StaticSprite
+	animation *assets.Animation
 
 	facingRight bool
 
@@ -111,16 +110,13 @@ func (p *PlayerPlugin) Init(
 	p.kernel = kernel
 
 	p.animation = assets.NewAnimation(0.1)
-	err := p.animation.LoadFromJSON("assets/images/player/gunner/run/player.json", "assets/images/player/gunner/run/player.png")
+	err := p.animation.LoadFromJSON(
+		"assets/images/player/gunner/run/player.json",
+		"assets/images/player/gunner/run/player.png")
+
 	if err != nil {
 		log.Fatal("Failed to load player asset:", err)
 	}
-
-	// p.staticsprite = assets.NewStaticSprite()
-	// err := p.staticsprite.Load("assets/images/player/player.png")
-	// if err != nil {
-	// 	log.Fatal("Failed to load player asset:", err)
-	// // }
 
 	return nil
 }
@@ -308,7 +304,7 @@ func (p *PlayerPlugin) GetHealthRegenTimer() float64 {
 
 func (p *PlayerPlugin) increaseAttributes() {
 	p.maxHealth += p.healthIncrementPerLevel
-	p.health = p.maxHealth // Restaurar a saúde ao máximo ao subir de nível
+	p.health = p.maxHealth
 	p.speed += p.speedIncrementPerLevel
 	p.damagePercent += p.damagePercentIncrementPerLevel
 	p.armor += p.armorIncrementPerLevel

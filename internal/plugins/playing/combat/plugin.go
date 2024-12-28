@@ -76,6 +76,7 @@ func (cp *CombatPlugin) Update() error {
 							if enemy.Health <= 0 {
 								enemy.Active = false
 								enemykilled = true
+								cp.enemyPlugin.AddDeathEnemies(enemy)
 
 							} else {
 								enemyGotDamaged = true
@@ -112,6 +113,7 @@ func (cp *CombatPlugin) Update() error {
 							if enemy.Health <= 0 {
 								enemy.Active = false
 								enemykilled = true
+								cp.enemyPlugin.AddDeathEnemies(enemy)
 
 							} else {
 								enemyGotDamaged = true
