@@ -88,7 +88,11 @@ func (ep *EnemyPlugin) Update() error {
 		if enemy.Active {
 			ep.moveTowardsPlayer(enemy, playerX, playerY)
 
-			enemy.RunningAnimationSprite.Update(ep.kernel.DeltaTime)
+			if enemy.IsEnemyMovingRight() {
+				enemy.RunningRightAnimationSprite.Update(ep.kernel.DeltaTime)
+			} else {
+				enemy.RunningLeftAnimationSprite.Update(ep.kernel.DeltaTime)
+			}
 
 			playerCollision := collision.Check(
 				enemy.X, enemy.Y,
@@ -188,7 +192,11 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 						Y:      screenY,
 					}
 
-					enemy.RunningAnimationSprite.Draw(screen, input)
+					if enemy.IsEnemyMovingRight() {
+						enemy.RunningRightAnimationSprite.Draw(screen, input)
+					} else {
+						enemy.RunningLeftAnimationSprite.Draw(screen, input)
+					}
 				}
 			}
 		}
@@ -286,6 +294,8 @@ func (ep *EnemyPlugin) GetEnemies() []*entity.Enemy {
 }
 
 func (ep *EnemyPlugin) moveTowardsPlayer(enemy *entity.Enemy, playerX, playerY float64) {
+	enemy.PreviousX = enemy.X
+
 	dx := playerX - enemy.X
 	dy := playerY - enemy.Y
 	distance := math.Sqrt(dx*dx + dy*dy)

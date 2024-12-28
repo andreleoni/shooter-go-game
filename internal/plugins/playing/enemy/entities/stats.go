@@ -12,6 +12,8 @@ type EnemyTemplate struct {
 	Size      float64
 	Power     float64
 
-	RunningAnimationSprite *assets.Animation
-	DeathAnimation         *assets.Animation
+	RunningRightAnimationSprite *assets.Animation
+	RunningLeftAnimationSprite  *assets.Animation
+
+	DeathAnimation *assets.Animation
 }

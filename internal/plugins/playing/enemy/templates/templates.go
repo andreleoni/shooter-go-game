@@ -50,12 +50,20 @@ var EnemyTemplates = map[entities.EnemyType]*entities.EnemyTemplate{
 
 func init() {
 	for _, t := range EnemyTemplates {
-		t.RunningAnimationSprite = assets.NewAnimation(0.1)
-		err := t.RunningAnimationSprite.LoadFromJSON(
-			"assets/images/enemies/"+t.Name+"/run/asset.json",
-			"assets/images/enemies/"+t.Name+"/run/asset.png")
+		t.RunningLeftAnimationSprite = assets.NewAnimation(0.1)
+		err := t.RunningLeftAnimationSprite.LoadFromJSON(
+			"assets/images/enemies/"+t.Name+"/run/left/asset.json",
+			"assets/images/enemies/"+t.Name+"/run/left/asset.png")
 		if err != nil {
-			log.Fatal("Failed to load enemy run asset:", err)
+			log.Fatal("Failed to load enemy left run asset:", err)
+		}
+
+		t.RunningRightAnimationSprite = assets.NewAnimation(0.1)
+		err = t.RunningRightAnimationSprite.LoadFromJSON(
+			"assets/images/enemies/"+t.Name+"/run/right/asset.json",
+			"assets/images/enemies/"+t.Name+"/run/right/asset.png")
+		if err != nil {
+			log.Fatal("Failed to load enemy run run asset:", err)
 		}
 
 		t.DeathAnimation = assets.NewAnimation(0.1)
