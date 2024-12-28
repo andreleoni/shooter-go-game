@@ -20,5 +20,6 @@ func CreateEnemy(enemyType entities.EnemyType, x, y float64) *entities.Enemy {
 		Health:                           template.MaxHealth,
 		Power:                            template.Power,
 		LastAreaDamageDeltaTimeByAbility: map[string]float64{},
+		MaxHealth:                        template.MaxHealth,
 	}
 }

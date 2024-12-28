@@ -9,6 +9,7 @@ type Enemy struct {
 	Type                             EnemyType
 	Stats                            EnemyStats
 	Health                           float64
+	MaxHealth                        float64
 	Power                            float64
 	LastPlayerDamageTime             float64
 	LastAreaDamageDeltaTimeByAbility map[string]float64

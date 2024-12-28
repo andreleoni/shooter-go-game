@@ -37,12 +37,16 @@ type EnemyPlugin struct {
 	kernel  *core.GameKernel
 	plugins *core.PluginManager
 
-	enemies      []*entity.Enemy
+	enemies         []*entity.Enemy
+	inactiveEnemies []*entity.Enemy
+
 	spawnTimer   float64
 	playerPlugin *player.PlayerPlugin
 	StaticAsset  *assets.StaticSprite
 
 	damages []DamageInfo // Lista de danos causados pelos inimigos
+
+	maxEnemies int // Número máximo de inimigos por nível
 }
 
 func NewEnemyPlugin(playerPlugin *player.PlayerPlugin, plugins *core.PluginManager) *EnemyPlugin {
@@ -51,6 +55,7 @@ func NewEnemyPlugin(playerPlugin *player.PlayerPlugin, plugins *core.PluginManag
 		spawnTimer:   0,
 		playerPlugin: playerPlugin,
 		plugins:      plugins,
+		maxEnemies:   10,
 	}
 }
 
@@ -88,7 +93,10 @@ func (ep *EnemyPlugin) Update() error {
 	playerX, playerY := ep.playerPlugin.GetPosition()
 	playerWidth, playerHeight := ep.playerPlugin.GetSize()
 
-	for _, enemy := range ep.enemies {
+	cameraPlugin := ep.plugins.GetPlugin("CameraSystem").(*camera.CameraPlugin)
+	cameraX, cameraY := cameraPlugin.GetPosition()
+
+	for i, enemy := range ep.enemies {
 		if enemy.Active {
 			ep.moveTowardsPlayer(enemy, playerX, playerY)
 
@@ -112,6 +120,14 @@ func (ep *EnemyPlugin) Update() error {
 					enemy.LastPlayerDamageTime += ep.kernel.DeltaTime
 					ep.playerPlugin.DamageFlashTime += ep.kernel.DeltaTime
 				}
+			}
+
+			// Verificar se o inimigo está fora dos limites da tela
+			if enemy.X < cameraX || enemy.X > cameraX+constants.ScreenWidth ||
+				enemy.Y < cameraY || enemy.Y > cameraY+constants.ScreenHeight {
+				enemy.Active = false
+				ep.inactiveEnemies = append(ep.inactiveEnemies, enemy)
+				ep.enemies = append(ep.enemies[:i], ep.enemies[i+1:]...)
 			}
 		}
 
@@ -200,6 +216,10 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 }
 
 func (ep *EnemyPlugin) Spawn() {
+	if len(ep.enemies) >= ep.maxEnemies {
+		return
+	}
+
 	playerX, playerY := ep.playerPlugin.GetPosition()
 
 	// Escolher uma borda aleatória (0: superior, 1: inferior, 2: esquerda, 3: direita)
@@ -225,10 +245,26 @@ func (ep *EnemyPlugin) Spawn() {
 	x = math.Max(0, math.Min(x, constants.WorldWidth))
 	y = math.Max(0, math.Min(y, constants.WorldHeight))
 
-	// Escolher um tipo aleatório de inimigo
-	enemyType := entities.EnemyType(rand.Intn(len(templates.EnemyTemplates)))
+	var enemy *entity.Enemy
 
-	ep.enemies = append(ep.enemies, factory.CreateEnemy(enemyType, x, y))
+	fmt.Println("Enemies:", ep.enemies, ep.inactiveEnemies)
+
+	if len(ep.inactiveEnemies) > 0 {
+		// Reutilizar um inimigo inativo
+		enemy = ep.inactiveEnemies[len(ep.inactiveEnemies)-1]
+		ep.inactiveEnemies = ep.inactiveEnemies[:len(ep.inactiveEnemies)-1]
+		enemy.X = x
+		enemy.Y = y
+		enemy.Health = enemy.MaxHealth
+		enemy.Active = true
+
+	} else {
+		// Criar um novo inimigo
+		enemyType := entities.EnemyType(rand.Intn(len(templates.EnemyTemplates)))
+		enemy = factory.CreateEnemy(enemyType, x, y)
+	}
+
+	ep.enemies = append(ep.enemies, enemy)
 }
 
 func (ep *EnemyPlugin) GetEnemies() []*entity.Enemy {
