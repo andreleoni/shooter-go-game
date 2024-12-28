@@ -203,7 +203,6 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 	}
 
 	// Desenhar os inimigos mortos
-	fmt.Println("death enemies", ep.deathEnemies)
 	for _, enemy := range ep.deathEnemies {
 		screenX := enemy.X - cameraX
 		screenY := enemy.Y - cameraY
@@ -240,9 +239,10 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 }
 
 func (ep *EnemyPlugin) Spawn() {
-	if len(ep.enemies) >= ep.maxEnemies {
-		return
-	}
+	// fmt.Println("Spawn", len(ep.enemies))
+	// if len(ep.enemies) >= ep.maxEnemies {
+	// 	return
+	// }
 
 	playerX, playerY := ep.playerPlugin.GetPosition()
 
@@ -291,6 +291,10 @@ func (ep *EnemyPlugin) Spawn() {
 
 func (ep *EnemyPlugin) GetEnemies() []*entity.Enemy {
 	return ep.enemies
+}
+
+func (ep *EnemyPlugin) SetEnemies(e []*entity.Enemy) {
+	ep.enemies = e
 }
 
 func (ep *EnemyPlugin) moveTowardsPlayer(enemy *entity.Enemy, playerX, playerY float64) {

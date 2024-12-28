@@ -6,6 +6,7 @@ import (
 	"game/internal/plugins"
 	"game/internal/plugins/playing/ability"
 	"game/internal/plugins/playing/enemy"
+	"game/internal/plugins/playing/enemy/entities"
 	"game/internal/plugins/playing/experience"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -48,6 +49,8 @@ func (cp *CombatPlugin) Update() error {
 	enemies := cp.enemyPlugin.GetEnemies()
 
 	playerX, playerY := pp.GetPosition()
+
+	activeEnemies := []*entities.Enemy{}
 
 	for _, a := range wp.GetAcquiredAbilities() {
 		for _, enemy := range enemies {
@@ -135,8 +138,14 @@ func (cp *CombatPlugin) Update() error {
 			if enemyGotDamaged {
 				enemy.DamageFlashTime = 0.1
 			}
+
+			if enemy.Active {
+				activeEnemies = append(activeEnemies, enemy)
+			}
 		}
 	}
+
+	// cp.enemyPlugin.SetEnemies(activeEnemies)
 
 	return nil
 }
