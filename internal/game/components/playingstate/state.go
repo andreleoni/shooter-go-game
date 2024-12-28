@@ -9,6 +9,7 @@ import (
 	"game/internal/plugins/playing/enemy"
 	"game/internal/plugins/playing/experience"
 	"game/internal/plugins/playing/player"
+	"game/internal/plugins/playing/scenario"
 	"game/internal/plugins/playing/stats"
 
 	entitiesability "game/internal/plugins/playing/ability/entities/abilities"
@@ -50,14 +51,16 @@ func NewComponentPlayingState(kernel *core.GameKernel) *ComponentPlayingState {
 		statsPlugin := stats.NewStatsPlugin(playerPlugin)
 		abilityPlugin := ability.NewAbilityPlugin(pluginManagerByState[Playing])
 		experiencePlugin := experience.NewExperiencePlugin(pluginManagerByState[Playing])
+		scenarioPlugin := scenario.New(pluginManagerByState[Playing])
 
-		pluginManagerByState[Playing].Register(abilityPlugin, 0)
-		pluginManagerByState[Playing].Register(playerPlugin, 1)
-		pluginManagerByState[Playing].Register(experiencePlugin, 2)
-		pluginManagerByState[Playing].Register(enemyPlugin, 3)
-		pluginManagerByState[Playing].Register(combatPlugin, 4)
-		pluginManagerByState[Playing].Register(cameraPlugin, 6)
-		pluginManagerByState[Playing].Register(statsPlugin, 7)
+		pluginManagerByState[Playing].Register(scenarioPlugin, 0)
+		pluginManagerByState[Playing].Register(abilityPlugin, 10)
+		pluginManagerByState[Playing].Register(playerPlugin, 20)
+		pluginManagerByState[Playing].Register(experiencePlugin, 30)
+		pluginManagerByState[Playing].Register(enemyPlugin, 40)
+		pluginManagerByState[Playing].Register(combatPlugin, 50)
+		pluginManagerByState[Playing].Register(cameraPlugin, 60)
+		pluginManagerByState[Playing].Register(statsPlugin, 70)
 
 		playerPlugin.Init(kernel)
 		experiencePlugin.Init(kernel)
@@ -66,6 +69,7 @@ func NewComponentPlayingState(kernel *core.GameKernel) *ComponentPlayingState {
 		cameraPlugin.Init(kernel)
 		statsPlugin.Init(kernel)
 		abilityPlugin.Init(kernel)
+		scenarioPlugin.Init(kernel)
 
 		kernel.EventBus.Subscribe("NewAbility", func(a interface{}) {
 			ability := a.(entitiesability.Ability)
