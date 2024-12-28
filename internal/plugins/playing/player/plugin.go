@@ -7,6 +7,7 @@ import (
 	"game/internal/plugins/playing/player/entities"
 	"image/color"
 	"log"
+	"math/rand/v2"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
@@ -42,20 +43,32 @@ type PlayerPlugin struct {
 	level      int
 
 	additionalDamagePercent float64
-	armor                   float64
+	criticalMultiplier      float64
+
+	armor float64
+
+	healthIncrementPerLevel         float64
+	speedIncrementPerLevel          float64
+	damagePercentIncrementPerLevel  float64
+	armorIncrementPerLevel          float64
+	criticalChanceIncrementPerLevel float64
 }
 
 var levelUpExperience = map[int]int{
-	1:  10,
-	2:  12,
-	3:  15,
-	4:  20,
-	5:  27,
-	6:  40,
-	7:  60,
-	8:  90,
-	9:  130,
-	10: 200,
+	// 1:  10,
+	// 2:  12,
+	// 3:  15,
+	// 4:  20,
+	// 5:  27,
+	// 6:  40,
+	// 7:  60,
+	// 8:  90,
+	// 9:  130,
+	// 10: 200,
+	1: 1,
+	2: 2,
+	3: 3,
+	4: 4,
 }
 
 func NewPlayerPlugin(plugins *core.PluginManager, c entities.Character) *PlayerPlugin {
@@ -76,7 +89,14 @@ func NewPlayerPlugin(plugins *core.PluginManager, c entities.Character) *PlayerP
 		healthRegenTimer: 0,
 
 		additionalDamagePercent: 0,
+		criticalMultiplier:      2.0,
 		armor:                   0,
+
+		healthIncrementPerLevel:         10.0,
+		speedIncrementPerLevel:          1.0,
+		damagePercentIncrementPerLevel:  5.0,
+		armorIncrementPerLevel:          1.0,
+		criticalChanceIncrementPerLevel: 0.5,
 	}
 }
 
@@ -198,9 +218,13 @@ func (p *PlayerPlugin) AddExperience(amount int) {
 
 	p.experience += amount
 
-	if p.experience >= levelUpExperience[p.level] {
+	if p.experience >= levelUpExperience[p.level] &&
+		p.level < len(levelUpExperience)+1 {
+
 		p.experience = 0
 		p.level++
+
+		p.increaseAttributes()
 
 		p.kernel.EventBus.Publish("ChoosingAbility", nil)
 	}
@@ -234,7 +258,14 @@ func (p *PlayerPlugin) ApplyDamage(damage float64) {
 
 func (p *PlayerPlugin) CalculateDamage(baseDamage float64) float64 {
 	// Aplicar a porcentagem de dano adicional
-	return baseDamage * (1 + p.additionalDamagePercent/100)
+	damage := baseDamage * (1 + p.additionalDamagePercent/100)
+
+	// Verificar se o ataque é um crítico
+	if rand.Float64() < p.criticalChance/100 {
+		damage *= p.criticalMultiplier
+	}
+
+	return damage
 }
 
 func (p *PlayerPlugin) GetAdditionalDamagePercent() float64 {
@@ -271,4 +302,13 @@ func (p *PlayerPlugin) GetHealthRegenDelay() float64 {
 
 func (p *PlayerPlugin) GetHealthRegenTimer() float64 {
 	return p.healthRegenTimer
+}
+
+func (p *PlayerPlugin) increaseAttributes() {
+	p.maxHealth += p.healthIncrementPerLevel
+	p.health = p.maxHealth // Restaurar a saúde ao máximo ao subir de nível
+	p.speed += p.speedIncrementPerLevel
+	p.damagePercent += p.damagePercentIncrementPerLevel
+	p.armor += p.armorIncrementPerLevel
+	p.criticalChance += p.criticalChanceIncrementPerLevel
 }
