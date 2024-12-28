@@ -6,6 +6,7 @@ import (
 	"game/internal/constants"
 	"game/internal/core"
 	"game/internal/helpers/collision"
+	"time"
 
 	"game/internal/plugins/playing/camera"
 	"game/internal/plugins/playing/enemy/entities"
@@ -116,9 +117,15 @@ func (ep *EnemyPlugin) Update() error {
 				}
 			}
 
-			// Verificar se o inimigo está fora dos limites da tela
-			if enemy.X < cameraX || enemy.X > cameraX+constants.ScreenWidth ||
-				enemy.Y < cameraY || enemy.Y > cameraY+constants.ScreenHeight {
+			// Margem extra de 200 pixels além da tela
+			const marginBeyondScreen = 200
+
+			// Verificar se o inimigo está muito além dos limites da tela
+			if enemy.X < cameraX-marginBeyondScreen ||
+				enemy.X > cameraX+constants.ScreenWidth+marginBeyondScreen ||
+				enemy.Y < cameraY-marginBeyondScreen ||
+				enemy.Y > cameraY+constants.ScreenHeight+marginBeyondScreen {
+
 				enemy.Active = false
 				ep.inactiveEnemies = append(ep.inactiveEnemies, enemy)
 				ep.enemies = append(ep.enemies[:i], ep.enemies[i+1:]...)
@@ -298,6 +305,8 @@ func (ep *EnemyPlugin) SetEnemies(e []*entity.Enemy) {
 }
 
 func (ep *EnemyPlugin) moveTowardsPlayer(enemy *entity.Enemy, playerX, playerY float64) {
+	rand.Seed(time.Now().UnixNano())
+
 	enemy.PreviousX = enemy.X
 
 	dx := playerX - enemy.X
@@ -308,14 +317,37 @@ func (ep *EnemyPlugin) moveTowardsPlayer(enemy *entity.Enemy, playerX, playerY f
 	dx /= distance
 	dy /= distance
 
-	// Mover o inimigo em direção ao jogador
-	enemy.X += dx * enemy.Speed * ep.kernel.DeltaTime
-	enemy.Y += dy * enemy.Speed * ep.kernel.DeltaTime
+	// Tentar várias direções diferentes
+	angles := []float64{0, math.Pi / 6, -math.Pi / 6, math.Pi / 4, -math.Pi / 4, math.Pi / 3, -math.Pi / 3}
 
-	// Verificar colisão com outros inimigos
-	if ep.checkEnemyCollision(enemy.X, enemy.Y, enemy) {
-		enemy.X -= dx * enemy.Speed * ep.kernel.DeltaTime
-		enemy.Y -= dy * enemy.Speed * ep.kernel.DeltaTime
+	moved := false
+	baseAngle := math.Atan2(dy, dx)
+
+	for _, angleOffset := range angles {
+		angle := baseAngle + angleOffset
+
+		// Adicionar um pequeno deslocamento aleatório para evitar sincronização
+		jitter := (rand.Float64() - 0.5) * 0.2
+
+		dx = math.Cos(angle + jitter)
+		dy = math.Sin(angle + jitter)
+
+		newX := enemy.X + dx*enemy.Speed*ep.kernel.DeltaTime
+		newY := enemy.Y + dy*enemy.Speed*ep.kernel.DeltaTime
+
+		if !ep.checkEnemyCollision(newX, newY, enemy) {
+			enemy.X = newX
+			enemy.Y = newY
+			moved = true
+			break
+		}
+	}
+
+	// Se nenhuma direção funcionou, aplique um pequeno impulso aleatório
+	if !moved {
+		randomAngle := rand.Float64() * 2 * math.Pi
+		enemy.X += math.Cos(randomAngle) * enemy.Speed * ep.kernel.DeltaTime * 0.1
+		enemy.Y += math.Sin(randomAngle) * enemy.Speed * ep.kernel.DeltaTime * 0.1
 	}
 }
 
