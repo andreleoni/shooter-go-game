@@ -14,6 +14,7 @@ type EnemyPlugin interface {
 	Draw(screen *ebiten.Image)
 	Spawn()
 	GetEnemies() []*entities.Enemy
+	ApplyDamage(enemy *entities.Enemy, damage float64, isCriticalDamage bool)
 }
 
 type PlayerPlugin interface {
@@ -44,5 +45,5 @@ type PlayerPlugin interface {
 	AddArmor(amount float64)
 
 	ApplyDamage(damage float64)
-	CalculateDamage(baseDamage float64) float64
+	CalculateDamage(baseDamage float64) (float64, bool)
 }

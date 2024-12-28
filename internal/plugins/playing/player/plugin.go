@@ -256,16 +256,18 @@ func (p *PlayerPlugin) ApplyDamage(damage float64) {
 	p.DecreaseHealth(effectiveDamage)
 }
 
-func (p *PlayerPlugin) CalculateDamage(baseDamage float64) float64 {
+func (p *PlayerPlugin) CalculateDamage(baseDamage float64) (float64, bool) {
 	// Aplicar a porcentagem de dano adicional
+	isCriticalDamage := false
 	damage := baseDamage * (1 + p.additionalDamagePercent/100)
 
 	// Verificar se o ataque é um crítico
 	if rand.Float64() < p.criticalChance/100 {
 		damage *= p.criticalMultiplier
+		isCriticalDamage = true
 	}
 
-	return damage
+	return damage, isCriticalDamage
 }
 
 func (p *PlayerPlugin) GetAdditionalDamagePercent() float64 {

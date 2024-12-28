@@ -21,8 +21,17 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	_ "github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/text"
 	"github.com/hajimehoshi/ebiten/v2/vector"
+	"golang.org/x/image/font/basicfont"
 )
+
+type DamageInfo struct {
+	X, Y  float64
+	Value float64
+	Color color.Color
+	Timer float64
+}
 
 type EnemyPlugin struct {
 	kernel  *core.GameKernel
@@ -32,6 +41,8 @@ type EnemyPlugin struct {
 	spawnTimer   float64
 	playerPlugin *player.PlayerPlugin
 	StaticAsset  *assets.StaticSprite
+
+	damages []DamageInfo // Lista de danos causados pelos inimigos
 }
 
 func NewEnemyPlugin(playerPlugin *player.PlayerPlugin, plugins *core.PluginManager) *EnemyPlugin {
@@ -168,6 +179,24 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 			}
 		}
 	}
+
+	// Desenhar os danos
+	for i := len(ep.damages) - 1; i >= 0; i-- {
+		damage := &ep.damages[i]
+		damage.Timer -= ep.kernel.DeltaTime
+
+		if damage.Timer <= 0 {
+			// Remover o dano da lista
+			ep.damages = append(ep.damages[:i], ep.damages[i+1:]...)
+		} else {
+			// Desenhar o dano
+			screenX := damage.X - cameraX
+			screenY := damage.Y - cameraY - (1.0-damage.Timer)*20 // Mover o texto para cima ao longo do tempo
+
+			drawValue := int(damage.Value)
+			text.Draw(screen, fmt.Sprintf("%d", drawValue), basicfont.Face7x13, int(screenX), int(screenY), damage.Color)
+		}
+	}
 }
 
 func (ep *EnemyPlugin) Spawn() {
@@ -224,4 +253,27 @@ func (ep *EnemyPlugin) moveTowardsPlayer(enemy *entity.Enemy, playerX, playerY f
 		enemy.X -= dx * enemy.Speed * ep.kernel.DeltaTime
 		enemy.Y -= dy * enemy.Speed * ep.kernel.DeltaTime
 	}
+}
+
+func (ep *EnemyPlugin) ApplyDamage(enemy *entities.Enemy, damage float64, isCriticalDamage bool) {
+	// Aplicar a armadura para reduzir o dano
+	effectiveDamage := damage
+	enemy.Health -= effectiveDamage
+
+	if enemy.Health < 0 {
+		enemy.Health = 0
+	}
+	colorByType := map[bool]color.Color{
+		true:  color.RGBA{255, 0, 0, 255},
+		false: color.RGBA{255, 255, 255, 255},
+	}
+
+	// Adicionar uma nova entrada de dano
+	ep.damages = append(ep.damages, DamageInfo{
+		X:     enemy.X,
+		Y:     enemy.Y,
+		Value: effectiveDamage,
+		Color: colorByType[isCriticalDamage],
+		Timer: 0.4,
+	})
 }
