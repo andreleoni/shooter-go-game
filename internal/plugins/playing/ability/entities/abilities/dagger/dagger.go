@@ -5,6 +5,7 @@ import (
 	"game/internal/core"
 	"game/internal/plugins/playing/ability/entities"
 	entityabilities "game/internal/plugins/playing/ability/entities/abilities"
+	"game/internal/plugins/playing/camera"
 
 	"image/color"
 	"math"
@@ -82,9 +83,17 @@ func (d *Dagger) Update(wui entityabilities.AbilityUpdateInput) {
 		p.X += p.DirectionX * p.Speed * deltatime
 		p.Y += p.DirectionY * p.Speed * deltatime
 
-		// Deactivate if off screen
-		if p.X < 0 || p.X > constants.ScreenHeight+100 ||
-			p.Y < 0 || p.Y > constants.ScreenWidth+100 {
+		cameraPlugin := d.plugins.GetPlugin("CameraSystem").(*camera.CameraPlugin)
+		cameraX, cameraY := cameraPlugin.GetPosition()
+		// Check if projectile is too far from camera view
+		screenX := p.X - cameraX
+		screenY := p.Y - cameraY
+		margin := float64(200) // Larger margin before deactivating
+
+		if screenX < -margin ||
+			screenX > constants.ScreenWidth+margin ||
+			screenY < -margin ||
+			screenY > constants.ScreenHeight+margin {
 
 			p.Active = false
 		}

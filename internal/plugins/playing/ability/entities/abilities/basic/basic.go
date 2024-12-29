@@ -7,6 +7,7 @@ import (
 	"game/internal/plugins"
 	"game/internal/plugins/playing/ability/entities"
 	abilityentities "game/internal/plugins/playing/ability/entities/abilities"
+	"game/internal/plugins/playing/camera"
 	"image/color"
 	"math"
 
@@ -123,11 +124,17 @@ func (b *Basic) Update(wui abilityentities.AbilityUpdateInput) {
 				projectile.Y += dy * projectile.Speed * wui.DeltaTime
 			}
 
-			// Deactivate if off screen
-			if projectile.X < 0 ||
-				projectile.X > constants.ScreenHeight+100 ||
-				projectile.Y < 0 ||
-				projectile.Y > constants.ScreenWidth+100 {
+			cameraPlugin := b.plugins.GetPlugin("CameraSystem").(*camera.CameraPlugin)
+			cameraX, cameraY := cameraPlugin.GetPosition()
+			// Check if projectile is too far from camera view
+			screenX := projectile.X - cameraX
+			screenY := projectile.Y - cameraY
+			margin := float64(200) // Larger margin before deactivating
+
+			if screenX < -margin ||
+				screenX > constants.ScreenWidth+margin ||
+				screenY < -margin ||
+				screenY > constants.ScreenHeight+margin {
 
 				projectile.Active = false
 			}
