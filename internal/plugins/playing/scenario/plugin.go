@@ -1,10 +1,13 @@
 package scenario
 
 import (
+	"fmt"
+	"game/internal/assets"
+	"game/internal/constants"
 	"game/internal/core"
+	"game/internal/plugins/playing/camera"
 	"image/color"
 	"math/rand"
-	"sync"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -26,9 +29,12 @@ var tileColors = map[TileType]color.Color{
 	TilePortal: color.RGBA{138, 43, 226, 255},  // Purple
 }
 
+var tileSize = 32
+
 type MapTile struct {
 	Type     TileType
 	Walkable bool
+	Animated *assets.Animation
 }
 
 type ScenarioPlugin struct {
@@ -46,13 +52,62 @@ func New(plugins *core.PluginManager) *ScenarioPlugin {
 		mapHeight: 50,
 	}
 
-	s.generateMap()
-
 	return s
 }
 
 func (sp *ScenarioPlugin) Init(kernel *core.GameKernel) error {
 	sp.kernel = kernel
+
+	// Initialize tiles array
+	sp.tiles = make([][]*MapTile, sp.mapWidth)
+	for i := range sp.tiles {
+		sp.tiles[i] = make([]*MapTile, sp.mapHeight)
+		for j := range sp.tiles[i] {
+			// Initialize with ground tile first
+			sp.tiles[i][j] = &MapTile{
+				Type:     TileGround,
+				Walkable: true,
+			}
+		}
+	}
+
+	// Generate map features before loading animations
+	sp.generateMap()
+
+	// Load animations for tiles after map generation
+	for i := range sp.tiles {
+		for j := range sp.tiles[i] {
+			tile := sp.tiles[i][j]
+
+			// Select appropriate asset based on tile type
+			var imagePath string
+			switch tile.Type {
+			case TileGround:
+				imagePath = "assets/images/maps/grass/1/asset"
+			case TileTree:
+				imagePath = "assets/images/maps/grass/2/asset"
+			case TileRock:
+				imagePath = "assets/images/maps/grass/3/asset"
+			case TilePortal:
+				imagePath = "assets/images/maps/grass/4/asset"
+			}
+
+			if imagePath != "" {
+				animation := assets.NewAnimation(0.1)
+				err := animation.LoadFromJSON(
+					imagePath+".json",
+					imagePath+".png")
+
+				if err != nil {
+					// Log error but continue loading other tiles
+					fmt.Printf("Warning: failed to load asset at %d,%d: %v\n", i, j, err)
+					continue
+				}
+
+				tile.Animated = animation
+			}
+		}
+	}
 
 	return nil
 }
@@ -66,6 +121,7 @@ func (sp *ScenarioPlugin) generateMap() {
 
 	// Initialize map with ground tiles
 	sp.tiles = make([][]*MapTile, sp.mapWidth)
+
 	for x := range sp.tiles {
 		sp.tiles[x] = make([]*MapTile, sp.mapHeight)
 		for y := range sp.tiles[x] {
@@ -80,10 +136,10 @@ func (sp *ScenarioPlugin) generateMap() {
 	for x := 0; x < sp.mapWidth; x++ {
 		for y := 0; y < sp.mapHeight; y++ {
 			r := rand.Float64()
-			if r < 0.15 {
+			if r < 0.10 {
 				sp.tiles[x][y].Type = TileTree
 				sp.tiles[x][y].Walkable = false
-			} else if r < 0.25 {
+			} else if r < 0.15 {
 				sp.tiles[x][y].Type = TileRock
 				sp.tiles[x][y].Walkable = false
 			}
@@ -110,51 +166,77 @@ func (sp *ScenarioPlugin) generateMap() {
 }
 
 func (sp *ScenarioPlugin) Draw(screen *ebiten.Image) {
-	tileSize := 32
-	var wg sync.WaitGroup
-	mutex := &sync.Mutex{}
-
-	// Number of goroutines to use
-	numWorkers := 1
-	rowsPerWorker := len(sp.tiles) / numWorkers
-
-	for w := 0; w < numWorkers; w++ {
-		wg.Add(1)
-		startRow := w * rowsPerWorker
-		endRow := startRow + rowsPerWorker
-		if w == numWorkers-1 {
-			endRow = len(sp.tiles) // Handle remaining rows
-		}
-
-		go func(start, end int) {
-			defer wg.Done()
-
-			// Pre-create images for this worker
-			tileImages := make(map[TileType]*ebiten.Image)
-			for tileType := range tileColors {
-				img := ebiten.NewImage(tileSize, tileSize)
-				img.Fill(tileColors[tileType])
-				tileImages[tileType] = img
-			}
-
-			for x := start; x < end; x++ {
-				for y := range sp.tiles[x] {
-					op := &ebiten.DrawImageOptions{}
-					op.GeoM.Translate(float64(x*tileSize), float64(y*tileSize))
-
-					tileType := sp.tiles[x][y].Type
-
-					mutex.Lock()
-					screen.DrawImage(tileImages[tileType], op)
-					mutex.Unlock()
-				}
-			}
-		}(startRow, endRow)
+	cameraPlugin := sp.plugins.GetPlugin("CameraSystem").(*camera.CameraPlugin)
+	if cameraPlugin == nil {
+		return
 	}
+	cameraX, cameraY := cameraPlugin.GetPosition()
 
-	wg.Wait()
+	// Calculate visible tile range
+	startTileX := int(cameraX) / tileSize
+	startTileY := int(cameraY) / tileSize
+
+	tilesX := constants.ScreenWidth/tileSize + 2
+	tilesY := constants.ScreenHeight/tileSize + 2
+
+	endTileX := startTileX + tilesX
+	endTileY := startTileY + tilesY
+
+	startTileX = clamp(startTileX, 0, sp.mapWidth-1)
+	startTileY = clamp(startTileY, 0, sp.mapHeight-1)
+	endTileX = clamp(endTileX, 0, sp.mapWidth)
+	endTileY = clamp(endTileY, 0, sp.mapHeight)
+
+	for x := startTileX; x < endTileX; x++ {
+		for y := startTileY; y < endTileY; y++ {
+			tile := sp.tiles[x][y]
+			if tile == nil || tile.Animated == nil {
+				// Fallback to color if animation is not available
+				tileImage := ebiten.NewImage(tileSize, tileSize)
+				tileImage.Fill(tileColors[tile.Type])
+
+				op := &ebiten.DrawImageOptions{}
+				screenX := float64(x*tileSize) - cameraX
+				screenY := float64(y*tileSize) - cameraY
+				op.GeoM.Translate(screenX, screenY)
+				screen.DrawImage(tileImage, op)
+				continue
+			}
+
+			// Draw animated tile
+			screenX := float64(x*tileSize) - cameraX
+			screenY := float64(y*tileSize) - cameraY
+
+			tile.Animated.Draw(screen, assets.DrawInput{
+				Width:  float64(tileSize),
+				Height: float64(tileSize),
+				X:      screenX,
+				Y:      screenY,
+			})
+		}
+	}
+}
+
+func clamp(value, min, max int) int {
+	if value < min {
+		return min
+	}
+	if value > max {
+		return max
+	}
+	return value
 }
 
 func (sp *ScenarioPlugin) Update() error {
+	// Update animations
+	if sp.tiles != nil {
+		for x := range sp.tiles {
+			for y := range sp.tiles[x] {
+				if sp.tiles[x][y] != nil && sp.tiles[x][y].Animated != nil {
+					sp.tiles[x][y].Animated.Update(sp.kernel.DeltaTime)
+				}
+			}
+		}
+	}
 	return nil
 }
