@@ -86,7 +86,6 @@ func (ep *ExperiencePlugin) Init(kernel *core.GameKernel) error {
 
 func (ep *ExperiencePlugin) Update() error {
 	playerPlugin := ep.plugins.GetPlugin("PlayerSystem").(*player.PlayerPlugin)
-
 	playerX, playerY := playerPlugin.GetPosition()
 	playerWidth, playerHeight := playerPlugin.GetSize()
 
@@ -117,26 +116,28 @@ func (ep *ExperiencePlugin) Update() error {
 
 	// Create super XP if enough far crystals
 	if len(farCrystals) >= 5 {
-		// Calculate total XP value
 		totalXP := 0
-
 		for _, fc := range farCrystals {
 			totalXP += fc.Value
 		}
 
-		// Create super crystal in random position near screen
-		margin := float64(0) // Margin from screen edge
-		superX := cameraX + rand.Float64()*(constants.ScreenWidth-2*margin) + margin
-		superY := cameraY + rand.Float64()*(constants.ScreenHeight-2*margin) + margin
+		margin := float64(1024) // Reduced margin
+		angle := rand.Float64() * 2 * math.Pi
+		distance := margin + rand.Float64()*200 // Random distance between margin and margin+200
+
+		// Calculate position relative to player
+		superX := playerX + math.Cos(angle)*distance
+		superY := playerY + math.Sin(angle)*distance
 
 		superCrystal := &Crystal{
-			X:      superX,
-			Y:      superY,
-			Width:  float64(superCrystalRadius),
-			Height: float64(superCrystalRadius),
-			Active: true,
-			Speed:  200,
-			Value:  totalXP, // Bonus for collecting grouped XP
+			X:         superX,
+			Y:         superY,
+			Width:     float64(superCrystalRadius),
+			Height:    float64(superCrystalRadius),
+			Active:    true,
+			Speed:     450,
+			Value:     totalXP,
+			animation: ep.superCrystalAnimation, // Make sure to set animation
 		}
 
 		// Deactivate grouped crystals
@@ -144,40 +145,41 @@ func (ep *ExperiencePlugin) Update() error {
 			crystal.Active = false
 		}
 
-		// Add super crystal
-		ep.crystals = append(activeCrystals, superCrystal)
-	} else {
+		activeCrystals = append(activeCrystals, superCrystal)
+
 		ep.crystals = activeCrystals
 	}
 
 	// Update remaining crystals
 	for _, crystal := range ep.crystals {
-		if crystal.Active {
-			if crystal.animation != nil {
-				crystal.animation.Update(ep.kernel.DeltaTime)
-			}
+		if !crystal.Active {
+			continue
+		}
 
-			// Move towards player if in range
-			dx := (playerX + playerWidth/2) - (crystal.X + 5)
-			dy := (playerY + playerHeight/2) - (crystal.Y + 5)
-			distance := math.Sqrt(dx*dx + dy*dy)
+		if crystal.animation != nil {
+			crystal.animation.Update(ep.kernel.DeltaTime)
+		}
 
-			if distance > 0 {
-				dx /= distance
-				dy /= distance
-			}
+		// Move towards player if in range
+		dx := (playerX + playerWidth/2) - crystal.X
+		dy := (playerY + playerHeight/2) - crystal.Y
+		distance := math.Sqrt(dx*dx + dy*dy)
 
-			crystal.X += dx * crystal.Speed * ep.kernel.DeltaTime
-			crystal.Y += dy * crystal.Speed * ep.kernel.DeltaTime
+		if distance > 0 {
+			dx /= distance
+			dy /= distance
+		}
 
-			if ep.inPlayerCollectionRadius(crystal, playerX, playerY, playerWidth, playerHeight) {
-				crystal.Speed = 450
-			}
+		crystal.X += dx * crystal.Speed * ep.kernel.DeltaTime
+		crystal.Y += dy * crystal.Speed * ep.kernel.DeltaTime
 
-			if ep.checkCollisionWithPlayer(crystal, playerX, playerY, playerWidth, playerHeight) {
-				crystal.Active = false
-				playerPlugin.AddExperience(crystal.Value)
-			}
+		if ep.inPlayerCollectionRadius(crystal, playerX, playerY, playerWidth, playerHeight) {
+			crystal.Speed = 450
+		}
+
+		if ep.checkCollisionWithPlayer(crystal, playerX, playerY, playerWidth, playerHeight) {
+			crystal.Active = false
+			playerPlugin.AddExperience(crystal.Value)
 		}
 	}
 
@@ -198,7 +200,7 @@ func (ep *ExperiencePlugin) Draw(screen *ebiten.Image) {
 				screenY >= -crystal.Height && screenY <= constants.ScreenHeight+crystal.Height {
 
 				if ep.crystalAnimation != nil {
-					ep.crystalAnimation.Draw(screen, assets.DrawInput{
+					crystal.animation.Draw(screen, assets.DrawInput{
 						Width:  crystal.Width,
 						Height: crystal.Height,
 						X:      screenX,
