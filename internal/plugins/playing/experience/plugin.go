@@ -121,7 +121,7 @@ func (ep *ExperiencePlugin) Update() error {
 			totalXP += fc.Value
 		}
 
-		margin := float64(1024) // Reduced margin
+		margin := float64(constants.ScreenHeight) // Reduced margin
 		angle := rand.Float64() * 2 * math.Pi
 		distance := margin + rand.Float64()*200 // Random distance between margin and margin+200
 
@@ -135,9 +135,8 @@ func (ep *ExperiencePlugin) Update() error {
 			Width:     float64(superCrystalRadius),
 			Height:    float64(superCrystalRadius),
 			Active:    true,
-			Speed:     450,
 			Value:     totalXP,
-			animation: ep.superCrystalAnimation, // Make sure to set animation
+			animation: ep.superCrystalAnimation,
 		}
 
 		// Deactivate grouped crystals
@@ -199,7 +198,7 @@ func (ep *ExperiencePlugin) Draw(screen *ebiten.Image) {
 			if screenX >= -crystal.Width && screenX <= constants.ScreenWidth+crystal.Width &&
 				screenY >= -crystal.Height && screenY <= constants.ScreenHeight+crystal.Height {
 
-				if ep.crystalAnimation != nil {
+				if crystal.animation != nil {
 					crystal.animation.Draw(screen, assets.DrawInput{
 						Width:  crystal.Width,
 						Height: crystal.Height,
