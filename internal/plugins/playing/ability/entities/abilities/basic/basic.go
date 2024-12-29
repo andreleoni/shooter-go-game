@@ -125,9 +125,9 @@ func (b *Basic) Update(wui abilityentities.AbilityUpdateInput) {
 
 			// Deactivate if off screen
 			if projectile.X < 0 ||
-				projectile.X > constants.WorldHeight ||
+				projectile.X > constants.ScreenHeight+100 ||
 				projectile.Y < 0 ||
-				projectile.Y > constants.WorldWidth {
+				projectile.Y > constants.ScreenWidth+100 {
 
 				projectile.Active = false
 			}

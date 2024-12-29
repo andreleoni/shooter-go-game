@@ -4,7 +4,6 @@ import (
 	"game/internal/constants"
 	"game/internal/core"
 	"game/internal/plugins"
-	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -41,10 +40,6 @@ func (cp *CameraPlugin) Update() error {
 	// Center camera on player
 	cp.camera.X = playerX - constants.ScreenWidth/2
 	cp.camera.Y = playerY - constants.ScreenHeight/2
-
-	// Clamp camera to world bounds
-	cp.camera.X = math.Max(0, math.Min(cp.camera.X, constants.WorldWidth-constants.ScreenWidth))
-	cp.camera.Y = math.Max(0, math.Min(cp.camera.Y, constants.WorldHeight-constants.ScreenHeight))
 
 	return nil
 }

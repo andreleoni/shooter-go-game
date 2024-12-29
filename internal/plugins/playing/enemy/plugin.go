@@ -273,10 +273,6 @@ func (ep *EnemyPlugin) Spawn() {
 		y = playerY + rand.Float64()*constants.ScreenHeight - constants.ScreenHeight/2
 	}
 
-	// Garantir que a posição de spawn esteja dentro dos limites do mundo
-	x = math.Max(0, math.Min(x, constants.WorldWidth))
-	y = math.Max(0, math.Min(y, constants.WorldHeight))
-
 	var enemy *entity.Enemy
 
 	if len(ep.inactiveEnemies) > 0 {

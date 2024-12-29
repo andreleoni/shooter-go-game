@@ -83,8 +83,9 @@ func (d *Dagger) Update(wui entityabilities.AbilityUpdateInput) {
 		p.Y += p.DirectionY * p.Speed * deltatime
 
 		// Deactivate if off screen
-		if p.X < 0 || p.X > constants.WorldWidth ||
-			p.Y < 0 || p.Y > constants.WorldHeight {
+		if p.X < 0 || p.X > constants.ScreenHeight+100 ||
+			p.Y < 0 || p.Y > constants.ScreenWidth+100 {
+
 			p.Active = false
 		}
 	}
