@@ -9,6 +9,7 @@ import (
 	"game/internal/game/states"
 	"game/internal/plugins/menu/fontface"
 	"log"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"golang.org/x/image/font"
@@ -20,6 +21,10 @@ type Game struct {
 	kernel            *core.GameKernel
 	currentState      states.State
 	componentsByState map[states.State]states.GameState
+
+	updateCount int
+	drawCount   int
+	perSec      time.Time
 }
 
 func NewGame(kernel *core.GameKernel) *Game {
@@ -62,6 +67,20 @@ func (g *Game) Update() error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	g.componentsByState[g.currentState].Draw(screen)
+
+	now := time.Now()
+	g.updateCount++
+
+	// Debug FPS on console
+	if now.Sub(g.perSec) >= time.Second {
+		log.Printf("TPS: %.2f, FPS: %.2f", ebiten.ActualTPS(), ebiten.ActualFPS())
+		log.Printf("Update() was called in this sec: %d times", g.updateCount)
+		log.Printf("Draw() was called in this sec: %d times\n\n", g.drawCount)
+
+		g.updateCount = 0
+		g.drawCount = 0
+		g.perSec = now
+	}
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
