@@ -17,7 +17,7 @@ var EnemyTemplates = map[entities.EnemyType]*entities.EnemyTemplate{
 	BasicEnemy: {
 		Name:      "basic",
 		MaxHealth: 20,
-		Speed:     100,
+		Speed:     80,
 		Damage:    10,
 		Size:      40,
 		Power:     10,
@@ -25,7 +25,7 @@ var EnemyTemplates = map[entities.EnemyType]*entities.EnemyTemplate{
 	FastEnemy: {
 		Name:      "fast",
 		MaxHealth: 10,
-		Speed:     200,
+		Speed:     100,
 		Damage:    5,
 		Size:      100,
 		Power:     5,

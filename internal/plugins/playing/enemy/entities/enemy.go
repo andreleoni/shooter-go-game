@@ -3,8 +3,7 @@ package entities
 import "game/internal/assets"
 
 type Enemy struct {
-	X, Y      float64
-	PreviousX float64
+	X, Y float64
 
 	Width                            float64
 	Height                           float64
@@ -33,6 +32,6 @@ func (e *Enemy) GetBounds() (float64, float64, float64, float64) {
 	return e.X, e.Y, e.Width, e.Height
 }
 
-func (e *Enemy) IsEnemyMovingRight() bool {
-	return e.X > e.PreviousX
+func (e *Enemy) IsEnemyMovingRight(playerX float64) bool {
+	return e.X < playerX
 }

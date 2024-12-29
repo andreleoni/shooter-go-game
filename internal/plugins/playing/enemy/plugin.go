@@ -88,7 +88,7 @@ func (ep *EnemyPlugin) Update() error {
 		if enemy.Active {
 			ep.moveTowardsPlayer(enemy, playerX, playerY)
 
-			if enemy.IsEnemyMovingRight() {
+			if enemy.IsEnemyMovingRight(playerX) {
 				enemy.RunningRightAnimationSprite.Update(ep.kernel.DeltaTime)
 			} else {
 				enemy.RunningLeftAnimationSprite.Update(ep.kernel.DeltaTime)
@@ -164,6 +164,8 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 	cameraPlugin := ep.plugins.GetPlugin("CameraSystem").(*camera.CameraPlugin)
 	cameraX, cameraY := cameraPlugin.GetPosition()
 
+	playerX, _ := ep.playerPlugin.GetPosition()
+
 	for _, enemy := range ep.enemies {
 		if enemy.Active {
 			// Draw enemy relative to camera position
@@ -198,7 +200,7 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 						Y:      screenY,
 					}
 
-					if enemy.IsEnemyMovingRight() {
+					if enemy.IsEnemyMovingRight(playerX) {
 						enemy.RunningRightAnimationSprite.Draw(screen, input)
 					} else {
 						enemy.RunningLeftAnimationSprite.Draw(screen, input)
@@ -304,8 +306,6 @@ func (ep *EnemyPlugin) SetEnemies(e []*entity.Enemy) {
 }
 
 func (ep *EnemyPlugin) moveTowardsPlayer(enemy *entity.Enemy, playerX, playerY float64) {
-	enemy.PreviousX = enemy.X
-
 	// Direction to player
 	dx := playerX - enemy.X
 	dy := playerY - enemy.Y
