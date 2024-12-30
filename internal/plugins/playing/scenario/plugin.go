@@ -6,6 +6,7 @@ import (
 	"game/internal/core"
 	"game/internal/plugins/playing/camera"
 	"image/color"
+	"log"
 	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -44,6 +45,11 @@ type ScenarioPlugin struct {
 	chunks    map[int]map[int]*Chunk
 	chunkSize int
 	tileSize  int
+
+	grassTile  *assets.Animation
+	treeTile   *assets.Animation
+	rockTile   *assets.Animation
+	portalTile *assets.Animation
 }
 
 func New(plugins *core.PluginManager) *ScenarioPlugin {
@@ -57,6 +63,49 @@ func New(plugins *core.PluginManager) *ScenarioPlugin {
 
 func (sp *ScenarioPlugin) Init(kernel *core.GameKernel) error {
 	sp.kernel = kernel
+
+	var imagePath string
+
+	imagePath = "assets/images/maps/grass/1/asset"
+	grassAnimation := assets.NewAnimation(0.1)
+	err := grassAnimation.LoadFromJSON(
+		imagePath+".json",
+		imagePath+".png")
+	if err != nil {
+		log.Fatal("error on load asset", err)
+	}
+	sp.grassTile = grassAnimation
+
+	imagePath = "assets/images/maps/grass/2/asset"
+	treeAnimation := assets.NewAnimation(0.1)
+	err = treeAnimation.LoadFromJSON(
+		imagePath+".json",
+		imagePath+".png")
+	if err != nil {
+		log.Fatal("error on load asset", err)
+	}
+	sp.treeTile = treeAnimation
+
+	imagePath = "assets/images/maps/grass/3/asset"
+	rockAnimation := assets.NewAnimation(0.1)
+	err = rockAnimation.LoadFromJSON(
+		imagePath+".json",
+		imagePath+".png")
+	if err != nil {
+		log.Fatal("error on load asset", err)
+	}
+	sp.rockTile = rockAnimation
+
+	imagePath = "assets/images/maps/grass/4/asset"
+	portalAnimation := assets.NewAnimation(0.1)
+	err = portalAnimation.LoadFromJSON(
+		imagePath+".json",
+		imagePath+".png")
+	if err != nil {
+		log.Fatal("error on load asset", err)
+	}
+	sp.portalTile = portalAnimation
+
 	return nil
 }
 
@@ -87,27 +136,15 @@ func (sp *ScenarioPlugin) generateChunk(chunkX, chunkY int) *Chunk {
 				tile.Walkable = false
 			}
 
-			// Load animation
-			var imagePath string
 			switch tile.Type {
 			case TileGround:
-				imagePath = "assets/images/maps/grass/1/asset"
+				tile.Animated = sp.grassTile
 			case TileTree:
-				imagePath = "assets/images/maps/grass/2/asset"
+				tile.Animated = sp.treeTile
 			case TileRock:
-				imagePath = "assets/images/maps/grass/3/asset"
+				tile.Animated = sp.rockTile
 			case TilePortal:
-				imagePath = "assets/images/maps/grass/4/asset"
-			}
-
-			if imagePath != "" {
-				animation := assets.NewAnimation(0.1)
-				err := animation.LoadFromJSON(
-					imagePath+".json",
-					imagePath+".png")
-				if err == nil {
-					tile.Animated = animation
-				}
+				tile.Animated = sp.portalTile
 			}
 
 			chunk.Tiles[x][y] = tile
