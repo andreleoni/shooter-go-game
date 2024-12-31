@@ -14,6 +14,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 type MenuPlugin struct {
@@ -26,29 +27,38 @@ type MenuPlugin struct {
 	canTransition  bool
 	selectionDelay float64
 
-	wallpaper *assets.StaticSprite
+	initialMenuAnimation *assets.Animation
+	backgroundAnimation  *assets.Animation
 }
 
 func NewMenuPlugin(kernel *core.GameKernel) *MenuPlugin {
 	var err error
 
-	wallpaper := assets.NewStaticSprite()
-
-	err = wallpaper.Load("assets/images/menu/wallpaper.png")
+	initialMenuAnimation := assets.NewAnimation(0.1)
+	err = initialMenuAnimation.LoadFromJSON(
+		"assets/images/menu/initial/asset.json",
+		"assets/images/menu/initial/asset.png")
 	if err != nil {
-		log.Fatal("Failed to wallpaper load animation:", err)
+		log.Fatal("Failed to load initial asset menu:", err)
+	}
+
+	backgroundAnimation := assets.NewAnimation(0.1)
+	err = backgroundAnimation.LoadFromJSON(
+		"assets/images/menu/background/asset.json",
+		"assets/images/menu/background/asset.png")
+	if err != nil {
+		log.Fatal("Failed to load background asset menu:", err)
 	}
 
 	return &MenuPlugin{
 		kernel:       kernel,
 		currentState: menu.MenuState,
 		characters: []playerentities.Character{
-			{Name: "Archer", Speed: 100, Health: 100, Ability: "Basic"},
-			{Name: "Rogue", Speed: 200, Health: 30, Ability: "Dagger"},
-			{Name: "Knight", Speed: 75, Health: 200, Ability: "Protection"},
+			{Name: "Rogue", Speed: 100, Health: 100, Ability: "Basic"},
 		},
-		selectionDelay: 0,
-		wallpaper:      wallpaper,
+		selectionDelay:       0,
+		initialMenuAnimation: initialMenuAnimation,
+		backgroundAnimation:  backgroundAnimation,
 	}
 }
 
@@ -114,7 +124,7 @@ func (m *MenuPlugin) Update() error {
 func (m *MenuPlugin) Draw(screen *ebiten.Image) {
 	switch m.currentState {
 	case menu.MenuState:
-		m.wallpaper.Draw(screen,
+		m.initialMenuAnimation.Draw(screen,
 			assets.DrawInput{
 				Width:  constants.ScreenWidth,
 				Height: constants.ScreenHeight,
@@ -123,16 +133,35 @@ func (m *MenuPlugin) Draw(screen *ebiten.Image) {
 			},
 		)
 
-		text.Draw(screen, "Press ENTER to Start", fontface.FontFace, 300, 200, color.White)
+		text.Draw(screen,
+			"Press ENTER to Start",
+			fontface.FontFace,
+			(constants.ScreenWidth/2)-110,
+			477,
+			color.White)
 
 	case menu.CharacterSelectState:
-		m.wallpaper.Draw(screen,
+		m.backgroundAnimation.Draw(screen,
 			assets.DrawInput{
 				Width:  constants.ScreenWidth,
 				Height: constants.ScreenHeight,
 				X:      0,
 				Y:      0,
 			},
+		)
+
+		width := 300
+		height := 300
+
+		// colocar retangulo no meio da tela
+		vector.DrawFilledRect(
+			screen,
+			float32((constants.ScreenWidth-width)/2),
+			float32((constants.ScreenHeight-height)/2-50),
+			float32(width),
+			float32(height),
+			color.RGBA{46, 41, 48, 255},
+			true,
 		)
 
 		text.Draw(screen, "Select Character:", fontface.FontFace, 300, 150, color.White)

@@ -27,7 +27,7 @@ type Basic struct {
 
 func New() *Basic {
 	return &Basic{
-		Power:         10,
+		Power:         100,
 		ShootCooldown: 1.0,
 	}
 }

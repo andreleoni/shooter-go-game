@@ -16,7 +16,7 @@ const (
 var EnemyTemplates = map[entities.EnemyType]*entities.EnemyTemplate{
 	BasicEnemy: {
 		Name:                 "basic",
-		MaxHealth:            20,
+		MaxHealth:            30,
 		Speed:                80,
 		Damage:               10,
 		Size:                 40,
@@ -43,7 +43,7 @@ var EnemyTemplates = map[entities.EnemyType]*entities.EnemyTemplate{
 	},
 	RangedEnemy: {
 		Name:                 "ranged",
-		MaxHealth:            30,
+		MaxHealth:            20,
 		Speed:                75,
 		Damage:               15,
 		Size:                 25,
