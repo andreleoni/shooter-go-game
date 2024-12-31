@@ -115,10 +115,10 @@ func (sp *ScenarioPlugin) generateChunk(chunkX, chunkY int) *Chunk {
 
 			// Generate random obstacles
 			r := rand.Float64()
-			if r < 0.05 {
+			if r < 0.01 {
 				tile.Type = TileTree
 				tile.Walkable = false
-			} else if r < 0.10 {
+			} else if r < 0.05 {
 				tile.Type = TileRock
 				tile.Walkable = false
 			}
