@@ -96,7 +96,7 @@ func (cp *CombatPlugin) Update() error {
 					if collision.CheckCircle(
 						playerX,
 						playerY,
-						200, //implementar interface com radius
+						a.GetRadius(), //implementar interface com radius
 						enemy.X,
 						enemy.Y,
 						enemy.Width,

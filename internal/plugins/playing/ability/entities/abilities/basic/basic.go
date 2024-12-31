@@ -197,3 +197,7 @@ func (*Basic) DamageType() string {
 func (*Basic) AttackSpeed() float64 {
 	return 1.0
 }
+
+func (*Basic) GetRadius() float64 {
+	return 0.0
+}

@@ -14,6 +14,7 @@ type Protection struct {
 	plugins     *core.PluginManager
 	Projectiles []*entities.Projectile
 	Power       float64
+	Radius      float64
 
 	// Shoot cooldown
 	ShootTimer    float64
@@ -52,7 +53,7 @@ func (p *Protection) Draw(screen *ebiten.Image, wdi abilityentities.AbilityDrawI
 		screen,
 		float32(circleX),
 		float32(circleY),
-		100,
+		float32(p.Radius),
 		color.RGBA{111, 222, 111, 2},
 		true)
 
@@ -76,4 +77,8 @@ func (*Protection) AttackSpeed() float64 {
 }
 
 func (*Protection) AutoShot(deltaTime, x, y float64) {
+}
+
+func (p *Protection) GetRadius() float64 {
+	return p.Radius
 }

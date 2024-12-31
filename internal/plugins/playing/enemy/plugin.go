@@ -53,6 +53,13 @@ type EnemyPlugin struct {
 
 	gameTimer  float64
 	spawnRates map[int]float64 // Maps minutes to spawn delay
+
+	baseStats map[int]EnemyBaseStats
+}
+
+type EnemyBaseStats struct {
+	Health float64
+	Damage float64
 }
 
 func NewEnemyPlugin(playerPlugin *player.PlayerPlugin, plugins *core.PluginManager) *EnemyPlugin {
@@ -70,6 +77,15 @@ func NewEnemyPlugin(playerPlugin *player.PlayerPlugin, plugins *core.PluginManag
 			4: 0.3,
 			5: 0.2,
 			6: 0.1,
+		},
+		baseStats: map[int]EnemyBaseStats{
+			0: {Health: 0.1, Damage: 0.1},
+			1: {Health: 0.2, Damage: 0.2},
+			2: {Health: 0.4, Damage: 0.4},
+			3: {Health: 0.6, Damage: 0.6},
+			4: {Health: 0.8, Damage: 0.8},
+			5: {Health: 0.9, Damage: 0.9},
+			6: {Health: 1.0, Damage: 1.0},
 		},
 	}
 }
@@ -288,11 +304,6 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 }
 
 func (ep *EnemyPlugin) Spawn() {
-	// fmt.Println("Spawn", len(ep.enemies))
-	// if len(ep.enemies) >= ep.maxEnemies {
-	// 	return
-	// }
-
 	playerX, playerY := ep.playerPlugin.GetPosition()
 
 	// Escolher uma borda aleatória (0: superior, 1: inferior, 2: esquerda, 3: direita)
@@ -330,6 +341,11 @@ func (ep *EnemyPlugin) Spawn() {
 		enemyType := entities.EnemyType(rand.Intn(len(templates.EnemyTemplates)))
 		enemy = factory.CreateEnemy(enemyType, x, y)
 	}
+
+	getEnemyStats := ep.getEnemyStats()
+
+	enemy.Health = enemy.MaxHealth + (enemy.MaxHealth * getEnemyStats.Health)
+	enemy.Power = enemy.Power + (enemy.Power * getEnemyStats.Damage)
 
 	ep.enemies = append(ep.enemies, enemy)
 }
@@ -404,4 +420,16 @@ func (ep *EnemyPlugin) ApplyDamage(enemy *entities.Enemy, damage float64, isCrit
 
 func (ep *EnemyPlugin) AddDeathEnemies(e *entity.Enemy) {
 	ep.deathEnemies = append(ep.deathEnemies, e)
+}
+
+func (ep *EnemyPlugin) getEnemyStats() EnemyBaseStats {
+	currentMinute := int(ep.gameTimer / 60)
+
+	stats := ep.baseStats[6]
+
+	if baseStats, exists := ep.baseStats[currentMinute]; exists {
+		stats = baseStats
+	}
+
+	return stats
 }

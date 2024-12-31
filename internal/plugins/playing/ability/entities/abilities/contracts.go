@@ -39,4 +39,6 @@ type Ability interface {
 	DamageType() string
 
 	AttackSpeed() float64
+
+	GetRadius() float64
 }

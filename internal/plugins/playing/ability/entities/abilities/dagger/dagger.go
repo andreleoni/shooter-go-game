@@ -135,3 +135,7 @@ func (d *Dagger) DamageType() string {
 func (*Dagger) AttackSpeed() float64 {
 	return 2.5
 }
+
+func (*Dagger) GetRadius() float64 {
+	return 0.0
+}
