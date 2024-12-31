@@ -18,14 +18,12 @@ const (
 	TileGround TileType = iota
 	TileTree
 	TileRock
-	TilePortal
 )
 
 var tileColors = map[TileType]color.Color{
 	TileGround: color.RGBA{34, 139, 34, 255},   // Green
 	TileTree:   color.RGBA{0, 100, 0, 255},     // Dark Green
 	TileRock:   color.RGBA{128, 128, 128, 255}, // Gray
-	TilePortal: color.RGBA{138, 43, 226, 255},  // Purple
 }
 
 type MapTile struct {
@@ -46,10 +44,9 @@ type ScenarioPlugin struct {
 	chunkSize int
 	tileSize  int
 
-	grassTile  *assets.Animation
-	treeTile   *assets.Animation
-	rockTile   *assets.Animation
-	portalTile *assets.Animation
+	grassTile *assets.Animation
+	treeTile  *assets.Animation
+	rockTile  *assets.Animation
 }
 
 func New(plugins *core.PluginManager) *ScenarioPlugin {
@@ -66,7 +63,7 @@ func (sp *ScenarioPlugin) Init(kernel *core.GameKernel) error {
 
 	var imagePath string
 
-	imagePath = "assets/images/maps/grass/1/asset"
+	imagePath = "assets/images/maps/void/1/asset"
 	grassAnimation := assets.NewAnimation(0.1)
 	err := grassAnimation.LoadFromJSON(
 		imagePath+".json",
@@ -76,7 +73,7 @@ func (sp *ScenarioPlugin) Init(kernel *core.GameKernel) error {
 	}
 	sp.grassTile = grassAnimation
 
-	imagePath = "assets/images/maps/grass/2/asset"
+	imagePath = "assets/images/maps/void/2/asset"
 	treeAnimation := assets.NewAnimation(0.1)
 	err = treeAnimation.LoadFromJSON(
 		imagePath+".json",
@@ -86,7 +83,7 @@ func (sp *ScenarioPlugin) Init(kernel *core.GameKernel) error {
 	}
 	sp.treeTile = treeAnimation
 
-	imagePath = "assets/images/maps/grass/3/asset"
+	imagePath = "assets/images/maps/void/3/asset"
 	rockAnimation := assets.NewAnimation(0.1)
 	err = rockAnimation.LoadFromJSON(
 		imagePath+".json",
@@ -95,16 +92,6 @@ func (sp *ScenarioPlugin) Init(kernel *core.GameKernel) error {
 		log.Fatal("error on load asset", err)
 	}
 	sp.rockTile = rockAnimation
-
-	imagePath = "assets/images/maps/grass/4/asset"
-	portalAnimation := assets.NewAnimation(0.1)
-	err = portalAnimation.LoadFromJSON(
-		imagePath+".json",
-		imagePath+".png")
-	if err != nil {
-		log.Fatal("error on load asset", err)
-	}
-	sp.portalTile = portalAnimation
 
 	return nil
 }
@@ -143,8 +130,6 @@ func (sp *ScenarioPlugin) generateChunk(chunkX, chunkY int) *Chunk {
 				tile.Animated = sp.treeTile
 			case TileRock:
 				tile.Animated = sp.rockTile
-			case TilePortal:
-				tile.Animated = sp.portalTile
 			}
 
 			chunk.Tiles[x][y] = tile
