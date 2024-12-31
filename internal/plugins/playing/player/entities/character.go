@@ -8,7 +8,7 @@ type Character struct {
 	Speed          float64
 	Health         float64
 	Ability        string
-	ArmorPercent   float64
+	Armor          float64
 	DamagePercent  float64
 	CriticalChance float64
 
@@ -16,6 +16,5 @@ type Character struct {
 	HealthRegenDelay float64
 	HealthRegenTimer float64
 
-	animation    *assets.Animation
-	staticsprite *assets.StaticSprite
+	animation *assets.Animation
 }

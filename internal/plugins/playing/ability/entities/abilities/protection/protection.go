@@ -23,7 +23,8 @@ type Protection struct {
 
 func New() *Protection {
 	return &Protection{
-		Power: 10,
+		Power:  10,
+		Radius: 75,
 	}
 }
 

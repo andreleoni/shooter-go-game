@@ -41,9 +41,6 @@ type PlayerPlugin interface {
 
 	NextLevelPercentage() float64
 
-	AddAdditionalDamagePercent(percent float64)
-	AddArmor(amount float64)
-
 	ApplyDamage(damage float64)
 	CalculateDamage(baseDamage float64) (float64, bool)
 }

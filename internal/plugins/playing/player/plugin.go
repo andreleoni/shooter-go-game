@@ -25,7 +25,6 @@ type PlayerPlugin struct {
 	width          float64
 	height         float64
 	speed          float64
-	armorPercent   float64
 	damagePercent  float64
 	criticalChance float64
 
@@ -56,6 +55,7 @@ type PlayerPlugin struct {
 	damagePercentIncrementPerLevel  float64
 	armorIncrementPerLevel          float64
 	criticalChanceIncrementPerLevel float64
+	additionalDamagePercentPerLevel float64
 }
 
 var levelUpExperience = map[int]int{
@@ -88,7 +88,7 @@ func NewPlayerPlugin(plugins *core.PluginManager, c entities.Character) *PlayerP
 		healthRegenDelay: 1.0,
 		healthRegenTimer: 0,
 
-		additionalDamagePercent: 0,
+		additionalDamagePercent: 10,
 		criticalMultiplier:      2.0,
 		armor:                   0,
 
@@ -97,6 +97,7 @@ func NewPlayerPlugin(plugins *core.PluginManager, c entities.Character) *PlayerP
 		damagePercentIncrementPerLevel:  5.0,
 		armorIncrementPerLevel:          1.0,
 		criticalChanceIncrementPerLevel: 0.5,
+		additionalDamagePercentPerLevel: 2.0,
 	}
 }
 
@@ -285,14 +286,6 @@ func (p *PlayerPlugin) NextLevelPercentage() float64 {
 	return float64(p.experience) / float64(levelUpExperience[p.level])
 }
 
-func (p *PlayerPlugin) AddAdditionalDamagePercent(percent float64) {
-	p.additionalDamagePercent += percent
-}
-
-func (p *PlayerPlugin) AddArmor(amount float64) {
-	p.armor += amount
-}
-
 func (p *PlayerPlugin) ApplyDamage(damage float64) {
 	// Aplicar a armadura para reduzir o dano
 	effectiveDamage := damage * (1 - p.armor/100)
@@ -354,4 +347,5 @@ func (p *PlayerPlugin) increaseAttributes() {
 	p.damagePercent += p.damagePercentIncrementPerLevel
 	p.armor += p.armorIncrementPerLevel
 	p.criticalChance += p.criticalChanceIncrementPerLevel
+	p.additionalDamagePercent += p.additionalDamagePercentPerLevel
 }
