@@ -52,8 +52,8 @@ func (p *Protection) Draw(screen *ebiten.Image, wdi abilityentities.AbilityDrawI
 		screen,
 		float32(circleX),
 		float32(circleY),
-		200,
-		color.RGBA{111, 222, 111, 255},
+		100,
+		color.RGBA{111, 222, 111, 2},
 		true)
 
 	return

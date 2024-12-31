@@ -93,4 +93,5 @@ func (sp *StatsPlugin) Draw(screen *ebiten.Image) {
 	playerGetCriticalChance := sp.playerPlugin.GetCriticalChance()
 	criticalChanceText := fmt.Sprintf("Critical Chance: %.0f%%", playerGetCriticalChance)
 	text.Draw(screen, criticalChanceText, sp.gameFont, 10, 300, color.White)
+
 }

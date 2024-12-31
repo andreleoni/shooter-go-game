@@ -137,7 +137,7 @@ func (m *MenuPlugin) Draw(screen *ebiten.Image) {
 			"Press ENTER to Start",
 			fontface.FontFace,
 			(constants.ScreenWidth/2)-110,
-			477,
+			600,
 			color.White)
 
 	case menu.CharacterSelectState:
@@ -157,14 +157,20 @@ func (m *MenuPlugin) Draw(screen *ebiten.Image) {
 		vector.DrawFilledRect(
 			screen,
 			float32((constants.ScreenWidth-width)/2),
-			float32((constants.ScreenHeight-height)/2-50),
+			float32((constants.ScreenHeight-height)/2-100),
 			float32(width),
 			float32(height),
 			color.RGBA{46, 41, 48, 255},
 			true,
 		)
 
-		text.Draw(screen, "Select Character:", fontface.FontFace, 300, 150, color.White)
+		text.Draw(
+			screen,
+			"Select Character:",
+			fontface.FontFace,
+			(constants.ScreenWidth-width)/2,
+			(constants.ScreenHeight-height)/2-100,
+			color.White)
 
 		for i, char := range m.characters {
 			col := color.White

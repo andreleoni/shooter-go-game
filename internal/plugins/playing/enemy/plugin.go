@@ -8,6 +8,7 @@ import (
 	"game/internal/core"
 	"game/internal/helpers/collision"
 
+	"game/internal/plugins/menu/fontface"
 	"game/internal/plugins/playing/camera"
 	"game/internal/plugins/playing/enemy/entities"
 	entity "game/internal/plugins/playing/enemy/entities"
@@ -49,6 +50,9 @@ type EnemyPlugin struct {
 	damages []DamageInfo // Lista de danos causados pelos inimigos
 
 	maxEnemies int // Número máximo de inimigos por nível
+
+	gameTimer  float64
+	spawnRates map[int]float64 // Maps minutes to spawn delay
 }
 
 func NewEnemyPlugin(playerPlugin *player.PlayerPlugin, plugins *core.PluginManager) *EnemyPlugin {
@@ -58,6 +62,15 @@ func NewEnemyPlugin(playerPlugin *player.PlayerPlugin, plugins *core.PluginManag
 		playerPlugin: playerPlugin,
 		plugins:      plugins,
 		maxEnemies:   10,
+		spawnRates: map[int]float64{
+			0: 2.0,
+			1: 1.0,
+			2: 0.7,
+			3: 0.5,
+			4: 0.3,
+			5: 0.2,
+			6: 0.1,
+		},
 	}
 }
 
@@ -72,9 +85,21 @@ func (ep *EnemyPlugin) Init(kernel *core.GameKernel) error {
 }
 
 func (ep *EnemyPlugin) Update() error {
+	// Update game timer
+	ep.gameTimer += ep.kernel.DeltaTime
 	ep.spawnTimer += ep.kernel.DeltaTime
 
-	if ep.spawnTimer >= 0.5 {
+	// Get current minute
+	currentMinute := int(ep.gameTimer / 60)
+
+	// Get spawn delay based on current minute
+	spawnDelay := ep.spawnRates[6] // Default to highest difficulty
+	if delay, exists := ep.spawnRates[currentMinute]; exists {
+		spawnDelay = delay
+	}
+
+	// Spawn enemy based on current spawn rate
+	if ep.spawnTimer >= spawnDelay {
 		ep.Spawn()
 		ep.spawnTimer = 0
 	}
@@ -185,6 +210,7 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 						float32(enemy.Height),
 						color.RGBA{255, 255, 255, 255},
 						true)
+
 				} else {
 					if config.IsDebugEnv() {
 						vector.DrawFilledRect(screen,
@@ -236,17 +262,29 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 		damage.Timer -= ep.kernel.DeltaTime
 
 		if damage.Timer <= 0 {
-			// Remover o dano da lista
+			// remove damage from list
 			ep.damages = append(ep.damages[:i], ep.damages[i+1:]...)
 		} else {
-			// Desenhar o dano
+			// draw damage
 			screenX := damage.X - cameraX
-			screenY := damage.Y - cameraY - (1.0-damage.Timer)*20 // Mover o texto para cima ao longo do tempo
+			screenY := damage.Y - cameraY - (1.0-damage.Timer)*20
 
 			drawValue := int(damage.Value)
 			text.Draw(screen, fmt.Sprintf("%d", drawValue), basicfont.Face7x13, int(screenX), int(screenY), damage.Color)
 		}
 	}
+
+	minutes := int(ep.gameTimer / 60)
+	seconds := int(ep.gameTimer) % 60
+	timerText := fmt.Sprintf("%02d:%02d", minutes, seconds)
+
+	text.Draw(
+		screen,
+		timerText,
+		fontface.FontFace,
+		500, // X position
+		40,  // Y position
+		color.White)
 }
 
 func (ep *EnemyPlugin) Spawn() {
@@ -350,8 +388,8 @@ func (ep *EnemyPlugin) ApplyDamage(enemy *entities.Enemy, damage float64, isCrit
 	}
 
 	colorByType := map[bool]color.Color{
-		true:  color.RGBA{255, 0, 0, 255},
-		false: color.RGBA{255, 255, 255, 255},
+		true:  color.RGBA{255, 0, 0, 200},
+		false: color.RGBA{255, 255, 255, 200},
 	}
 
 	// Adicionar uma nova entrada de dano

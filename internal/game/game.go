@@ -34,7 +34,7 @@ func NewGame(kernel *core.GameKernel) *Game {
 	}
 
 	fontface.FontFace, err = opentype.NewFace(tt, &opentype.FaceOptions{
-		Size:    24,
+		Size:    36,
 		DPI:     72,
 		Hinting: font.HintingFull,
 	})

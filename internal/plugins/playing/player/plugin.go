@@ -3,6 +3,7 @@ package player
 import (
 	"game/internal/assets"
 	"game/internal/config"
+	"game/internal/constants"
 	"game/internal/core"
 	"game/internal/plugins/playing/camera"
 	"game/internal/plugins/playing/player/entities"
@@ -68,10 +69,6 @@ var levelUpExperience = map[int]int{
 	8:  90,
 	9:  130,
 	10: 200,
-	// 1: 1,
-	// 2: 2,
-	// 3: 3,
-	// 4: 4,
 }
 
 func NewPlayerPlugin(plugins *core.PluginManager, c entities.Character) *PlayerPlugin {
@@ -205,6 +202,14 @@ func (p *PlayerPlugin) Draw(screen *ebiten.Image) {
 			color.RGBA{255, 255, 0, 255},
 			true)
 
+		vector.DrawFilledRect(screen,
+			0,
+			0,
+			constants.ScreenWidth,
+			constants.ScreenHeight,
+			color.RGBA{200, 0, 0, 2},
+			true)
+
 	} else {
 		if config.IsDebugEnv() {
 			vector.DrawFilledRect(
@@ -295,11 +300,9 @@ func (p *PlayerPlugin) ApplyDamage(damage float64) {
 }
 
 func (p *PlayerPlugin) CalculateDamage(baseDamage float64) (float64, bool) {
-	// Aplicar a porcentagem de dano adicional
 	isCriticalDamage := false
 	damage := baseDamage * (1 + p.additionalDamagePercent/100)
 
-	// Verificar se o ataque é um crítico
 	if rand.Float64() < p.criticalChance/100 {
 		damage *= p.criticalMultiplier
 		isCriticalDamage = true
