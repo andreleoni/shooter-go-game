@@ -3,6 +3,7 @@ package enemy
 import (
 	"fmt"
 	"game/internal/assets"
+	"game/internal/config"
 	"game/internal/constants"
 	"game/internal/core"
 	"game/internal/helpers/collision"
@@ -185,13 +186,15 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 						color.RGBA{255, 255, 255, 255},
 						true)
 				} else {
-					vector.DrawFilledRect(screen,
-						float32(screenX),
-						float32(screenY),
-						float32(enemy.Width),
-						float32(enemy.Height),
-						color.RGBA{255, 0, 255, 255},
-						true)
+					if config.IsDebugEnv() {
+						vector.DrawFilledRect(screen,
+							float32(screenX),
+							float32(screenY),
+							float32(enemy.Width),
+							float32(enemy.Height),
+							color.RGBA{255, 0, 255, 255},
+							true)
+					}
 
 					input := assets.DrawInput{
 						Width:  enemy.Width,

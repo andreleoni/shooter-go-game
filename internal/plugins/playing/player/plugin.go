@@ -2,6 +2,7 @@ package player
 
 import (
 	"game/internal/assets"
+	"game/internal/config"
 	"game/internal/core"
 	"game/internal/plugins/playing/camera"
 	"game/internal/plugins/playing/player/entities"
@@ -32,7 +33,10 @@ type PlayerPlugin struct {
 	healthRegenDelay float64
 	healthRegenTimer float64
 
-	animation *assets.Animation
+	walkingLeftAnimation  *assets.Animation
+	walkingRightAnimation *assets.Animation
+	idleAnimation         *assets.Animation
+	currentAnimation      *assets.Animation
 
 	facingRight bool
 
@@ -76,7 +80,7 @@ func NewPlayerPlugin(plugins *core.PluginManager, c entities.Character) *PlayerP
 		x:              400,
 		y:              300,
 		width:          32,
-		height:         32,
+		height:         48,
 		speed:          c.Speed,
 		experience:     0,
 		level:          1,
@@ -103,20 +107,41 @@ func (p *PlayerPlugin) ID() string {
 	return "PlayerSystem"
 }
 
-func (p *PlayerPlugin) Init(
-	kernel *core.GameKernel,
-) error {
-
+func (p *PlayerPlugin) Init(kernel *core.GameKernel) error {
 	p.kernel = kernel
 
-	p.animation = assets.NewAnimation(0.1)
-	err := p.animation.LoadFromJSON(
-		"assets/images/player/gunner/run/player.json",
-		"assets/images/player/gunner/run/player.png")
+	walkingLeftAnimation := assets.NewAnimation(0.1)
+	err := walkingLeftAnimation.LoadFromJSON(
+		"assets/images/player/rogue/run/left/asset.json",
+		"assets/images/player/rogue/run/left/asset.png")
 
 	if err != nil {
-		log.Fatal("Failed to load player asset:", err)
+		log.Fatal("Failed to load player asset left:", err)
 	}
+
+	p.walkingLeftAnimation = walkingLeftAnimation
+
+	walkingRightAnimation := assets.NewAnimation(0.1)
+	err = walkingRightAnimation.LoadFromJSON(
+		"assets/images/player/rogue/run/right/asset.json",
+		"assets/images/player/rogue/run/right/asset.png")
+
+	if err != nil {
+		log.Fatal("Failed to load player asset right:", err)
+	}
+
+	p.walkingRightAnimation = walkingRightAnimation
+
+	idleAnimation := assets.NewAnimation(0.1)
+	err = idleAnimation.LoadFromJSON(
+		"assets/images/player/rogue/idle/asset.json",
+		"assets/images/player/rogue/idle/asset.png")
+
+	if err != nil {
+		log.Fatal("Failed to load player asset right:", err)
+	}
+
+	p.idleAnimation = idleAnimation
 
 	return nil
 }
@@ -124,6 +149,20 @@ func (p *PlayerPlugin) Init(
 func (p *PlayerPlugin) Update() error {
 	newX, newY := p.x, p.y
 	newX, newY = InputHandler(p, newX, newY)
+
+	p.currentAnimation = p.idleAnimation
+
+	if p.x != newX || p.y != newY {
+		if p.x > newX {
+			p.currentAnimation = p.walkingRightAnimation
+		} else {
+			p.currentAnimation = p.walkingLeftAnimation
+		}
+	}
+
+	if p.currentAnimation != nil {
+		p.currentAnimation.Update(p.kernel.DeltaTime)
+	}
 
 	p.x, p.y = newX, newY
 
@@ -167,25 +206,28 @@ func (p *PlayerPlugin) Draw(screen *ebiten.Image) {
 			true)
 
 	} else {
-		vector.DrawFilledRect(
-			screen,
-			float32(screenX-p.width/2),
-			float32(screenY-p.height/2),
-			float32(p.width),
-			float32(p.height),
-			color.RGBA{255, 255, 0, 255},
-			true)
+		if config.IsDebugEnv() {
+			vector.DrawFilledRect(
+				screen,
+				float32(screenX-p.width/2),
+				float32(screenY-p.height/2),
+				float32(p.width),
+				float32(p.height),
+				color.RGBA{255, 255, 0, 255},
+				true)
+		}
+
 	}
 
-	if p.animation != nil {
-		p.animation.Update(p.kernel.DeltaTime)
+	drawInput := assets.DrawInput{
+		Width:  p.width,
+		Height: p.height,
+		X:      screenX - p.width/2,
+		Y:      screenY - p.height/2,
+	}
 
-		p.animation.Draw(screen, assets.DrawInput{
-			Width:  p.width,
-			Height: p.height,
-			X:      screenX - p.width/2,
-			Y:      screenY - p.height/2,
-		})
+	if p.currentAnimation != nil {
+		p.currentAnimation.Draw(screen, drawInput)
 	}
 }
 
