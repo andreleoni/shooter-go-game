@@ -2,17 +2,21 @@
 package game
 
 import (
+	"fmt"
 	"game/internal/constants"
 	"game/internal/core"
 	"game/internal/game/components/menu"
 	"game/internal/game/components/playingstate"
 	"game/internal/game/states"
 	"game/internal/plugins/menu/fontface"
+	"image/color"
 	"log"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
+	"golang.org/x/image/font/basicfont"
 	"golang.org/x/image/font/gofont/goregular"
 	"golang.org/x/image/font/opentype"
 )
@@ -73,14 +77,25 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	// Debug FPS on console
 	if now.Sub(g.perSec) >= time.Second {
-		log.Printf("TPS: %.2f, FPS: %.2f", ebiten.ActualTPS(), ebiten.ActualFPS())
-		log.Printf("Update() was called in this sec: %d times", g.updateCount)
-		log.Printf("Draw() was called in this sec: %d times\n\n", g.drawCount)
+		fmt.Printf("TPS: %.2f, FPS: %.2f", ebiten.ActualTPS(), ebiten.ActualFPS())
+		fmt.Printf("Update() was called in this sec: %d times", g.updateCount)
+		fmt.Printf("Draw() was called in this sec: %d times\n\n", g.drawCount)
 
 		g.updateCount = 0
 		g.drawCount = 0
 		g.perSec = now
 	}
+
+	fpstext := fmt.Sprintf("FPS: %.2f", ebiten.ActualFPS())
+
+	text.Draw(
+		screen,
+		fpstext,
+		basicfont.Face7x13,
+		constants.ScreenWidth-80,
+		20,
+		color.White,
+	)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
