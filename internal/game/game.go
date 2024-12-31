@@ -75,7 +75,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	now := time.Now()
 	g.updateCount++
 
-	// Debug FPS on console
 	if now.Sub(g.perSec) >= time.Second {
 		fmt.Printf("TPS: %.2f, FPS: %.2f", ebiten.ActualTPS(), ebiten.ActualFPS())
 		fmt.Printf("Update() was called in this sec: %d times", g.updateCount)

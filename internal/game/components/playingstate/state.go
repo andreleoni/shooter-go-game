@@ -48,7 +48,7 @@ func NewComponentPlayingState(kernel *core.GameKernel) *ComponentPlayingState {
 		cameraPlugin := camera.NewCameraPlugin(playerPlugin)
 		enemyPlugin := enemy.NewEnemyPlugin(playerPlugin, pluginManagerByState[Playing])
 		combatPlugin := combat.NewCombatPlugin(enemyPlugin, pluginManagerByState[Playing])
-		statsPlugin := stats.NewStatsPlugin(playerPlugin)
+		statsPlugin := stats.NewStatsPlugin(pluginManagerByState[Playing])
 		abilityPlugin := ability.NewAbilityPlugin(pluginManagerByState[Playing])
 		experiencePlugin := experience.NewExperiencePlugin(pluginManagerByState[Playing])
 		scenarioPlugin := scenario.New(pluginManagerByState[Playing])

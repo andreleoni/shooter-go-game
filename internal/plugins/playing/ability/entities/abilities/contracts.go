@@ -41,4 +41,8 @@ type Ability interface {
 	AttackSpeed() float64
 
 	GetRadius() float64
+
+	CurrentLevel() int
+	MaxLevel() bool
+	IncreaseLevel()
 }

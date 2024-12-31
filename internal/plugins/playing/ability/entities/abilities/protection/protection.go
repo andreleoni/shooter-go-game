@@ -19,12 +19,15 @@ type Protection struct {
 	// Shoot cooldown
 	ShootTimer    float64
 	ShootCooldown float64
+
+	Level int
 }
 
 func New() *Protection {
 	return &Protection{
 		Power:  10,
 		Radius: 75,
+		Level:  1,
 	}
 }
 
@@ -82,4 +85,18 @@ func (*Protection) AutoShot(deltaTime, x, y float64) {
 
 func (p *Protection) GetRadius() float64 {
 	return p.Radius
+}
+
+func (p *Protection) CurrentLevel() int {
+	return p.Level
+}
+
+func (p *Protection) MaxLevel() bool {
+	return p.Level == 5
+}
+
+func (p *Protection) IncreaseLevel() {
+	p.Level++
+	p.Power += 10
+	p.Radius += 10
 }

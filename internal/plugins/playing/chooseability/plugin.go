@@ -65,7 +65,7 @@ func (cp *ChooseAbilityPlugin) Update() error {
 }
 
 func (cp *ChooseAbilityPlugin) Draw(screen *ebiten.Image) {
-	text.Draw(screen, "Qual abilidade você quer?:", fontface.FontFace, 300, 150, color.White)
+	text.Draw(screen, "Qual abilidade você quer?", fontface.FontFace, 300, 150, color.White)
 
 	for i, key := range cp.abilities {
 		col := color.White

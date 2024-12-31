@@ -16,19 +16,24 @@ import (
 )
 
 type Dagger struct {
-	plugins     *core.PluginManager
-	Projectiles []*entities.Projectile
-	Power       float64
+	plugins            *core.PluginManager
+	Projectiles        []*entities.Projectile
+	Power              float64
+	ProjectilesByShoot int
 
 	// Shoot cooldown
 	ShootTimer    float64
 	ShootCooldown float64
+
+	Level int
 }
 
 func New() *Dagger {
 	return &Dagger{
-		Power:         10,
-		ShootCooldown: 2.3,
+		Power:              10,
+		ShootCooldown:      2.3,
+		Level:              1,
+		ProjectilesByShoot: 5,
 	}
 }
 
@@ -50,7 +55,7 @@ func (d *Dagger) AutoShot(deltaTime, x, y float64) {
 }
 
 func (d *Dagger) Shoot(x, y float64) {
-	for i := 0; i < 10; i++ {
+	for i := 0; i < d.ProjectilesByShoot; i++ {
 		angle := rand.Float64() * 2 * math.Pi
 		directionX := math.Cos(angle)
 		directionY := math.Sin(angle)
@@ -85,10 +90,10 @@ func (d *Dagger) Update(wui entityabilities.AbilityUpdateInput) {
 
 		cameraPlugin := d.plugins.GetPlugin("CameraSystem").(*camera.CameraPlugin)
 		cameraX, cameraY := cameraPlugin.GetPosition()
-		// Check if projectile is too far from camera view
+
 		screenX := p.X - cameraX
 		screenY := p.Y - cameraY
-		margin := float64(200) // Larger margin before deactivating
+		margin := float64(200)
 
 		if screenX < -margin ||
 			screenX > constants.ScreenWidth+margin ||
@@ -138,4 +143,18 @@ func (*Dagger) AttackSpeed() float64 {
 
 func (*Dagger) GetRadius() float64 {
 	return 0.0
+}
+
+func (d *Dagger) CurrentLevel() int {
+	return d.Level
+}
+
+func (d *Dagger) MaxLevel() bool {
+	return d.Level == 5
+}
+
+func (d *Dagger) IncreaseLevel() {
+	d.Level++
+	d.Power += 10
+	d.ProjectilesByShoot++
 }

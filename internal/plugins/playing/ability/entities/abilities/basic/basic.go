@@ -23,12 +23,15 @@ type Basic struct {
 	// Shoot cooldown
 	ShootTimer    float64
 	ShootCooldown float64
+
+	Level int
 }
 
 func New() *Basic {
 	return &Basic{
 		Power:         10,
 		ShootCooldown: 1.0,
+		Level:         1,
 	}
 }
 
@@ -200,4 +203,18 @@ func (*Basic) AttackSpeed() float64 {
 
 func (*Basic) GetRadius() float64 {
 	return 0.0
+}
+
+func (b *Basic) CurrentLevel() int {
+	return b.Level
+}
+
+func (b *Basic) MaxLevel() bool {
+	return b.Level >= 5
+}
+
+func (b *Basic) IncreaseLevel() {
+	b.Level++
+	b.Power += 5
+	b.ShootCooldown -= 0.1
 }
