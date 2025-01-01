@@ -3,6 +3,8 @@ package entities
 import "game/internal/assets"
 
 type Enemy struct {
+	UUID string
+
 	X, Y float64
 
 	Width                            float64

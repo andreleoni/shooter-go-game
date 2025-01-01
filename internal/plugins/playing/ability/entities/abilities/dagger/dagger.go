@@ -3,7 +3,9 @@ package dagger
 import (
 	"game/internal/constants"
 	"game/internal/core"
+	"game/internal/helpers/collision"
 	"game/internal/plugins/playing/ability/entities"
+	abilityentities "game/internal/plugins/playing/ability/entities/abilities"
 	entityabilities "game/internal/plugins/playing/ability/entities/abilities"
 	"game/internal/plugins/playing/camera"
 
@@ -157,4 +159,38 @@ func (d *Dagger) IncreaseLevel() {
 	d.Level++
 	d.Power += 10
 	d.ProjectilesByShoot++
+}
+
+func (d *Dagger) Combat(ci abilityentities.CombatInput) abilityentities.CombatOutput {
+	enemy := ci.Enemy
+	pp := ci.PlayerPlugin
+	enemyGotDamaged := false
+	damage := 0.0
+	critical := false
+
+	for _, projectil := range d.ActiveProjectiles() {
+		if enemy.Active && projectil.Active {
+			if collision.Check(
+				projectil.X,
+				projectil.Y,
+				projectil.Width,
+				projectil.Height,
+				enemy.X,
+				enemy.Y,
+				enemy.Width,
+				enemy.Height) {
+
+				damage, critical = pp.CalculateDamage(projectil.Power)
+
+				projectil.Active = false
+				enemyGotDamaged = true
+			}
+		}
+	}
+
+	return abilityentities.CombatOutput{
+		EnemyGotDamaged: enemyGotDamaged,
+		Damage:          damage,
+		CriticalDamage:  critical,
+	}
 }

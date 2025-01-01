@@ -2,12 +2,12 @@ package combat
 
 import (
 	"game/internal/core"
-	"game/internal/helpers/collision"
 	"game/internal/plugins"
 	"game/internal/plugins/playing/ability"
 	"game/internal/plugins/playing/enemy"
-	"game/internal/plugins/playing/enemy/entities"
 	"game/internal/plugins/playing/experience"
+
+	entitiesabilities "game/internal/plugins/playing/ability/entities/abilities"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -48,104 +48,34 @@ func (cp *CombatPlugin) Update() error {
 
 	enemies := cp.enemyPlugin.GetEnemies()
 
-	playerX, playerY := pp.GetPosition()
-
-	activeEnemies := []*entities.Enemy{}
-
 	for _, a := range wp.GetAcquiredAbilities() {
 		for _, enemy := range enemies {
-			enemyGotDamaged := false
-			enemykilled := false
+			combatOutput := a.Combat(entitiesabilities.CombatInput{
+				DeltaTime:    cp.kernel.DeltaTime,
+				Enemy:        enemy,
+				PlayerPlugin: pp,
+				EnemyPlugin:  cp.enemyPlugin,
+			})
 
-			if a.DamageType() == "projectil" {
-				for _, projectil := range a.ActiveProjectiles() {
-					if enemy.Active && projectil.Active {
-						if collision.Check(
-							projectil.X,
-							projectil.Y,
-							projectil.Width,
-							projectil.Height,
-							enemy.X,
-							enemy.Y,
-							enemy.Width,
-							enemy.Height) {
+			if combatOutput.EnemyGotDamaged {
+				cp.enemyPlugin.ApplyDamage(
+					enemy,
+					combatOutput.Damage,
+					combatOutput.CriticalDamage)
 
-							projectil.Active = false
-
-							damage, critical := pp.CalculateDamage(projectil.Power)
-
-							cp.enemyPlugin.ApplyDamage(enemy, damage, critical)
-
-							if enemy.Health <= 0 {
-								enemy.Active = false
-								enemykilled = true
-								cp.enemyPlugin.AddDeathEnemies(enemy)
-
-							} else {
-								enemyGotDamaged = true
-							}
-						}
-					}
-				}
-			}
-
-			if a.DamageType() == "area" {
-				if enemy.Active {
-					abilityID := a.ID()
-
-					if collision.CheckCircle(
-						playerX,
-						playerY,
-						a.GetRadius(), //implementar interface com radius
-						enemy.X,
-						enemy.Y,
-						enemy.Width,
-						enemy.Height) {
-
-						lastAreaDamageDeltaTime, exists := enemy.LastAreaDamageDeltaTimeByAbility[abilityID]
-						if !exists {
-							lastAreaDamageDeltaTime = 0
-						}
-
-						if lastAreaDamageDeltaTime >= a.AttackSpeed() {
-							damage, critical := pp.CalculateDamage(a.GetPower())
-							cp.enemyPlugin.ApplyDamage(enemy, damage, critical)
-
-							lastAreaDamageDeltaTime = 0
-
-							if enemy.Health <= 0 {
-								enemy.Active = false
-								enemykilled = true
-								cp.enemyPlugin.AddDeathEnemies(enemy)
-
-							} else {
-								enemyGotDamaged = true
-							}
-
-						} else {
-							lastAreaDamageDeltaTime += cp.kernel.DeltaTime
-						}
-
-						enemy.LastAreaDamageDeltaTimeByAbility[abilityID] = lastAreaDamageDeltaTime
-					}
-				}
-			}
-
-			if enemykilled {
-				ep.DropCrystal(enemy.X, enemy.Y)
-			}
-
-			if enemyGotDamaged {
 				enemy.DamageFlashTime = 0.1
 			}
 
 			if enemy.Active {
-				activeEnemies = append(activeEnemies, enemy)
+				if enemy.Health <= 0 {
+					enemy.Active = false
+
+					cp.enemyPlugin.AddDeathEnemies(enemy)
+					ep.DropCrystal(enemy.X, enemy.Y)
+				}
 			}
 		}
 	}
-
-	// cp.enemyPlugin.SetEnemies(activeEnemies)
 
 	return nil
 }

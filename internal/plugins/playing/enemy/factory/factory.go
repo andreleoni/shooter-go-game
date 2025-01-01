@@ -4,12 +4,17 @@ import (
 	"game/internal/assets"
 	"game/internal/plugins/playing/enemy/entities"
 	"game/internal/plugins/playing/enemy/templates"
+
+	"github.com/google/uuid"
 )
 
 func CreateEnemy(enemyType entities.EnemyType, x, y float64) *entities.Enemy {
 	template := templates.EnemyTemplates[enemyType]
 
+	randomUUID := uuid.NewString()
+
 	return &entities.Enemy{
+		UUID:                             randomUUID,
 		X:                                x,
 		Y:                                y,
 		Width:                            template.Size,

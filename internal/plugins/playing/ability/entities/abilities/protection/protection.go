@@ -2,6 +2,7 @@ package protection
 
 import (
 	"game/internal/core"
+	"game/internal/helpers/collision"
 	"game/internal/plugins/playing/ability/entities"
 	abilityentities "game/internal/plugins/playing/ability/entities/abilities"
 	"image/color"
@@ -20,14 +21,17 @@ type Protection struct {
 	ShootTimer    float64
 	ShootCooldown float64
 
+	LastDamageDeltaTimeByEnemy map[string]float64
+
 	Level int
 }
 
 func New() *Protection {
 	return &Protection{
-		Power:  10,
-		Radius: 75,
-		Level:  1,
+		Power:                      10,
+		Radius:                     75,
+		Level:                      1,
+		LastDamageDeltaTimeByEnemy: make(map[string]float64),
 	}
 }
 
@@ -99,4 +103,50 @@ func (p *Protection) IncreaseLevel() {
 	p.Level++
 	p.Power += 10
 	p.Radius += 10
+}
+
+func (p *Protection) Combat(ci abilityentities.CombatInput) abilityentities.CombatOutput {
+	enemy := ci.Enemy
+	pp := ci.PlayerPlugin
+	enemyGotDamaged := false
+	damage := 0.0
+	critical := false
+
+	playerX, playerY := pp.GetPosition()
+
+	if enemy.Active {
+		enemyUUID := enemy.UUID
+
+		if collision.CheckCircle(
+			playerX,
+			playerY,
+			p.GetRadius(),
+			enemy.X,
+			enemy.Y,
+			enemy.Width,
+			enemy.Height) {
+
+			lastAreaDamageDeltaTime, exists := p.LastDamageDeltaTimeByEnemy[enemyUUID]
+			if !exists {
+				lastAreaDamageDeltaTime = 0
+			}
+
+			if lastAreaDamageDeltaTime >= p.AttackSpeed() {
+				damage, critical = pp.CalculateDamage(p.GetPower())
+				enemyGotDamaged = true
+
+				lastAreaDamageDeltaTime = 0
+			} else {
+				lastAreaDamageDeltaTime += ci.DeltaTime
+			}
+
+			p.LastDamageDeltaTimeByEnemy[enemyUUID] = lastAreaDamageDeltaTime
+		}
+	}
+
+	return abilityentities.CombatOutput{
+		EnemyGotDamaged: enemyGotDamaged,
+		Damage:          damage,
+		CriticalDamage:  critical,
+	}
 }

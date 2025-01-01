@@ -2,7 +2,9 @@ package abilities
 
 import (
 	"game/internal/core"
+	"game/internal/plugins"
 	"game/internal/plugins/playing/ability/entities"
+	enemyentities "game/internal/plugins/playing/enemy/entities"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -25,6 +27,21 @@ type AbilityDrawInput struct {
 	CameraY float64
 }
 
+type CombatInput struct {
+	DeltaTime float64
+
+	PlayerPlugin plugins.PlayerPlugin
+	EnemyPlugin  plugins.EnemyPlugin
+
+	Enemy *enemyentities.Enemy
+}
+
+type CombatOutput struct {
+	Damage          float64
+	CriticalDamage  bool
+	EnemyGotDamaged bool
+}
+
 type Ability interface {
 	ID() string
 	SetPluginManager(plugins *core.PluginManager)
@@ -37,6 +54,8 @@ type Ability interface {
 	GetPower() float64
 
 	DamageType() string
+
+	Combat(ci CombatInput) CombatOutput
 
 	AttackSpeed() float64
 
