@@ -43,4 +43,6 @@ type PlayerPlugin interface {
 
 	ApplyDamage(damage float64)
 	CalculateDamage(baseDamage float64) (float64, bool)
+
+	GetDashTimer() float64
 }

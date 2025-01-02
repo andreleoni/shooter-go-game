@@ -108,4 +108,9 @@ func (sp *StatsPlugin) Draw(screen *ebiten.Image) {
 		ability := fmt.Sprintf("Ability: %s, Level: %d", ability.ID(), ability.CurrentLevel())
 		text.Draw(screen, ability, sp.gameFont, 10, 330+(i*30), color.White)
 	}
+
+	// exibir o timer para o proximo dash do player em millisegundos
+	playerDashTimer := playerPlugin.GetDashTimer()
+	dashTimerText := fmt.Sprintf("Dash Cooldown: %.2fms", playerDashTimer)
+	text.Draw(screen, dashTimerText, sp.gameFont, 10, 330+(len(playerAbilities)*30), color.White)
 }

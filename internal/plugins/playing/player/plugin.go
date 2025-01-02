@@ -56,6 +56,13 @@ type PlayerPlugin struct {
 	armorIncrementPerLevel          float64
 	criticalChanceIncrementPerLevel float64
 	additionalDamagePercentPerLevel float64
+
+	dashSpeed    float64
+	dashDuration float64
+	dashCooldown float64
+	dashTimer    float64
+	isDashing    bool
+	canDash      bool
 }
 
 var levelUpExperience = map[int]int{
@@ -98,6 +105,13 @@ func NewPlayerPlugin(plugins *core.PluginManager, c entities.Character) *PlayerP
 		armorIncrementPerLevel:          1.0,
 		criticalChanceIncrementPerLevel: 0.5,
 		additionalDamagePercentPerLevel: 2.0,
+
+		dashSpeed:    500, // Dash speed multiplier
+		dashDuration: 0.2, // How long dash lasts
+		dashCooldown: 1.0, // Time between dashes
+		dashTimer:    0,
+		isDashing:    false,
+		canDash:      true,
 	}
 }
 
@@ -145,9 +159,40 @@ func (p *PlayerPlugin) Init(kernel *core.GameKernel) error {
 }
 
 func (p *PlayerPlugin) Update() error {
+	// Get initial position
 	newX, newY := p.x, p.y
-	newX, newY = InputHandler(p, newX, newY)
 
+	// Handle dash input and state
+	if ebiten.IsKeyPressed(ebiten.KeyShift) && p.canDash {
+		p.isDashing = true
+		p.canDash = false
+		p.dashTimer = 0
+	}
+
+	// Update dash state
+	if !p.canDash {
+		p.dashTimer += p.kernel.DeltaTime
+		if p.dashTimer >= p.dashCooldown {
+			p.canDash = true
+			p.dashTimer = 0
+		}
+	}
+
+	// Calculate movement
+	currentSpeed := p.speed
+	if p.isDashing {
+		currentSpeed = p.dashSpeed
+		p.dashTimer += p.kernel.DeltaTime
+
+		if p.dashTimer >= p.dashDuration {
+			p.isDashing = false
+		}
+	}
+
+	// Apply movement with dash speed if active
+	newX, newY = InputHandler(p, newX, newY, currentSpeed)
+
+	// Update animation states
 	p.currentAnimation = p.idleAnimation
 
 	if p.x != newX || p.y != newY {
@@ -158,34 +203,16 @@ func (p *PlayerPlugin) Update() error {
 		}
 	}
 
+	// Update animation
 	if p.currentAnimation != nil {
 		p.currentAnimation.Update(p.kernel.DeltaTime)
 	}
 
+	// Update position
 	p.x, p.y = newX, newY
-
-	// Atualizar o temporizador de flash de dano
-	if p.DamageFlashTime > 0 {
-		p.DamageFlashTime -= p.kernel.DeltaTime
-	}
-
-	if p.health < p.maxHealth {
-		if p.healthRegenTimer >= p.healthRegenDelay {
-			p.health += p.healthRegenRate * p.kernel.DeltaTime
-			if p.health > p.maxHealth {
-				p.health = p.maxHealth
-			}
-
-		} else {
-			p.healthRegenTimer += p.kernel.DeltaTime
-		}
-	} else {
-		p.healthRegenTimer = 0
-	}
 
 	return nil
 }
-
 func (p *PlayerPlugin) Draw(screen *ebiten.Image) {
 	cameraPlugin := p.playingPlugins.GetPlugin("CameraSystem").(*camera.CameraPlugin)
 	cameraX, cameraY := cameraPlugin.GetPosition()
@@ -348,4 +375,8 @@ func (p *PlayerPlugin) increaseAttributes() {
 	p.armor += p.armorIncrementPerLevel
 	p.criticalChance += p.criticalChanceIncrementPerLevel
 	p.additionalDamagePercent += p.additionalDamagePercentPerLevel
+}
+
+func (p *PlayerPlugin) GetDashTimer() float64 {
+	return p.dashTimer
 }
