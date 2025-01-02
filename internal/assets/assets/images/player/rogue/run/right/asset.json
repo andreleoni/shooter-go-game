@@ -1,6 +1,6 @@
 { "frames": [
    {
-    "filename": "player.aseprite-walk-decay-right-0.aseprite",
+    "filename": "player.aseprite-walk-decay-left-0.aseprite",
     "frame": { "x": 0, "y": 0, "w": 32, "h": 48 },
     "rotated": false,
     "trimmed": false,
@@ -9,7 +9,7 @@
     "duration": 100
    },
    {
-    "filename": "player.aseprite-walk-decay-right-1.aseprite",
+    "filename": "player.aseprite-walk-decay-left-1.aseprite",
     "frame": { "x": 32, "y": 0, "w": 32, "h": 48 },
     "rotated": false,
     "trimmed": false,
@@ -18,7 +18,7 @@
     "duration": 100
    },
    {
-    "filename": "player.aseprite-walk-decay-right-2.aseprite",
+    "filename": "player.aseprite-walk-decay-left-2.aseprite",
     "frame": { "x": 64, "y": 0, "w": 32, "h": 48 },
     "rotated": false,
     "trimmed": false,
@@ -27,7 +27,7 @@
     "duration": 100
    },
    {
-    "filename": "player.aseprite-walk-decay-right-3.aseprite",
+    "filename": "player.aseprite-walk-decay-left-3.aseprite",
     "frame": { "x": 96, "y": 0, "w": 32, "h": 48 },
     "rotated": false,
     "trimmed": false,
@@ -46,7 +46,7 @@
   "frameTags": [
   ],
   "layers": [
-   { "name": "walk-decay-right", "opacity": 255, "blendMode": "normal" }
+   { "name": "walk-decay-left", "opacity": 255, "blendMode": "normal" }
   ],
   "slices": [
   ]
