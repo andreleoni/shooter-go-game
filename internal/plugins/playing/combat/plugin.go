@@ -71,7 +71,9 @@ func (cp *CombatPlugin) Update() error {
 					enemy.Active = false
 
 					cp.enemyPlugin.AddDeathEnemies(enemy)
-					ep.DropCrystal(enemy.X, enemy.Y)
+					ep.DropCrystal(
+						enemy.X+(enemy.Width/2),
+						enemy.Y+(enemy.Height/2))
 				}
 			}
 		}

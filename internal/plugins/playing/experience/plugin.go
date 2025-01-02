@@ -221,11 +221,13 @@ func (ep *ExperiencePlugin) Draw(screen *ebiten.Image) {
 }
 
 func (ep *ExperiencePlugin) DropCrystal(x, y float64) {
+	cr := float64(10)
+
 	ep.crystals = append(ep.crystals, &Crystal{
-		X:      x,
-		Y:      y,
-		Width:  float64(crystalRadius),
-		Height: float64(crystalRadius),
+		X:      x - (cr / 2),
+		Y:      y - (cr / 2),
+		Width:  cr,
+		Height: cr,
 		Active: true,
 		Value:  1,
 	})
