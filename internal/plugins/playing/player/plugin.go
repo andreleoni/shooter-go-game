@@ -211,6 +211,10 @@ func (p *PlayerPlugin) Update() error {
 	// Update position
 	p.x, p.y = newX, newY
 
+	if p.DamageFlashTime > 0 {
+		p.DamageFlashTime -= p.kernel.DeltaTime
+	}
+
 	return nil
 }
 func (p *PlayerPlugin) Draw(screen *ebiten.Image) {
