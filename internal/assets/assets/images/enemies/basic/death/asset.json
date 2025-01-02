@@ -1,6 +1,6 @@
 { "frames": [
    {
-    "filename": "enemies-oeslime.aseprite-run-left-0.aseprite",
+    "filename": "enemies-oeslime.aseprite-death-0.aseprite",
     "frame": { "x": 0, "y": 0, "w": 40, "h": 40 },
     "rotated": false,
     "trimmed": false,
@@ -9,7 +9,7 @@
     "duration": 100
    },
    {
-    "filename": "enemies-oeslime.aseprite-run-left-1.aseprite",
+    "filename": "enemies-oeslime.aseprite-death-1.aseprite",
     "frame": { "x": 40, "y": 0, "w": 40, "h": 40 },
     "rotated": false,
     "trimmed": false,
@@ -18,7 +18,7 @@
     "duration": 100
    },
    {
-    "filename": "enemies-oeslime.aseprite-run-left-2.aseprite",
+    "filename": "enemies-oeslime.aseprite-death-2.aseprite",
     "frame": { "x": 80, "y": 0, "w": 40, "h": 40 },
     "rotated": false,
     "trimmed": false,
@@ -27,7 +27,7 @@
     "duration": 100
    },
    {
-    "filename": "enemies-oeslime.aseprite-run-left-3.aseprite",
+    "filename": "enemies-oeslime.aseprite-death-3.aseprite",
     "frame": { "x": 120, "y": 0, "w": 40, "h": 40 },
     "rotated": false,
     "trimmed": false,
@@ -46,7 +46,7 @@
   "frameTags": [
   ],
   "layers": [
-   { "name": "run-left", "opacity": 255, "blendMode": "normal" }
+   { "name": "death", "opacity": 255, "blendMode": "normal" }
   ],
   "slices": [
   ]
