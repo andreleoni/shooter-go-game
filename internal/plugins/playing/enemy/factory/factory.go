@@ -14,6 +14,7 @@ func CreateEnemy(enemyType entities.EnemyType, x, y float64) *entities.Enemy {
 	randomUUID := uuid.NewString()
 
 	return &entities.Enemy{
+		Name:                             template.Name,
 		UUID:                             randomUUID,
 		X:                                x,
 		Y:                                y,
@@ -30,6 +31,11 @@ func CreateEnemy(enemyType entities.EnemyType, x, y float64) *entities.Enemy {
 		RunningRightAnimationSprite:      dupAnimation(template.RunningRightAnimationSprite),
 		RunningLeftAnimationSprite:       dupAnimation(template.RunningLeftAnimationSprite),
 		DeathAnimation:                   dupAnimation(template.DeathAnimation),
+
+		AttackCooldown:  2.0, // Seconds between attacks
+		AttackRange:     800, // Range to start shooting
+		ProjectileSpeed: 200,
+		Projectiles:     make([]*entities.Projectile, 0),
 	}
 }
 

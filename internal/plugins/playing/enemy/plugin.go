@@ -171,6 +171,30 @@ func (ep *EnemyPlugin) Update() error {
 				ep.inactiveEnemies = append(ep.inactiveEnemies, enemy)
 				ep.enemies = append(ep.enemies[:i], ep.enemies[i+1:]...)
 			}
+
+			if enemy.Name == "ranged" {
+				// Calculate distance to player
+				dx := playerX - enemy.X
+				dy := playerY - enemy.Y
+				distance := math.Sqrt(dx*dx + dy*dy)
+
+				// Attack if in range
+				if distance <= enemy.AttackRange {
+					enemy.AttackCooldown -= ep.kernel.DeltaTime
+					if enemy.AttackCooldown <= 0 {
+						enemy.Shoot(playerX, playerY)
+						enemy.AttackCooldown = 2.0 // Reset cooldown
+					}
+				}
+
+				// Update projectiles
+				for _, p := range enemy.Projectiles {
+					if p.Active {
+						p.X += p.DirectionX * p.Speed * ep.kernel.DeltaTime
+						p.Y += p.DirectionY * p.Speed * ep.kernel.DeltaTime
+					}
+				}
+			}
 		}
 
 		// Atualizar o temporizador de flash de dano
@@ -249,6 +273,25 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 						enemy.RunningRightAnimationSprite.Draw(screen, input)
 					} else {
 						enemy.RunningLeftAnimationSprite.Draw(screen, input)
+					}
+				}
+
+				if enemy.Name == "ranged" {
+					for _, p := range enemy.Projectiles {
+						if p.Active {
+							screenX := p.X - cameraX
+							screenY := p.Y - cameraY
+
+							vector.DrawFilledRect(
+								screen,
+								float32(screenX),
+								float32(screenY),
+								float32(p.Width),
+								float32(p.Height),
+								color.RGBA{255, 0, 0, 255},
+								true,
+							)
+						}
 					}
 				}
 			}
@@ -364,10 +407,24 @@ func (ep *EnemyPlugin) moveTowardsPlayer(enemy *entity.Enemy, playerX, playerY f
 	dy := playerY - enemy.Y
 	distance := math.Sqrt(dx*dx + dy*dy)
 
-	// Normalize direction
+	// Define minimum range based on enemy type
+	minRange := 0.0
+	if enemy.Name == "ranged" {
+		minRange = 200.0 // Ranged enemies try to maintain this distance
+	} else {
+		minRange = 10.0 // Melee enemies get closer
+	}
+
+	// Adjust movement based on range
 	if distance > 0 {
 		dx /= distance
 		dy /= distance
+
+		// If ranged and too close, move away from player
+		if enemy.Name == "ranged" && distance < minRange {
+			dx = -dx
+			dy = -dy
+		}
 	}
 
 	// Simple separation to avoid stacking
@@ -385,9 +442,9 @@ func (ep *EnemyPlugin) moveTowardsPlayer(enemy *entity.Enemy, playerX, playerY f
 		}
 	}
 
-	// Combine movement (90% following, 10% separation)
-	moveX := dx*0.9 + separationX*0.1
-	moveY := dy*0.9 + separationY*0.1
+	// Combine movement forces
+	moveX := dx*0.7 + separationX*0.3
+	moveY := dy*0.7 + separationY*0.3
 
 	// Update position
 	enemy.X += moveX * enemy.Speed * ep.kernel.DeltaTime
