@@ -2,6 +2,7 @@ package stats
 
 import (
 	"fmt"
+	"game/internal/assets"
 	"game/internal/core"
 	"game/internal/plugins"
 	"image/color"
@@ -9,11 +10,13 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/gofont/goregular"
 	"golang.org/x/image/font/opentype"
 
 	abilityplugin "game/internal/plugins/playing/ability"
+	"game/internal/plugins/playing/camera"
 )
 
 type StatsPlugin struct {
@@ -22,6 +25,8 @@ type StatsPlugin struct {
 
 	playerPlugin plugins.PlayerPlugin
 	gameFont     font.Face
+
+	healthBarAnimation *assets.Animation
 }
 
 func NewStatsPlugin(plugins *core.PluginManager) *StatsPlugin {
@@ -41,6 +46,16 @@ func (sp *StatsPlugin) Init(kernel *core.GameKernel) error {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	healthBarAnimation := assets.NewAnimation(0.1)
+	err = healthBarAnimation.LoadFromJSON(
+		"assets/images/stats/bar/asset.json",
+		"assets/images/stats/bar/asset.png")
+	if err != nil {
+		log.Fatal("Failed to load initial asset menu:", err)
+	}
+
+	sp.healthBarAnimation = healthBarAnimation
 
 	sp.gameFont, err = opentype.NewFace(tt, &opentype.FaceOptions{
 		Size:    14,
@@ -113,4 +128,78 @@ func (sp *StatsPlugin) Draw(screen *ebiten.Image) {
 	playerDashTimer := playerPlugin.GetDashTimer()
 	dashTimerText := fmt.Sprintf("Dash Cooldown: %.2fms", playerDashTimer)
 	text.Draw(screen, dashTimerText, sp.gameFont, 10, 330+(len(playerAbilities)*30), color.White)
+
+	currentHealth := playerPlugin.GetHealth()
+	maxHealth := playerPlugin.GetMaxHealth()
+	healthPercentage := currentHealth / maxHealth
+
+	currentXP := float64(playerPlugin.GetExperience())
+	nextLevelXP := float64(playerPlugin.GetNextLevelExperience())
+	xpPercentage := currentXP / nextLevelXP
+
+	playerX, playerY := playerPlugin.GetPosition()
+
+	_, playerHeight := playerPlugin.GetSize()
+
+	cameraPlugin := sp.playingPlugins.GetPlugin("CameraSystem").(*camera.CameraPlugin)
+	cameraX, cameraY := cameraPlugin.GetPosition()
+
+	screenX := playerX - cameraX
+	screenY := playerY - cameraY
+
+	barWidth := 50.0
+	barHeight := 7.0
+	expbarheight := 3.0
+
+	healthBarPosition := screenY - (playerHeight / 2) - 15
+	centerX := screenX - barWidth/2
+
+	vector.DrawFilledRect(
+		screen,
+		float32(centerX),
+		float32(healthBarPosition),
+		float32(barWidth),
+		float32(barHeight),
+		color.RGBA{100, 0, 0, 255},
+		true,
+	)
+
+	vector.DrawFilledRect(
+		screen,
+		float32(centerX),
+		float32(healthBarPosition),
+		float32(barWidth*healthPercentage),
+		float32(barHeight),
+		color.RGBA{255, 0, 0, 255},
+		true,
+	)
+
+	vector.DrawFilledRect(
+		screen,
+		float32(centerX),
+		float32(healthBarPosition+barHeight),
+		float32(barWidth),
+		float32(expbarheight),
+		color.RGBA{0, 0, 100, 255},
+		true,
+	)
+
+	vector.DrawFilledRect(
+		screen,
+		float32(centerX),
+		float32(healthBarPosition+barHeight),
+		float32(barWidth*xpPercentage),
+		float32(expbarheight),
+		color.RGBA{0, 100, 255, 255},
+		true,
+	)
+
+	sp.healthBarAnimation.Draw(screen,
+		assets.DrawInput{
+			Width:  barWidth,
+			Height: barHeight + expbarheight,
+			X:      centerX,
+			Y:      healthBarPosition,
+		},
+	)
 }

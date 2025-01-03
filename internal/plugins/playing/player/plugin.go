@@ -384,3 +384,7 @@ func (p *PlayerPlugin) increaseAttributes() {
 func (p *PlayerPlugin) GetDashTimer() float64 {
 	return p.dashTimer
 }
+
+func (p *PlayerPlugin) GetNextLevelExperience() int {
+	return levelUpExperience[p.level]
+}
