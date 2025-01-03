@@ -15,6 +15,7 @@ type EnemyPlugin interface {
 	Spawn()
 	GetEnemies() []*entities.Enemy
 	ApplyDamage(enemy *entities.Enemy, damage float64, isCriticalDamage bool)
+	GetGlobalProjectiles() []*entities.Projectile
 }
 
 type PlayerPlugin interface {

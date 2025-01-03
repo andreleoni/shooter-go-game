@@ -2,6 +2,7 @@ package combat
 
 import (
 	"game/internal/core"
+	"game/internal/helpers/collision"
 	"game/internal/plugins"
 	"game/internal/plugins/playing/ability"
 	"game/internal/plugins/playing/enemy"
@@ -47,6 +48,8 @@ func (cp *CombatPlugin) Update() error {
 	pp := cp.plugins.GetPlugin("PlayerSystem").(plugins.PlayerPlugin)
 
 	enemies := cp.enemyPlugin.GetEnemies()
+	playerX, playerY := pp.GetPosition()
+	playerWidth, playerHeight := pp.GetSize()
 
 	for _, a := range wp.GetAcquiredAbilities() {
 		for _, enemy := range enemies {
@@ -74,6 +77,26 @@ func (cp *CombatPlugin) Update() error {
 					ep.DropCrystal(
 						enemy.X+(enemy.Width/2),
 						enemy.Y+(enemy.Height/2))
+				}
+			}
+		}
+
+		// Update projectiles
+		for _, p := range cp.enemyPlugin.GetGlobalProjectiles() {
+			if p.Active {
+				p.X += p.DirectionX * p.Speed * cp.kernel.DeltaTime
+				p.Y += p.DirectionY * p.Speed * cp.kernel.DeltaTime
+
+				// Check collision with player
+				playerCollision := collision.Check(
+					p.X, p.Y,
+					p.Width, p.Height,
+					(playerX - playerWidth/2), (playerY - playerHeight/2),
+					playerWidth, playerHeight)
+
+				if playerCollision {
+					pp.ApplyDamage(p.Power)
+					p.Active = false
 				}
 			}
 		}

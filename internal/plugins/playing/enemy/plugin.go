@@ -55,6 +55,8 @@ type EnemyPlugin struct {
 	spawnRates map[int]float64 // Maps minutes to spawn delay
 
 	baseStats map[int]EnemyBaseStats
+
+	globalProjectiles []*entity.Projectile
 }
 
 type EnemyBaseStats struct {
@@ -96,6 +98,7 @@ func (ep *EnemyPlugin) ID() string {
 
 func (ep *EnemyPlugin) Init(kernel *core.GameKernel) error {
 	ep.kernel = kernel
+	ep.globalProjectiles = []*entity.Projectile{}
 
 	return nil
 }
@@ -182,16 +185,9 @@ func (ep *EnemyPlugin) Update() error {
 				if distance <= enemy.AttackRange {
 					enemy.AttackCooldown -= ep.kernel.DeltaTime
 					if enemy.AttackCooldown <= 0 {
-						enemy.Shoot(playerX, playerY)
-						enemy.AttackCooldown = 2.0 // Reset cooldown
-					}
-				}
+						ep.globalProjectiles = append(ep.globalProjectiles, enemy.Shoot(playerX, playerY))
 
-				// Update projectiles
-				for _, p := range enemy.Projectiles {
-					if p.Active {
-						p.X += p.DirectionX * p.Speed * ep.kernel.DeltaTime
-						p.Y += p.DirectionY * p.Speed * ep.kernel.DeltaTime
+						enemy.AttackCooldown = 2.0 // Reset cooldown
 					}
 				}
 			}
@@ -275,26 +271,25 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 						enemy.RunningLeftAnimationSprite.Draw(screen, input)
 					}
 				}
-
-				if enemy.Name == "ranged" {
-					for _, p := range enemy.Projectiles {
-						if p.Active {
-							screenX := p.X - cameraX
-							screenY := p.Y - cameraY
-
-							vector.DrawFilledRect(
-								screen,
-								float32(screenX),
-								float32(screenY),
-								float32(p.Width),
-								float32(p.Height),
-								color.RGBA{255, 0, 0, 255},
-								true,
-							)
-						}
-					}
-				}
 			}
+		}
+	}
+
+	// Draw global projectiles
+	for _, p := range ep.globalProjectiles {
+		if p.Active {
+			screenX := p.X - cameraX
+			screenY := p.Y - cameraY
+
+			vector.DrawFilledRect(
+				screen,
+				float32(screenX),
+				float32(screenY),
+				float32(p.Width),
+				float32(p.Height),
+				color.RGBA{255, 0, 0, 255},
+				true,
+			)
 		}
 	}
 
@@ -489,4 +484,8 @@ func (ep *EnemyPlugin) getEnemyStats() EnemyBaseStats {
 	}
 
 	return stats
+}
+
+func (ep *EnemyPlugin) GetGlobalProjectiles() []*entity.Projectile {
+	return ep.globalProjectiles
 }

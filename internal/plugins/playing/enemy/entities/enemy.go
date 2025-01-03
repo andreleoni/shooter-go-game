@@ -39,17 +39,6 @@ type Enemy struct {
 	AttackCooldown  float64
 	AttackRange     float64
 	ProjectileSpeed float64
-	Projectiles     []*Projectile
-}
-
-type Projectile struct {
-	X, Y          float64
-	Width, Height float64
-	Speed         float64
-	DirectionX    float64
-	DirectionY    float64
-	Active        bool
-	Damage        float64
 }
 
 func (e *Enemy) GetBounds() (float64, float64, float64, float64) {
@@ -60,12 +49,11 @@ func (e *Enemy) IsEnemyMovingRight(playerX float64) bool {
 	return e.X < playerX
 }
 
-func (re *Enemy) Shoot(playerX, playerY float64) {
+func (re *Enemy) Shoot(playerX, playerY float64) *Projectile {
 	dx := playerX - re.X
 	dy := playerY - re.Y
 	distance := math.Sqrt(dx*dx + dy*dy)
 
-	// Normalize direction
 	if distance > 0 {
 		dx /= distance
 		dy /= distance
@@ -80,8 +68,8 @@ func (re *Enemy) Shoot(playerX, playerY float64) {
 		DirectionX: dx,
 		DirectionY: dy,
 		Active:     true,
-		Damage:     10,
+		Power:      10,
 	}
 
-	re.Projectiles = append(re.Projectiles, projectile)
+	return projectile
 }
