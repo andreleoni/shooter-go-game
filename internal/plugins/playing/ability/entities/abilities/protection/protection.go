@@ -3,7 +3,6 @@ package protection
 import (
 	"game/internal/core"
 	"game/internal/helpers/collision"
-	"game/internal/plugins/playing/ability/entities"
 	abilityentities "game/internal/plugins/playing/ability/entities/abilities"
 	"image/color"
 
@@ -12,10 +11,9 @@ import (
 )
 
 type Protection struct {
-	plugins     *core.PluginManager
-	Projectiles []*entities.Projectile
-	Power       float64
-	Radius      float64
+	plugins *core.PluginManager
+	Power   float64
+	Radius  float64
 
 	// Shoot cooldown
 	ShootTimer    float64
@@ -66,10 +64,6 @@ func (p *Protection) Draw(screen *ebiten.Image, wdi abilityentities.AbilityDrawI
 		true)
 
 	return
-}
-
-func (d *Protection) ActiveProjectiles() []*entities.Projectile {
-	return d.Projectiles
 }
 
 func (d *Protection) GetPower() float64 {

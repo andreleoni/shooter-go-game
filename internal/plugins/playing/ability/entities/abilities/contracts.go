@@ -3,7 +3,6 @@ package abilities
 import (
 	"game/internal/core"
 	"game/internal/plugins"
-	"game/internal/plugins/playing/ability/entities"
 	enemyentities "game/internal/plugins/playing/enemy/entities"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -48,8 +47,6 @@ type Ability interface {
 	Shoot(x, y float64)
 	Update(wui AbilityUpdateInput)
 	Draw(screen *ebiten.Image, wdi AbilityDrawInput)
-
-	ActiveProjectiles() []*entities.Projectile
 
 	GetPower() float64
 

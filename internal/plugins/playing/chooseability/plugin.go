@@ -6,6 +6,7 @@ import (
 	abilitiesentities "game/internal/plugins/playing/ability/entities/abilities"
 	abilitiesentitiesbasic "game/internal/plugins/playing/ability/entities/abilities/basic"
 	abilitiesentitiesdagger "game/internal/plugins/playing/ability/entities/abilities/dagger"
+	abilitiesentitiesfireball "game/internal/plugins/playing/ability/entities/abilities/dagger"
 	abilitiesentitiesprotection "game/internal/plugins/playing/ability/entities/abilities/protection"
 
 	"image/color"
@@ -25,12 +26,14 @@ func NewChooseAbilityPlugin(plugins *core.PluginManager) *ChooseAbilityPlugin {
 		"BasicWeapon",
 		"DaggersWeapon",
 		"ProtectionWeapon",
+		"FireballWeapon",
 	}
 
 	abilitiesByName := map[string]abilitiesentities.Ability{
 		"BasicWeapon":      abilitiesentitiesbasic.New(),
 		"DaggersWeapon":    abilitiesentitiesdagger.New(),
 		"ProtectionWeapon": abilitiesentitiesprotection.New(),
+		"FireballWeapon":   abilitiesentitiesfireball.New(),
 		// "HealAbility":      abilitiesentitiesheal.New(),
 	}
 

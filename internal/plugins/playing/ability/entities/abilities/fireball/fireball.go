@@ -1,4 +1,4 @@
-package basic
+package fireball
 
 import (
 	"game/internal/assets"
@@ -9,6 +9,7 @@ import (
 	abilityentities "game/internal/plugins/playing/ability/entities/abilities"
 	"game/internal/plugins/playing/camera"
 	"image/color"
+	"log"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -27,11 +28,14 @@ type Projectile struct {
 	TargetX float64
 	TargetY float64
 
-	Width  float64
-	Height float64
+	Radius float64
+
+	EnemiesDamaged map[string]bool
+
+	Animation *assets.Animation
 }
 
-type Basic struct {
+type Ability struct {
 	plugins     *core.PluginManager
 	Projectiles []*Projectile
 	Power       float64
@@ -41,25 +45,37 @@ type Basic struct {
 	ShootCooldown float64
 
 	Level int
+
+	FireballAnimation *assets.Animation
 }
 
-func New() *Basic {
-	return &Basic{
-		Power:         10,
-		ShootCooldown: 1.0,
-		Level:         1,
+func New() *Ability {
+	fireballAnimation := assets.NewAnimation(0.1)
+	err := fireballAnimation.LoadFromJSON(
+		"assets/images/bullets/fireball/asset.json",
+		"assets/images/bullets/fireball/asset.png")
+
+	if err != nil {
+		log.Fatal("Failed to load player asset right:", err)
+	}
+
+	return &Ability{
+		Power:             10,
+		ShootCooldown:     1.0,
+		Level:             1,
+		FireballAnimation: fireballAnimation,
 	}
 }
 
-func (b *Basic) SetPluginManager(plugins *core.PluginManager) {
+func (b *Ability) SetPluginManager(plugins *core.PluginManager) {
 	b.plugins = plugins
 }
 
-func (b *Basic) ID() string {
-	return "Basic"
+func (b *Ability) ID() string {
+	return "Fireball"
 }
 
-func (b *Basic) AutoShot(deltaTime, x, y float64) {
+func (b *Ability) AutoShot(deltaTime, x, y float64) {
 	b.ShootTimer += deltaTime
 
 	if b.ShootTimer >= b.ShootCooldown {
@@ -68,7 +84,7 @@ func (b *Basic) AutoShot(deltaTime, x, y float64) {
 	}
 }
 
-func (b *Basic) Shoot(x, y float64) {
+func (b *Ability) Shoot(x, y float64) {
 	// Get enemy plugin to find closest enemy
 	enemyPlugin := b.plugins.GetPlugin("EnemySystem").(plugins.EnemyPlugin)
 
@@ -105,25 +121,26 @@ func (b *Basic) Shoot(x, y float64) {
 
 		// Create bullet targeting closest enemy
 		projectile := &Projectile{
-			X:          x,
-			Y:          y,
-			Speed:      300,
-			Active:     true,
-			Power:      b.Power,
-			TargetX:    closestEnemy.X + closestEnemy.Width/2,
-			TargetY:    closestEnemy.Y + closestEnemy.Height/2,
-			DirectionX: dirX,
-			DirectionY: dirY,
-			Height:     10,
-			Width:      10,
+			X:              x,
+			Y:              y,
+			Speed:          500,
+			Active:         true,
+			Power:          b.Power,
+			DirectionX:     dirX,
+			DirectionY:     dirY,
+			Radius:         50,
+			EnemiesDamaged: make(map[string]bool),
+			Animation:      b.FireballAnimation,
 		}
 
 		b.Projectiles = append(b.Projectiles, projectile)
 	}
 }
 
-func (b *Basic) Update(wui abilityentities.AbilityUpdateInput) {
+func (b *Ability) Update(wui abilityentities.AbilityUpdateInput) {
 	b.AutoShot(wui.DeltaTime, wui.PlayerX, wui.PlayerY)
+
+	b.FireballAnimation.Update(wui.DeltaTime)
 
 	for _, projectile := range b.Projectiles {
 		if projectile.Active {
@@ -161,7 +178,7 @@ func (b *Basic) Update(wui abilityentities.AbilityUpdateInput) {
 	}
 }
 
-func (b *Basic) Draw(screen *ebiten.Image, wdi abilityentities.AbilityDrawInput) {
+func (b *Ability) Draw(screen *ebiten.Image, wdi abilityentities.AbilityDrawInput) {
 	for _, projectile := range b.Projectiles {
 		if projectile.Active {
 			// Draw bullet relative to camera position
@@ -172,28 +189,23 @@ func (b *Basic) Draw(screen *ebiten.Image, wdi abilityentities.AbilityDrawInput)
 			if screenX >= -5 && screenX <= constants.ScreenWidth+5 &&
 				screenY >= -5 && screenY <= constants.ScreenHeight+5 {
 
-				vector.DrawFilledRect(
+				vector.DrawFilledCircle(
 					screen,
 					float32(screenX),
 					float32(screenY),
-					float32(projectile.Width),
-					float32(projectile.Height),
+					float32(projectile.Radius),
 					color.RGBA{200, 255, 0, 255},
 					true)
 
-				angle := math.Atan2(
-					projectile.DirectionY, projectile.DirectionX)
+				squareSize := projectile.Radius * 2
+				drawInput := assets.DrawInput{
+					Width:  squareSize,
+					Height: squareSize,
+					X:      screenX - squareSize/2,
+					Y:      screenY - squareSize/2,
+				}
 
-				staticsprite := assets.NewStaticSprite()
-				staticsprite.Load("assets/images/bullets/arrow/arrow.png")
-
-				staticsprite.Draw(screen, assets.DrawInput{
-					Width:  projectile.Width,
-					Height: projectile.Height,
-					X:      screenX,
-					Y:      screenY,
-					Angle:  &angle,
-				})
+				projectile.Animation.Draw(screen, drawInput)
 			}
 		}
 	}
@@ -201,37 +213,37 @@ func (b *Basic) Draw(screen *ebiten.Image, wdi abilityentities.AbilityDrawInput)
 	return
 }
 
-func (b *Basic) GetPower() float64 {
+func (b *Ability) GetPower() float64 {
 	return b.Power
 }
 
-func (*Basic) DamageType() string {
+func (*Ability) DamageType() string {
 	return "projectil"
 }
 
-func (*Basic) AttackSpeed() float64 {
+func (*Ability) AttackSpeed() float64 {
 	return 1.0
 }
 
-func (*Basic) GetRadius() float64 {
+func (*Ability) GetRadius() float64 {
 	return 0.0
 }
 
-func (b *Basic) CurrentLevel() int {
+func (b *Ability) CurrentLevel() int {
 	return b.Level
 }
 
-func (b *Basic) MaxLevel() bool {
+func (b *Ability) MaxLevel() bool {
 	return b.Level >= 5
 }
 
-func (b *Basic) IncreaseLevel() {
+func (b *Ability) IncreaseLevel() {
 	b.Level++
 	b.Power += 5
 	b.ShootCooldown -= 0.1
 }
 
-func (b *Basic) Combat(ci abilityentities.CombatInput) abilityentities.CombatOutput {
+func (b *Ability) Combat(ci abilityentities.CombatInput) abilityentities.CombatOutput {
 	enemy := ci.Enemy
 	pp := ci.PlayerPlugin
 	enemyGotDamaged := false
@@ -240,11 +252,10 @@ func (b *Basic) Combat(ci abilityentities.CombatInput) abilityentities.CombatOut
 
 	for _, projectil := range b.Projectiles {
 		if enemy.Active && projectil.Active {
-			if collision.Check(
+			if collision.CheckCircle(
 				projectil.X,
 				projectil.Y,
-				projectil.Width,
-				projectil.Height,
+				projectil.Radius,
 				enemy.X,
 				enemy.Y,
 				enemy.Width,
@@ -252,7 +263,7 @@ func (b *Basic) Combat(ci abilityentities.CombatInput) abilityentities.CombatOut
 
 				damage, critical = pp.CalculateDamage(projectil.Power)
 
-				projectil.Active = false
+				projectil.EnemiesDamaged[enemy.UUID] = true
 				enemyGotDamaged = true
 			}
 		}

@@ -10,6 +10,7 @@ import (
 	abilitiesentities "game/internal/plugins/playing/ability/entities/abilities"
 	abilitiesentitiesbasic "game/internal/plugins/playing/ability/entities/abilities/basic"
 	abilitiesentitiesdagger "game/internal/plugins/playing/ability/entities/abilities/dagger"
+	abilitiesentitiesfireball "game/internal/plugins/playing/ability/entities/abilities/fireball"
 	abilitiesentitiesprotection "game/internal/plugins/playing/ability/entities/abilities/protection"
 
 	abilitiesrepository "game/internal/plugins/playing/ability/repository"
@@ -46,6 +47,7 @@ func (ap *AbilityPlugin) Init(
 	ap.AddAvailableAbility(abilitiesentitiesbasic.New())
 	ap.AddAvailableAbility(abilitiesentitiesdagger.New())
 	ap.AddAvailableAbility(abilitiesentitiesprotection.New())
+	ap.AddAvailableAbility(abilitiesentitiesfireball.New())
 
 	return nil
 }

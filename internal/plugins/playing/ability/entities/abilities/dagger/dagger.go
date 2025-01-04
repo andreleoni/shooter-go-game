@@ -4,7 +4,6 @@ import (
 	"game/internal/constants"
 	"game/internal/core"
 	"game/internal/helpers/collision"
-	"game/internal/plugins/playing/ability/entities"
 	abilityentities "game/internal/plugins/playing/ability/entities/abilities"
 	entityabilities "game/internal/plugins/playing/ability/entities/abilities"
 	"game/internal/plugins/playing/camera"
@@ -17,9 +16,25 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
+type Projectile struct {
+	Active bool
+	Power  float64
+
+	X, Y       float64
+	Speed      float64
+	DirectionX float64
+	DirectionY float64
+
+	TargetX float64
+	TargetY float64
+
+	Width  float64
+	Height float64
+}
+
 type Dagger struct {
 	plugins            *core.PluginManager
-	Projectiles        []*entities.Projectile
+	Projectiles        []*Projectile
 	Power              float64
 	ProjectilesByShoot int
 
@@ -62,7 +77,7 @@ func (d *Dagger) Shoot(x, y float64) {
 		directionX := math.Cos(angle)
 		directionY := math.Sin(angle)
 
-		projectile := &entities.Projectile{
+		projectile := &Projectile{
 			X:          x,
 			Y:          y,
 			Speed:      300,
@@ -127,10 +142,6 @@ func (d *Dagger) Draw(screen *ebiten.Image, wdi entityabilities.AbilityDrawInput
 	return
 }
 
-func (d *Dagger) ActiveProjectiles() []*entities.Projectile {
-	return d.Projectiles
-}
-
 func (d *Dagger) GetPower() float64 {
 	return d.Power
 }
@@ -168,7 +179,7 @@ func (d *Dagger) Combat(ci abilityentities.CombatInput) abilityentities.CombatOu
 	damage := 0.0
 	critical := false
 
-	for _, projectil := range d.ActiveProjectiles() {
+	for _, projectil := range d.Projectiles {
 		if enemy.Active && projectil.Active {
 			if collision.Check(
 				projectil.X,

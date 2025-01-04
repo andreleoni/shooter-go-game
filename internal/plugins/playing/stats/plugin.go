@@ -128,21 +128,21 @@ func (sp *StatsPlugin) Draw(screen *ebiten.Image) {
 		playerGetCriticalChance := playerPlugin.GetCriticalChance()
 		criticalChanceText := fmt.Sprintf("Critical Chance: %.0f%%", playerGetCriticalChance)
 		text.Draw(screen, criticalChanceText, sp.gameFont, 10, 300, color.White)
+
+		abilities := sp.playingPlugins.GetPlugin("AbilitySystem")
+
+		playerAbilities := abilities.(*abilityplugin.AbilityPlugin).GetAcquiredAbilities()
+
+		for i, ability := range playerAbilities {
+			ability := fmt.Sprintf("Ability: %s, Level: %d", ability.ID(), ability.CurrentLevel())
+			text.Draw(screen, ability, sp.gameFont, 10, 330+(i*30), color.White)
+		}
+
+		// exibir o timer para o proximo dash do player em millisegundos
+		playerDashTimer := playerPlugin.GetDashTimer()
+		dashTimerText := fmt.Sprintf("Dash Cooldown: %.2fms", playerDashTimer)
+		text.Draw(screen, dashTimerText, sp.gameFont, 10, 330+(len(playerAbilities)*30), color.White)
 	}
-
-	abilities := sp.playingPlugins.GetPlugin("AbilitySystem")
-
-	playerAbilities := abilities.(*abilityplugin.AbilityPlugin).GetAcquiredAbilities()
-
-	for i, ability := range playerAbilities {
-		ability := fmt.Sprintf("Ability: %s, Level: %d", ability.ID(), ability.CurrentLevel())
-		text.Draw(screen, ability, sp.gameFont, 10, 330+(i*30), color.White)
-	}
-
-	// exibir o timer para o proximo dash do player em millisegundos
-	playerDashTimer := playerPlugin.GetDashTimer()
-	dashTimerText := fmt.Sprintf("Dash Cooldown: %.2fms", playerDashTimer)
-	text.Draw(screen, dashTimerText, sp.gameFont, 10, 330+(len(playerAbilities)*30), color.White)
 
 	currentHealth := playerPlugin.GetHealth()
 	maxHealth := playerPlugin.GetMaxHealth()
