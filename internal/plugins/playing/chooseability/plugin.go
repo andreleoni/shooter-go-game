@@ -6,7 +6,7 @@ import (
 	abilitiesentities "game/internal/plugins/playing/ability/entities/abilities"
 	abilitiesentitiesbasic "game/internal/plugins/playing/ability/entities/abilities/basic"
 	abilitiesentitiesdagger "game/internal/plugins/playing/ability/entities/abilities/dagger"
-	abilitiesentitiesfireball "game/internal/plugins/playing/ability/entities/abilities/dagger"
+	abilitiesentitiesfireball "game/internal/plugins/playing/ability/entities/abilities/fireball"
 	abilitiesentitiesprotection "game/internal/plugins/playing/ability/entities/abilities/protection"
 
 	"image/color"
@@ -62,6 +62,8 @@ func (cp *ChooseAbilityPlugin) Update() error {
 		cp.kernel.EventBus.Publish("NewAbility", cp.availableAbilities["DaggersWeapon"])
 	} else if ebiten.IsKeyPressed(ebiten.Key3) {
 		cp.kernel.EventBus.Publish("NewAbility", cp.availableAbilities["ProtectionWeapon"])
+	} else if ebiten.IsKeyPressed(ebiten.Key4) {
+		cp.kernel.EventBus.Publish("NewAbility", cp.availableAbilities["FireballWeapon"])
 	}
 
 	return nil
@@ -82,6 +84,8 @@ func (cp *ChooseAbilityPlugin) Draw(screen *ebiten.Image) {
 			name = "2. Daggers Weapon"
 		case "ProtectionWeapon":
 			name = "3. Protection Weapon"
+		case "FireballWeapon":
+			name = "4. Fireball Weapon"
 		}
 
 		text.Draw(screen, name, fontface.FontFace, 300, 200+(i*30), col)
