@@ -103,3 +103,7 @@ func (a *Animation) Draw(
 
 	screen.DrawImage(a.Frames[a.CurrentFrame], op)
 }
+
+func (a *Animation) GetCurrentFrame() *ebiten.Image {
+	return a.Frames[a.CurrentFrame]
+}

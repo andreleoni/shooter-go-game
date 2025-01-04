@@ -27,6 +27,7 @@ type Enemy struct {
 
 	RunningRightAnimationSprite *assets.Animation
 	RunningLeftAnimationSprite  *assets.Animation
+	CurrentAnimation            *assets.Animation
 
 	RunningAnimationTime float64
 

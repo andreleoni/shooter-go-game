@@ -9,6 +9,7 @@ import (
 	abilityentities "game/internal/plugins/playing/ability/entities/abilities"
 	"game/internal/plugins/playing/camera"
 	"image/color"
+	"log"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -29,6 +30,8 @@ type Projectile struct {
 
 	Width  float64
 	Height float64
+
+	Animation *assets.Animation
 }
 
 type Basic struct {
@@ -41,13 +44,26 @@ type Basic struct {
 	ShootCooldown float64
 
 	Level int
+
+	BaseAnimation *assets.Animation
 }
 
 func New() *Basic {
+
+	BaseAnimation := assets.NewAnimation(0.1)
+	err := BaseAnimation.LoadFromJSON(
+		"assets/images/bullets/fireball/asset.json",
+		"assets/images/bullets/fireball/asset.png")
+
+	if err != nil {
+		log.Fatal("Failed to load player asset right:", err)
+	}
+
 	return &Basic{
 		Power:         10,
 		ShootCooldown: 1.0,
 		Level:         1,
+		BaseAnimation: BaseAnimation,
 	}
 }
 
@@ -116,6 +132,7 @@ func (b *Basic) Shoot(x, y float64) {
 			DirectionY: dirY,
 			Height:     10,
 			Width:      10,
+			Animation:  b.BaseAnimation,
 		}
 
 		b.Projectiles = append(b.Projectiles, projectile)
@@ -180,20 +197,6 @@ func (b *Basic) Draw(screen *ebiten.Image, wdi abilityentities.AbilityDrawInput)
 					float32(projectile.Height),
 					color.RGBA{200, 255, 0, 255},
 					true)
-
-				angle := math.Atan2(
-					projectile.DirectionY, projectile.DirectionX)
-
-				staticsprite := assets.NewStaticSprite()
-				staticsprite.Load("assets/images/bullets/arrow/arrow.png")
-
-				staticsprite.Draw(screen, assets.DrawInput{
-					Width:  projectile.Width,
-					Height: projectile.Height,
-					X:      screenX,
-					Y:      screenY,
-					Angle:  &angle,
-				})
 			}
 		}
 	}
@@ -240,16 +243,18 @@ func (b *Basic) Combat(ci abilityentities.CombatInput) abilityentities.CombatOut
 
 	for _, projectil := range b.Projectiles {
 		if enemy.Active && projectil.Active {
-			if collision.Check(
-				projectil.X,
-				projectil.Y,
-				projectil.Width,
-				projectil.Height,
-				enemy.X,
-				enemy.Y,
-				enemy.Width,
-				enemy.Height) {
+			checkSpriteCollisionInput := collision.CheckSpriteCollisionInput{
+				X1:      projectil.X,
+				Y1:      projectil.Y,
+				Width1:  projectil.Width,
+				Height1: projectil.Height,
+				X2:      enemy.X,
+				Y2:      enemy.Y,
+				Width2:  enemy.Width,
+				Height2: enemy.Height,
+			}
 
+			if collision.CheckSpriteCollision(checkSpriteCollisionInput) {
 				damage, critical = pp.CalculateDamage(projectil.Power)
 
 				projectil.Active = false

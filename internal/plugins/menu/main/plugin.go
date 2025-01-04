@@ -54,7 +54,7 @@ func NewMenuPlugin(kernel *core.GameKernel) *MenuPlugin {
 		kernel:       kernel,
 		currentState: menu.MenuState,
 		characters: []playerentities.Character{
-			{Name: "Rogue", Speed: 100, Health: 100, Ability: "Basic"},
+			{Name: "Rogue", Speed: 100, Health: 100, Ability: "Protection"},
 		},
 		selectionDelay:       0,
 		initialMenuAnimation: initialMenuAnimation,

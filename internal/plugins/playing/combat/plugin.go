@@ -5,6 +5,7 @@ import (
 	"game/internal/helpers/collision"
 	"game/internal/plugins"
 	"game/internal/plugins/playing/ability"
+	"game/internal/plugins/playing/camera"
 	"game/internal/plugins/playing/enemy"
 	"game/internal/plugins/playing/experience"
 
@@ -46,10 +47,12 @@ func (cp *CombatPlugin) Update() error {
 	wp := cp.plugins.GetPlugin("AbilitySystem").(*ability.AbilityPlugin)
 	ep := cp.plugins.GetPlugin("ExperienceSystem").(*experience.ExperiencePlugin)
 	pp := cp.plugins.GetPlugin("PlayerSystem").(plugins.PlayerPlugin)
+	cameraPlugin := cp.plugins.GetPlugin("CameraSystem").(*camera.CameraPlugin)
 
 	enemies := cp.enemyPlugin.GetEnemies()
 	playerX, playerY := pp.GetPosition()
 	playerWidth, playerHeight := pp.GetSize()
+	cameraX, cameraY := cameraPlugin.GetPosition()
 
 	for _, a := range wp.GetAcquiredAbilities() {
 		for _, enemy := range enemies {
@@ -58,6 +61,8 @@ func (cp *CombatPlugin) Update() error {
 				Enemy:        enemy,
 				PlayerPlugin: pp,
 				EnemyPlugin:  cp.enemyPlugin,
+				CameraX:      cameraX,
+				CameraY:      cameraY,
 			})
 
 			if combatOutput.EnemyGotDamaged {

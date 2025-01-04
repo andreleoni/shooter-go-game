@@ -1,6 +1,7 @@
 package protection
 
 import (
+	"game/internal/constants"
 	"game/internal/core"
 	"game/internal/helpers/collision"
 	abilityentities "game/internal/plugins/playing/ability/entities/abilities"
@@ -27,7 +28,7 @@ type Protection struct {
 func New() *Protection {
 	return &Protection{
 		Power:                      10,
-		Radius:                     75,
+		Radius:                     200,
 		Level:                      1,
 		LastDamageDeltaTimeByEnemy: make(map[string]float64),
 	}
@@ -52,13 +53,10 @@ func (p *Protection) Draw(screen *ebiten.Image, wdi abilityentities.AbilityDrawI
 	screenX := wdi.PlayerX - wdi.CameraX
 	screenY := wdi.PlayerY - wdi.CameraY
 
-	circleX := screenX
-	circleY := screenY
-
 	vector.DrawFilledCircle(
 		screen,
-		float32(circleX),
-		float32(circleY),
+		float32(screenX),
+		float32(screenY),
 		float32(p.Radius),
 		color.RGBA{111, 222, 111, 2},
 		true)
@@ -106,21 +104,32 @@ func (p *Protection) Combat(ci abilityentities.CombatInput) abilityentities.Comb
 	damage := 0.0
 	critical := false
 
-	playerX, playerY := pp.GetPosition()
-
 	if enemy.Active {
 		enemyUUID := enemy.UUID
 
-		if collision.CheckCircle(
-			playerX,
-			playerY,
-			p.GetRadius(),
-			enemy.X,
-			enemy.Y,
-			enemy.Width,
-			enemy.Height) {
+		screenCenterX := float64(constants.ScreenWidth) / 2
+		screenCenterY := float64(constants.ScreenHeight) / 2
 
+		circleCenterX := screenCenterX + ci.CameraX - p.GetRadius()
+		circleCenterY := screenCenterY + ci.CameraY - p.GetRadius()
+
+		enemyCenterX := enemy.X + enemy.Width/2
+		enemyCenterY := enemy.Y + enemy.Height/2
+
+		checkSpriteCollisionInput := collision.CheckSpriteCollisionInput{
+			X1:      circleCenterX,
+			Y1:      circleCenterY,
+			Width1:  p.GetRadius() * 2,
+			Height1: p.GetRadius() * 2,
+			X2:      enemyCenterX,
+			Y2:      enemyCenterY,
+			Width2:  enemy.Width,
+			Height2: enemy.Height,
+		}
+
+		if collision.CheckSpriteCollision(checkSpriteCollisionInput) {
 			lastAreaDamageDeltaTime, exists := p.LastDamageDeltaTimeByEnemy[enemyUUID]
+
 			if !exists {
 				lastAreaDamageDeltaTime = 0
 			}

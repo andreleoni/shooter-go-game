@@ -252,15 +252,18 @@ func (b *Ability) Combat(ci abilityentities.CombatInput) abilityentities.CombatO
 
 	for _, projectil := range b.Projectiles {
 		if enemy.Active && projectil.Active {
-			if collision.CheckCircle(
-				projectil.X,
-				projectil.Y,
-				projectil.Radius,
-				enemy.X,
-				enemy.Y,
-				enemy.Width,
-				enemy.Height) {
+			checkSpriteCollisionInput := collision.CheckSpriteCollisionInput{
+				X1:      projectil.X,
+				Y1:      projectil.Y,
+				Width1:  projectil.Radius * 2,
+				Height1: projectil.Radius * 2,
+				X2:      enemy.X,
+				Y2:      enemy.Y,
+				Width2:  enemy.Width,
+				Height2: enemy.Height,
+			}
 
+			if collision.CheckSpriteCollision(checkSpriteCollisionInput) {
 				damage, critical = pp.CalculateDamage(projectil.Power)
 
 				projectil.EnemiesDamaged[enemy.UUID] = true

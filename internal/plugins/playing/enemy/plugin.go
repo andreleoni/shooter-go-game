@@ -134,10 +134,12 @@ func (ep *EnemyPlugin) Update() error {
 			ep.moveTowardsPlayer(enemy, playerX, playerY)
 
 			if enemy.IsEnemyMovingRight(playerX) {
-				enemy.RunningRightAnimationSprite.Update(ep.kernel.DeltaTime)
+				enemy.CurrentAnimation = enemy.RunningRightAnimationSprite
 			} else {
-				enemy.RunningLeftAnimationSprite.Update(ep.kernel.DeltaTime)
+				enemy.CurrentAnimation = enemy.RunningLeftAnimationSprite
 			}
+
+			enemy.CurrentAnimation.Update(ep.kernel.DeltaTime)
 
 			playerCollision := collision.Check(
 				enemy.X, enemy.Y,
@@ -226,8 +228,6 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 	cameraPlugin := ep.plugins.GetPlugin("CameraSystem").(*camera.CameraPlugin)
 	cameraX, cameraY := cameraPlugin.GetPosition()
 
-	playerX, _ := ep.playerPlugin.GetPosition()
-
 	for _, enemy := range ep.enemies {
 		if enemy.Active {
 			// Draw enemy relative to camera position
@@ -265,10 +265,8 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 						Y:      screenY,
 					}
 
-					if enemy.IsEnemyMovingRight(playerX) {
-						enemy.RunningRightAnimationSprite.Draw(screen, input)
-					} else {
-						enemy.RunningLeftAnimationSprite.Draw(screen, input)
+					if enemy.CurrentAnimation != nil {
+						enemy.CurrentAnimation.Draw(screen, input)
 					}
 				}
 			}

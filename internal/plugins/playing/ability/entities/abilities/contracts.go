@@ -29,6 +29,9 @@ type AbilityDrawInput struct {
 type CombatInput struct {
 	DeltaTime float64
 
+	CameraX float64
+	CameraY float64
+
 	PlayerPlugin plugins.PlayerPlugin
 	EnemyPlugin  plugins.EnemyPlugin
 
