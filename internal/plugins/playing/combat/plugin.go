@@ -36,11 +36,11 @@ func (cp *CombatPlugin) ID() string {
 
 func (cp *CombatPlugin) Init(kernel *core.GameKernel) error {
 	cp.kernel = kernel
+
 	return nil
 }
 
 func (cp *CombatPlugin) Draw(*ebiten.Image) {
-	return
 }
 
 func (cp *CombatPlugin) Update() error {

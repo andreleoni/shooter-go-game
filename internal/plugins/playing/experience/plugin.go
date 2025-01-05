@@ -17,8 +17,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-var crystalRadius = 10
-var superCrystalRadius = 15
+var crystalRadius = float64(10)
+var superCrystalRadius = float64(15)
 
 type ExperiencePlugin struct {
 	kernel   *core.GameKernel
@@ -121,19 +121,19 @@ func (ep *ExperiencePlugin) Update() error {
 			totalXP += fc.Value
 		}
 
-		margin := float64(constants.ScreenHeight) // Reduced margin
+		margin := float64(constants.ScreenHeight)
 		angle := rand.Float64() * 2 * math.Pi
-		distance := margin + rand.Float64()*200 // Random distance between margin and margin+200
+		distanceX := margin
+		distanceY := margin
 
-		// Calculate position relative to player
-		superX := playerX + math.Cos(angle)*distance
-		superY := playerY + math.Sin(angle)*distance
+		superX := playerX + math.Cos(angle)*distanceX
+		superY := playerY + math.Sin(angle)*distanceY
 
 		superCrystal := &Crystal{
 			X:         superX,
 			Y:         superY,
-			Width:     float64(superCrystalRadius),
-			Height:    float64(superCrystalRadius),
+			Width:     superCrystalRadius,
+			Height:    superCrystalRadius,
 			Active:    true,
 			Value:     totalXP,
 			animation: ep.superCrystalAnimation,
@@ -221,15 +221,14 @@ func (ep *ExperiencePlugin) Draw(screen *ebiten.Image) {
 }
 
 func (ep *ExperiencePlugin) DropCrystal(x, y float64) {
-	cr := float64(10)
-
 	ep.crystals = append(ep.crystals, &Crystal{
-		X:      x - (cr / 2),
-		Y:      y - (cr / 2),
-		Width:  cr,
-		Height: cr,
-		Active: true,
-		Value:  1,
+		X:         x - (crystalRadius / 2),
+		Y:         y - (crystalRadius / 2),
+		Width:     crystalRadius,
+		Height:    crystalRadius,
+		Active:    true,
+		Value:     1,
+		animation: ep.crystalAnimation,
 	})
 }
 

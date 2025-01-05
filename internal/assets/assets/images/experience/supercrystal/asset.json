@@ -1,6 +1,6 @@
 { "frames": [
    {
-    "filename": "supercrystal.aseprite-Layer 1-0.aseprite",
+    "filename": "supercristal.aseprite-supercrystal-0.aseprite",
     "frame": { "x": 0, "y": 0, "w": 15, "h": 15 },
     "rotated": false,
     "trimmed": false,
@@ -9,7 +9,7 @@
     "duration": 100
    },
    {
-    "filename": "supercrystal.aseprite-Layer 1-1.aseprite",
+    "filename": "supercristal.aseprite-supercrystal-1.aseprite",
     "frame": { "x": 15, "y": 0, "w": 15, "h": 15 },
     "rotated": false,
     "trimmed": false,
@@ -18,7 +18,16 @@
     "duration": 100
    },
    {
-    "filename": "supercrystal.aseprite-Layer 1-2.aseprite",
+    "filename": "supercristal.aseprite-supercrystal-2.aseprite",
+    "frame": { "x": 15, "y": 0, "w": 15, "h": 15 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 15, "h": 15 },
+    "sourceSize": { "w": 15, "h": 15 },
+    "duration": 100
+   },
+   {
+    "filename": "supercristal.aseprite-supercrystal-3.aseprite",
     "frame": { "x": 30, "y": 0, "w": 15, "h": 15 },
     "rotated": false,
     "trimmed": false,
@@ -37,7 +46,7 @@
   "frameTags": [
   ],
   "layers": [
-   { "name": "Layer 1", "opacity": 255, "blendMode": "normal" }
+   { "name": "supercrystal", "opacity": 255, "blendMode": "normal" }
   ],
   "slices": [
   ]
