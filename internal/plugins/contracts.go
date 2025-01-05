@@ -39,6 +39,7 @@ type PlayerPlugin interface {
 	GetHealthRegenRate() float64
 	GetHealthRegenDelay() float64
 	GetAdditionalDamagePercent() float64
+	GetCollectionRadius() float64
 
 	NextLevelPercentage() float64
 
@@ -48,4 +49,6 @@ type PlayerPlugin interface {
 	GetDashTimer() float64
 
 	GetNextLevelExperience() int
+
+	AddExperience(amount int)
 }

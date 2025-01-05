@@ -5,7 +5,6 @@ import (
 	"game/internal/constants"
 	"game/internal/core"
 	"game/internal/plugins/playing/camera"
-	"game/internal/plugins/playing/player"
 	"image/color"
 	"math"
 	"math/rand"
@@ -15,6 +14,8 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
+
+	plugins "game/internal/plugins"
 )
 
 var crystalRadius = float64(10)
@@ -62,7 +63,7 @@ func (ep *ExperiencePlugin) Init(kernel *core.GameKernel) error {
 	ep.kernel = kernel
 	rand.Seed(time.Now().UnixNano())
 
-	crystalAnimation := assets.NewAnimation(0.1)
+	crystalAnimation := assets.NewAnimation(0.3)
 	err := crystalAnimation.LoadFromJSON(
 		"assets/images/experience/crystal/asset.json",
 		"assets/images/experience/crystal/asset.png")
@@ -70,7 +71,7 @@ func (ep *ExperiencePlugin) Init(kernel *core.GameKernel) error {
 		log.Fatal("Failed to load crystal animation:", err)
 	}
 
-	superCrystalAnimation := assets.NewAnimation(0.1)
+	superCrystalAnimation := assets.NewAnimation(0.3)
 	err = superCrystalAnimation.LoadFromJSON(
 		"assets/images/experience/supercrystal/asset.json",
 		"assets/images/experience/supercrystal/asset.png")
@@ -85,7 +86,7 @@ func (ep *ExperiencePlugin) Init(kernel *core.GameKernel) error {
 }
 
 func (ep *ExperiencePlugin) Update() error {
-	playerPlugin := ep.plugins.GetPlugin("PlayerSystem").(*player.PlayerPlugin)
+	playerPlugin := ep.plugins.GetPlugin("PlayerSystem").(plugins.PlayerPlugin)
 	playerX, playerY := playerPlugin.GetPosition()
 	playerWidth, playerHeight := playerPlugin.GetSize()
 
@@ -172,11 +173,18 @@ func (ep *ExperiencePlugin) Update() error {
 		crystal.X += dx * crystal.Speed * ep.kernel.DeltaTime
 		crystal.Y += dy * crystal.Speed * ep.kernel.DeltaTime
 
-		if ep.inPlayerCollectionRadius(crystal, playerX, playerY, playerWidth, playerHeight) {
+		if ep.inPlayerCollectionRadius(
+			crystal,
+			playerX, playerY,
+			playerWidth, playerHeight,
+			playerPlugin.GetCollectionRadius()) {
+
 			crystal.Speed = 450
 		}
 
-		if ep.checkCollisionWithPlayer(crystal, playerX, playerY, playerWidth, playerHeight) {
+		if ep.checkCollisionWithPlayer(
+			crystal, playerX, playerY, playerWidth, playerHeight) {
+
 			crystal.Active = false
 			playerPlugin.AddExperience(crystal.Value)
 		}
@@ -232,18 +240,21 @@ func (ep *ExperiencePlugin) DropCrystal(x, y float64) {
 	})
 }
 
-func (ep *ExperiencePlugin) inPlayerCollectionRadius(crystal *Crystal, playerX, playerY, playerWidth, playerHeight float64) bool {
-	collectionRadius := 50.0
+func (ep *ExperiencePlugin) inPlayerCollectionRadius(
+	crystal *Crystal,
+	playerX, playerY, playerWidth, playerHeight, radius float64) bool {
 
-	dx := (playerX + playerWidth/2) - (crystal.X + 5)
-	dy := (playerY + playerHeight/2) - (crystal.Y + 5)
+	dx := (playerX + playerWidth/2) - (crystal.X + crystal.Width)
+	dy := (playerY + playerHeight/2) - (crystal.Y + crystal.Height)
 
 	distance := math.Sqrt(dx*dx + dy*dy)
 
-	return distance <= collectionRadius
+	return distance <= radius
 }
 
 func (ep *ExperiencePlugin) checkCollisionWithPlayer(crystal *Crystal, playerX, playerY, playerWidth, playerHeight float64) bool {
-	return crystal.X < playerX+playerWidth && crystal.X+10 > playerX &&
-		crystal.Y < playerY+playerHeight && crystal.Y+10 > playerY
+	return crystal.X < playerX+playerWidth &&
+		crystal.X+crystal.Width > playerX &&
+		crystal.Y < playerY+playerHeight &&
+		crystal.Y+crystal.Height > playerY
 }

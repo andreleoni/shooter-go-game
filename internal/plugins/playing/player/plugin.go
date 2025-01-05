@@ -21,12 +21,13 @@ type PlayerPlugin struct {
 
 	x, y float64
 
-	health         float64
-	width          float64
-	height         float64
-	speed          float64
-	damagePercent  float64
-	criticalChance float64
+	health           float64
+	width            float64
+	height           float64
+	speed            float64
+	damagePercent    float64
+	criticalChance   float64
+	collectionRadius float64
 
 	maxHealth        float64
 	healthRegenRate  float64
@@ -80,14 +81,15 @@ var levelUpExperience = map[int]int{
 
 func NewPlayerPlugin(plugins *core.PluginManager, c entities.Character) *PlayerPlugin {
 	return &PlayerPlugin{
-		playingPlugins: plugins,
-		x:              400,
-		y:              300,
-		width:          32,
-		height:         48,
-		speed:          c.Speed,
-		experience:     0,
-		level:          1,
+		playingPlugins:   plugins,
+		x:                400,
+		y:                300,
+		width:            32,
+		height:           48,
+		speed:            c.Speed,
+		experience:       0,
+		level:            1,
+		collectionRadius: 50.0,
 
 		health:           c.Health,
 		maxHealth:        c.Health,
@@ -384,4 +386,8 @@ func (p *PlayerPlugin) GetDashTimer() float64 {
 
 func (p *PlayerPlugin) GetNextLevelExperience() int {
 	return levelUpExperience[p.level]
+}
+
+func (p *PlayerPlugin) GetCollectionRadius() float64 {
+	return p.collectionRadius
 }

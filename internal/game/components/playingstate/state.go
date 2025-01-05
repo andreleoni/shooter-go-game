@@ -92,8 +92,6 @@ func NewComponentPlayingState(kernel *core.GameKernel) *ComponentPlayingState {
 			ability.SetPluginManager(pluginManagerByState[Playing])
 			abilityPlugin.AcquireAbility(ability)
 
-			fmt.Println("NewAbility", ability)
-
 			componentPlayingState.SetState(Playing)
 		})
 
