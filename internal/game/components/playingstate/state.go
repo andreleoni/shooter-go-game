@@ -1,6 +1,7 @@
 package playingstate
 
 import (
+	"fmt"
 	"game/internal/core"
 	"game/internal/plugins/playing/ability"
 	"game/internal/plugins/playing/camera"
@@ -44,6 +45,7 @@ func NewComponentPlayingState(kernel *core.GameKernel) *ComponentPlayingState {
 
 		character := data.(playerentities.Character)
 
+		// Playing plugin
 		playerPlugin := player.NewPlayerPlugin(pluginManagerByState[Playing], character)
 		cameraPlugin := camera.NewCameraPlugin(playerPlugin)
 		enemyPlugin := enemy.NewEnemyPlugin(playerPlugin, pluginManagerByState[Playing])
@@ -53,7 +55,7 @@ func NewComponentPlayingState(kernel *core.GameKernel) *ComponentPlayingState {
 		experiencePlugin := experience.NewExperiencePlugin(pluginManagerByState[Playing])
 		scenarioPlugin := scenario.New(pluginManagerByState[Playing])
 
-		pluginManagerByState[Playing].Register(scenarioPlugin, 0)
+		pluginManagerByState[Playing].Register(scenarioPlugin, 1)
 		pluginManagerByState[Playing].Register(abilityPlugin, 10)
 		pluginManagerByState[Playing].Register(playerPlugin, 20)
 		pluginManagerByState[Playing].Register(experiencePlugin, 30)
@@ -71,27 +73,33 @@ func NewComponentPlayingState(kernel *core.GameKernel) *ComponentPlayingState {
 		abilityPlugin.Init(kernel)
 		scenarioPlugin.Init(kernel)
 
-		kernel.EventBus.Subscribe("NewAbility", func(a interface{}) {
-			ability := a.(entitiesability.Ability)
-			ability.SetPluginManager(pluginManagerByState[Playing])
-			abilityPlugin.AcquireAbility(ability)
-
-			componentPlayingState.SetState(Playing)
-		})
-
-		kernel.EventBus.Publish("NewAbility", abilityPlugin.GetAvailableAbilitiesByName(character.Ability))
-	})
-
-	kernel.EventBus.Subscribe("ChoosingAbility", func(data interface{}) {
-		pluginManagerByState[ChooseAbility].UnregisterAll()
-
+		// ChooseAbility plugins
 		chooseabilityPlugin := chooseability.NewChooseAbilityPlugin(pluginManagerByState[ChooseAbility])
 
 		pluginManagerByState[ChooseAbility].Register(chooseabilityPlugin, 0)
 
 		chooseabilityPlugin.Init(kernel)
 
-		componentPlayingState.SetState(ChooseAbility)
+		// Subscribers
+		kernel.EventBus.Subscribe("ChoosingAbility", func(data interface{}) {
+			fmt.Println("ChoosingAbility")
+
+			componentPlayingState.SetState(ChooseAbility)
+		})
+
+		kernel.EventBus.Subscribe("NewAbility", func(a interface{}) {
+			ability := a.(entitiesability.Ability)
+			ability.SetPluginManager(pluginManagerByState[Playing])
+			abilityPlugin.AcquireAbility(ability)
+
+			fmt.Println("NewAbility", ability)
+
+			componentPlayingState.SetState(Playing)
+		})
+
+		kernel.EventBus.Publish(
+			"NewAbility",
+			abilityPlugin.GetAvailableAbilitiesByName(character.Ability))
 	})
 
 	componentPlayingState.pluginManagerByState = pluginManagerByState

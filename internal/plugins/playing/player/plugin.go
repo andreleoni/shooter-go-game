@@ -42,9 +42,8 @@ type PlayerPlugin struct {
 
 	DamageFlashTime float64
 
-	experience            int
-	level                 int
-	abilitiesChoosenCount int
+	experience int
+	level      int
 
 	additionalDamagePercent float64
 	criticalMultiplier      float64
@@ -160,15 +159,6 @@ func (p *PlayerPlugin) Init(kernel *core.GameKernel) error {
 }
 
 func (p *PlayerPlugin) Update() error {
-	if p.experience >= levelUpExperience[p.level] &&
-		p.level < len(levelUpExperience)+1 {
-
-		p.level++
-		p.increaseAttributes()
-
-		p.kernel.EventBus.Publish("ChoosingAbility", nil)
-	}
-
 	// Get initial position
 	newX, newY := p.x, p.y
 
@@ -223,6 +213,15 @@ func (p *PlayerPlugin) Update() error {
 
 	if p.DamageFlashTime > 0 {
 		p.DamageFlashTime -= p.kernel.DeltaTime
+	}
+
+	if p.experience >= levelUpExperience[p.level] &&
+		p.level < len(levelUpExperience)+1 {
+
+		p.level++
+		p.increaseAttributes()
+
+		p.kernel.EventBus.Publish("ChoosingAbility", nil)
 	}
 
 	return nil

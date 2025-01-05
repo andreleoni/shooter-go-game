@@ -19,6 +19,8 @@ type ChooseAbilityPlugin struct {
 	kernel             *core.GameKernel
 	availableAbilities map[string]abilitiesentities.Ability
 	abilities          []string
+
+	selectionDelay float64
 }
 
 func NewChooseAbilityPlugin(plugins *core.PluginManager) *ChooseAbilityPlugin {
@@ -56,21 +58,32 @@ func (cp *ChooseAbilityPlugin) Init(kernel *core.GameKernel) error {
 }
 
 func (cp *ChooseAbilityPlugin) Update() error {
-	if ebiten.IsKeyPressed(ebiten.Key1) {
-		cp.kernel.EventBus.Publish("NewAbility", cp.availableAbilities["BasicWeapon"])
-	} else if ebiten.IsKeyPressed(ebiten.Key2) {
-		cp.kernel.EventBus.Publish("NewAbility", cp.availableAbilities["DaggersWeapon"])
-	} else if ebiten.IsKeyPressed(ebiten.Key3) {
-		cp.kernel.EventBus.Publish("NewAbility", cp.availableAbilities["ProtectionWeapon"])
-	} else if ebiten.IsKeyPressed(ebiten.Key4) {
-		cp.kernel.EventBus.Publish("NewAbility", cp.availableAbilities["FireballWeapon"])
+	cp.selectionDelay += cp.kernel.DeltaTime
+
+	if cp.selectionDelay > 1 {
+		if ebiten.IsKeyPressed(ebiten.Key1) {
+			cp.kernel.EventBus.Publish("NewAbility", cp.availableAbilities["BasicWeapon"])
+			cp.selectionDelay = 0
+
+		} else if ebiten.IsKeyPressed(ebiten.Key2) {
+			cp.kernel.EventBus.Publish("NewAbility", cp.availableAbilities["DaggersWeapon"])
+			cp.selectionDelay = 0
+
+		} else if ebiten.IsKeyPressed(ebiten.Key3) {
+			cp.kernel.EventBus.Publish("NewAbility", cp.availableAbilities["ProtectionWeapon"])
+			cp.selectionDelay = 0
+
+		} else if ebiten.IsKeyPressed(ebiten.Key4) {
+			cp.kernel.EventBus.Publish("NewAbility", cp.availableAbilities["FireballWeapon"])
+			cp.selectionDelay = 0
+		}
 	}
 
 	return nil
 }
 
 func (cp *ChooseAbilityPlugin) Draw(screen *ebiten.Image) {
-	text.Draw(screen, "Qual abilidade você quer?", fontface.FontFace, 300, 150, color.White)
+	text.Draw(screen, "Qual habilidade você quer?", fontface.FontFace, 300, 150, color.White)
 
 	for i, key := range cp.abilities {
 		col := color.White
