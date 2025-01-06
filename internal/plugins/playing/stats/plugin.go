@@ -3,6 +3,7 @@ package stats
 import (
 	"fmt"
 	"game/internal/assets"
+	"game/internal/constants"
 	"game/internal/core"
 	"game/internal/plugins"
 	"image/color"
@@ -217,4 +218,15 @@ func (sp *StatsPlugin) Draw(screen *ebiten.Image) {
 			Y:      healthBarPosition,
 		},
 	)
+
+	statsPanelWidth := float32(300.0)
+	statsPanelHeight := float32(50.0)
+
+	vector.DrawFilledRect(screen,
+		constants.ScreenWidth/2-statsPanelWidth/2,
+		constants.ScreenHeight-statsPanelHeight,
+		statsPanelWidth,
+		statsPanelHeight,
+		color.RGBA{255, 255, 255, 255},
+		true)
 }
