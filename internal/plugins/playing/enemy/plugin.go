@@ -308,16 +308,13 @@ func (ep *EnemyPlugin) Draw(screen *ebiten.Image) {
 		}
 	}
 
-	// Desenhar os danos
 	for i := len(ep.damages) - 1; i >= 0; i-- {
 		damage := &ep.damages[i]
 		damage.Timer -= ep.kernel.DeltaTime
 
 		if damage.Timer <= 0 {
-			// remove damage from list
 			ep.damages = append(ep.damages[:i], ep.damages[i+1:]...)
 		} else {
-			// draw damage
 			screenX := damage.X - cameraX
 			screenY := damage.Y - cameraY - (1.0-damage.Timer)*20
 
@@ -458,14 +455,22 @@ func (ep *EnemyPlugin) ApplyDamage(enemy *entities.Enemy, damage float64, isCrit
 		false: color.RGBA{255, 255, 255, 200},
 	}
 
-	// Adicionar uma nova entrada de dano
+	damageText := fmt.Sprintf("%d", int(effectiveDamage))
+	bounds := text.BoundString(basicfont.Face7x13, damageText)
+	textWidth := bounds.Dx()
+	textHeight := bounds.Dy()
+
+	textX := enemy.X + enemy.Width/2 - float64(textWidth)/2
+	textY := enemy.Y - float64(textHeight)/2
+
 	ep.damages = append(ep.damages, DamageInfo{
-		X:     enemy.X,
-		Y:     enemy.Y,
+		X:     textX,
+		Y:     textY,
 		Value: effectiveDamage,
 		Color: colorByType[isCriticalDamage],
 		Timer: 0.4,
 	})
+
 }
 
 func (ep *EnemyPlugin) AddDeathEnemies(e *entity.Enemy) {

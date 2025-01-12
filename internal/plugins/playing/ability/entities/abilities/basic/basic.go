@@ -91,7 +91,6 @@ func (b *Basic) Shoot(x, y float64) {
 	enemies := enemyPlugin.GetEnemies()
 
 	if len(enemies) > 0 {
-		// Find closest enemy
 		closestEnemy := enemies[0]
 		closestDist := math.MaxFloat64
 
